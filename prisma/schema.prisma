@@ -36,6 +36,7 @@ model User {
   notifications Notification[]
   retros        Retro[]
   sessions      Session[]
+  reports       Report[]
 
   @@map("users")
 }
@@ -248,4 +249,18 @@ model Session {
 
   @@index([userId])
   @@map("sessions")
+}
+
+// "이상해요" 신고: AI 설명이나 자료가 틀렸다고 알린 기록(운영자가 확인)
+model Report {
+  id         String   @id @default(cuid())
+  userId     String
+  lessonId   String?
+  resourceId String?
+  reason     String
+  createdAt  DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([lessonId])
+  @@map("reports")
 }

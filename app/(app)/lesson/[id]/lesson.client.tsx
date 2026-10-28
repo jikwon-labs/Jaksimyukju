@@ -9,6 +9,7 @@ import { OfflineBar } from "@/components/lesson/StateBlock";
 import { saveLesson, useOnline } from "@/components/lesson/offline";
 import { OFFLINE_NOTE } from "@/components/lesson/copy";
 import s from "@/components/lesson/lesson.module.css";
+import { ReportButton } from "@/components/lesson/ReportButton";
 
 function FinishShort({ disabled }: { disabled: boolean }) {
   const { pending } = useFormStatus();
@@ -50,6 +51,7 @@ export function LessonView({ lesson, initialShort }: { lesson: LessonPayload; in
       )}
       <div className={s.grow}>
         <LessonContent lesson={lesson} short={short} onMode={onMode} />
+        {online && <ReportButton lessonId={lesson.id} label="설명이 이상해요" />}
       </div>
       <div className={s.ctaBar}>
         {!online && <p className={s.ctaNote}>{OFFLINE_NOTE}</p>}

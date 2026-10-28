@@ -367,3 +367,11 @@ test("22. 일요일에는 주간 회고 알림이 생기고 회고로 이어진�
   await retro.click();
   await expect(page).toHaveURL(/\/retro/);
 });
+
+test("23. 레슨에서 '설명이 이상해요' 신고", async ({ page }) => {
+  await loginDemo(page, "/home");
+  await page.getByRole("link", { name: "학습 시작" }).click();
+  await page.getByTestId("report-open").click();
+  await page.getByRole("button", { name: "설명이 틀린 것 같아요" }).click();
+  await expect(page.getByTestId("report-done")).toBeVisible();
+});

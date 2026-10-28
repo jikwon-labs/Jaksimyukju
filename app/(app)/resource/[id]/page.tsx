@@ -137,7 +137,7 @@ export default async function ResourcePage({ params }: { params: Promise<{ id: s
         뺐어요.
       </p>
 
-      <ResourceButtons url={r.url} />
+      <ResourceButtons url={r.url} resourceId={r.id} />
     </main>
   );
 }

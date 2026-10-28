@@ -1,11 +1,11 @@
 "use client";
 
+import { ReportButton } from "@/components/lesson/ReportButton";
 import { useState } from "react";
 import s from "./resource.module.css";
 
-export function ResourceButtons({ url }: { url: string }) {
+export function ResourceButtons({ url, resourceId }: { url: string; resourceId: string }) {
   const [read, setRead] = useState(false);
-  const [reported, setReported] = useState(false);
   return (
     <>
       <div className={s.buttons}>
@@ -23,15 +23,7 @@ export function ResourceButtons({ url }: { url: string }) {
         </a>
       </div>
       <div className={s.reportRow}>
-        {reported ? (
-          <p role="status" className={s.reported}>
-            알려 줘서 고마워요. 이 자료는 다시 확인해 볼게요.
-          </p>
-        ) : (
-          <button type="button" className={s.report} onClick={() => setReported(true)}>
-            자료가 이상해요
-          </button>
-        )}
+        <ReportButton resourceId={resourceId} label="자료가 이상해요" reasons={["자료 링크가 이상해요", "설명이 틀린 것 같아요"]} />
       </div>
     </>
   );
