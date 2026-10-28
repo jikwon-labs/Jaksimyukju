@@ -1,0 +1,113 @@
+.root {
+  gap: 18px;
+}
+.logo {
+  font-family: var(--font-title), "Jua", sans-serif;
+  font-weight: 400;
+  font-size: 22px;
+}
+.stepLabel {
+  font-size: 13px;
+  color: var(--sub);
+}
+.bars {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+.bar {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--line);
+}
+.bar[data-on="true"] {
+  background: var(--ink);
+}
+.trio {
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  gap: 4px;
+  height: 92px;
+}
+.asking {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.titleBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.eyebrow {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--sub);
+}
+.title {
+  font-size: 24px;
+  line-height: 33px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+.options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.option {
+  min-height: 60px;
+  padding: 14px 18px;
+  border-radius: 18px;
+  border: var(--card-border);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 15px;
+  line-height: 22px;
+  text-align: left;
+  cursor: pointer;
+}
+.note {
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--sub);
+}
+.result {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.reco {
+  color: var(--a-text);
+}
+.why {
+  font-size: 15px;
+  line-height: 23px;
+  color: var(--sub);
+}
+.restart {
+  align-self: flex-start;
+  height: 44px;
+  padding: 0 14px;
+  border-radius: 14px;
+  border: 1.5px solid var(--line);
+  background: transparent;
+  color: var(--ink);
+  font-size: 14px;
+  cursor: pointer;
+}
+.prev {
+  height: 48px;
+  border: none;
+  background: transparent;
+  color: var(--sub);
+  font-size: 14px;
+  cursor: pointer;
+}
+.option:focus-visible,
+.restart:focus-visible,
+.prev:focus-visible {
+  outline: 3px solid var(--ink);
+  outline-offset: 2px;
+}

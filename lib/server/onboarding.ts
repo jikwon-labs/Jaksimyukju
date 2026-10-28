@@ -1,0 +1,107 @@
+import "server-only";
+import { cookies } from "next/headers";
+import type { User } from "@prisma/client";
+import { z } from "zod";
+import { getAi } from "@/lib/ai";
+import type { CurriculumInput } from "@/lib/ai/types";
+import { createGuest, getSessionUser, signIn } from "@/lib/auth";
+import { getToday } from "@/lib/clock";
+import { DEMO_INVITE } from "@/lib/constants";
+import { sortStudyDays } from "@/lib/domain/dates";
+import { prisma } from "@/lib/prisma";
+import { createCourse } from "./course";
+
+/** /invite/[code]가 남기는 초대 코드 쿠키 */
+export const INVITE_COOKIE = "j6_invite";
+
+export const OnboardingInput = z.object({
+  teacher: z.enum(["온", "결", "새"]),
+  topic: z.string().trim().min(1).max(60),
+  goal: z.string().trim().min(1).max(120),
+  level: z.enum(["처음이에요", "조금 알아요", "꽤 알아요"]),
+  studyDays: z.array(z.number().int().min(0).max(6)).min(1).max(7),
+  minutes: z.union([z.literal(5), z.literal(10), z.literal(20), z.literal(30)]),
+  weeks: z.union([z.literal(2), z.literal(4), z.literal(6), z.literal(8), z.literal(12)]),
+  notifyTime: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/),
+});
+export type OnboardingInput = z.infer<typeof OnboardingInput>;
+
+export interface OnboardingSummary {
+  teacher: string;
+  topic: string;
+  goal: string;
+  weeksCount: number;
+  perWeek: number;
+  minutes: number;
+  lessons: number;
+  weeks: { title: string; milestone: string }[];
+  excludes: string[];
+}
+
+/** 초대 쿠키(없으면 데모 그룹)의 그룹. 만료됐거나 없으면 null */
+export async function inviteGroup(now = new Date()) {
+  const code = (await cookies()).get(INVITE_COOKIE)?.value || DEMO_INVITE;
+  const group = await prisma.group.findUnique({
+    where: { inviteCode: code },
+    include: { createdBy: { select: { id: true, name: true } } },
+  });
+  if (!group || group.inviteExpiresAt <= now) return null;
+  return group;
+}
+
+/**
+ * 커리큘럼을 만들고 과정을 저장한다. 세션 사용자가 있으면 그 사용자를 쓰고(다시 만들기),
+ * 없으면 게스트를 만든다. AI가 실패하면 AiError를 그대로 던지고 아무것도 쓰지 않는다.
+ */
+export async function startOnboarding(data: OnboardingInput): Promise<OnboardingSummary> {
+  const studyDays = sortStudyDays(data.studyDays);
+  const input: CurriculumInput = {
+    topic: data.topic,
+    goal: data.goal,
+    level: data.level,
+    studyDays,
+    minutes: data.minutes,
+    weeks: data.weeks,
+    teacher: data.teacher,
+  };
+  const plan = await getAi().generateCurriculum(input);
+
+  const profile = {
+    teacher: data.teacher,
+    studyDays: studyDays.join(","),
+    minutesPerDay: data.minutes,
+    notifyTime: data.notifyTime,
+  };
+  const existing = await getSessionUser();
+  let user: User;
+  if (existing) {
+    user = await prisma.user.update({ where: { id: existing.id }, data: profile });
+    await signIn(user);
+  } else {
+    const guest = await createGuest({ teacher: data.teacher });
+    user = await prisma.user.update({ where: { id: guest.id }, data: { ...profile, name: "나" } });
+  }
+
+  await createCourse(user.id, input, plan, await getToday());
+
+  const group = await inviteGroup();
+  if (group) {
+    await prisma.groupMember.upsert({
+      where: { groupId_userId: { groupId: group.id, userId: user.id } },
+      create: { groupId: group.id, userId: user.id, visibility: "grass_topic" },
+      update: {},
+    });
+  }
+
+  return {
+    teacher: data.teacher,
+    topic: input.topic,
+    goal: plan.goal || input.goal,
+    weeksCount: plan.weeks.length,
+    perWeek: studyDays.length,
+    minutes: data.minutes,
+    lessons: plan.weeks.reduce((n, w) => n + w.lessons.length, 0),
+    weeks: plan.weeks.map((w) => ({ title: w.title, milestone: w.milestone })),
+    excludes: plan.excludes,
+  };
+}

@@ -1,0 +1,273 @@
+.making {
+  min-height: 100dvh;
+  padding: 120px 32px 40px 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+}
+.makingText {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  text-align: center;
+}
+.makingTitle {
+  font-size: 22px;
+  line-height: 30px;
+  font-weight: 700;
+}
+.makingSub {
+  font-size: 14px;
+  color: var(--sub);
+}
+.steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.step {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 52px;
+  padding: 0 16px;
+  border-radius: 16px;
+  background: var(--surface);
+  border: var(--card-border);
+  font-size: 15px;
+  color: var(--ink);
+}
+.step[data-state="active"] {
+  font-weight: 700;
+}
+.step[data-state="wait"] {
+  color: var(--sub);
+}
+.stepIcon {
+  flex: none;
+}
+.spin {
+  transform-box: fill-box;
+  transform-origin: 50% 50%;
+  animation: sl-spin 1s linear infinite;
+}
+@keyframes sl-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .spin {
+    animation: none;
+  }
+}
+
+.readyRoot {
+  min-height: 100dvh;
+  position: relative;
+}
+.scroll {
+  padding: 20px 20px 120px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.hero {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-top: 8px;
+}
+.heroText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.heroTitle {
+  font-size: 22px;
+  line-height: 30px;
+  font-weight: 700;
+  letter-spacing: -0.4px;
+}
+.heroSub {
+  font-size: 13px;
+  color: var(--sub);
+}
+.summary {
+  background: var(--a-tint);
+  border-radius: 20px;
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.summaryMeta {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--a-text);
+}
+.summaryTopic {
+  font-size: 20px;
+  font-weight: 700;
+}
+.summaryGoal {
+  font-size: 13px;
+  line-height: 20px;
+}
+.weeks {
+  background: var(--surface);
+  border: var(--card-border);
+  border-radius: 20px;
+  padding: 4px 16px;
+}
+.week {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 0;
+  border-top: 1px solid var(--line);
+}
+.week:first-child {
+  border-top: none;
+}
+.badge {
+  width: 34px;
+  height: 34px;
+  flex: none;
+  border-radius: 11px;
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--future);
+  color: var(--sub);
+}
+.badge[data-first="true"] {
+  background: var(--a-btn-bg);
+  color: var(--a-btn-ink);
+}
+.weekText {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.weekTitle {
+  font-size: 15px;
+  font-weight: 700;
+}
+.weekMs {
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--sub);
+}
+.skip {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.skipTitle {
+  font-size: 15px;
+  font-weight: 700;
+}
+.pills {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.pill {
+  font-size: 13px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1.5px dashed var(--line);
+  color: var(--sub);
+}
+.skipNote {
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--sub);
+}
+.footer {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 430px;
+  height: 96px;
+  padding: 12px 20px 28px 20px;
+  background: var(--bg);
+  border-top: 1px solid var(--line);
+  display: flex;
+  gap: 8px;
+}
+@media (min-width: 600px) {
+  .footer {
+    width: 390px;
+  }
+}
+.remake {
+  width: 112px;
+}
+.start {
+  flex: 1;
+  width: auto;
+}
+
+.fail {
+  min-height: 100dvh;
+  padding: 64px 28px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.failMid {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  text-align: center;
+}
+.tag {
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: 999px;
+  padding: 4px 10px;
+  background: var(--warn-bg);
+  color: var(--warn);
+}
+.failTitle {
+  font-size: 23px;
+  line-height: 31px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+.failBody {
+  font-size: 15px;
+  line-height: 23px;
+  color: var(--sub);
+}
+.secondary {
+  height: 48px;
+  border-radius: 16px;
+  color: var(--ink);
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
+.secondary:focus-visible {
+  outline: 3px solid var(--a-text);
+  outline-offset: 2px;
+}

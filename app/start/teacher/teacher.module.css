@@ -1,0 +1,213 @@
+/* 카드마다 그 선생님 색을 쓴다(현재 강조색과 별개). 목업 accent() 값 그대로 */
+.card[data-who="온"],
+.recoName[data-who="온"] {
+  --x-text: #2f62d9;
+  --x-tint: #e6eeff;
+  --x-btn: #2f62d9;
+  --x-ink: #ffffff;
+}
+.card[data-who="결"],
+.recoName[data-who="결"] {
+  --x-text: #d63a30;
+  --x-tint: #ffe9e5;
+  --x-btn: #d63a30;
+  --x-ink: #ffffff;
+}
+.card[data-who="새"],
+.recoName[data-who="새"] {
+  --x-text: #1f7a4a;
+  --x-tint: #e2f5ea;
+  --x-btn: #1f7a4a;
+  --x-ink: #ffffff;
+}
+:global(html[data-theme="dark"]) .card[data-who="온"],
+:global(html[data-theme="dark"]) .recoName[data-who="온"] {
+  --x-text: #5b8cff;
+  --x-tint: rgba(91, 140, 255, 0.16);
+  --x-btn: #5b8cff;
+  --x-ink: #111114;
+}
+:global(html[data-theme="dark"]) .card[data-who="결"],
+:global(html[data-theme="dark"]) .recoName[data-who="결"] {
+  --x-text: #ff6b5e;
+  --x-tint: rgba(255, 107, 94, 0.16);
+  --x-btn: #ff6b5e;
+  --x-ink: #111114;
+}
+:global(html[data-theme="dark"]) .card[data-who="새"],
+:global(html[data-theme="dark"]) .recoName[data-who="새"] {
+  --x-text: #4cc38a;
+  --x-tint: rgba(76, 195, 138, 0.16);
+  --x-btn: #4cc38a;
+  --x-ink: #111114;
+}
+@media (prefers-color-scheme: dark) {
+  :global(html[data-theme="system"]) .card[data-who="온"],
+  :global(html[data-theme="system"]) .recoName[data-who="온"] {
+    --x-text: #5b8cff;
+    --x-tint: rgba(91, 140, 255, 0.16);
+    --x-btn: #5b8cff;
+    --x-ink: #111114;
+  }
+  :global(html[data-theme="system"]) .card[data-who="결"],
+  :global(html[data-theme="system"]) .recoName[data-who="결"] {
+    --x-text: #ff6b5e;
+    --x-tint: rgba(255, 107, 94, 0.16);
+    --x-btn: #ff6b5e;
+    --x-ink: #111114;
+  }
+  :global(html[data-theme="system"]) .card[data-who="새"],
+  :global(html[data-theme="system"]) .recoName[data-who="새"] {
+    --x-text: #4cc38a;
+    --x-tint: rgba(76, 195, 138, 0.16);
+    --x-btn: #4cc38a;
+    --x-ink: #111114;
+  }
+}
+
+.stage {
+  position: relative;
+  height: 176px;
+  flex: none;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+.floor {
+  position: absolute;
+  bottom: 4px;
+  left: 50%;
+  margin-left: -75px;
+  width: 150px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--a-tint);
+}
+.arrive {
+  position: relative;
+  animation: sl-arrive 0.6s cubic-bezier(0.3, 1.6, 0.5, 1) both;
+}
+@keyframes sl-arrive {
+  0% {
+    transform: translateY(24px) scale(0.8, 1.2);
+    opacity: 0;
+  }
+  60% {
+    transform: translateY(-6px) scale(1.08, 0.92);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(0) scale(1, 1);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .arrive {
+    animation: none;
+  }
+}
+.titleBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  text-align: center;
+}
+.title {
+  font-size: 24px;
+  line-height: 32px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+.sub {
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--sub);
+}
+.recoName {
+  color: var(--x-text);
+  font-weight: 700;
+}
+.cards {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-align: left;
+  min-height: 80px;
+  padding: 10px 16px 10px 10px;
+  border-radius: 20px;
+  border: 2px solid transparent;
+  background: var(--surface);
+  color: var(--ink);
+  cursor: pointer;
+}
+.card[aria-checked="true"] {
+  border-color: var(--x-text);
+  background: var(--x-tint);
+}
+.card:focus-visible {
+  outline: 3px solid var(--x-text);
+  outline-offset: 2px;
+}
+.cardText {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.cardRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.name {
+  font-family: var(--font-title), "Jua", sans-serif;
+  font-weight: 400;
+  font-size: 20px;
+  color: var(--x-text);
+}
+.cardTitle {
+  font-size: 14px;
+  font-weight: 700;
+}
+.badge {
+  font-size: 11px;
+  font-weight: 700;
+  color: #ffffff;
+  background: #2f62d9;
+  border-radius: 999px;
+  padding: 2px 7px;
+}
+/* 목업은 온 진한 색으로 고정. 추천이 바뀌면 그 선생님의 진한 색 */
+.card[data-who="결"] .badge {
+  background: #d63a30;
+}
+.card[data-who="새"] .badge {
+  background: #1f7a4a;
+}
+.desc {
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--sub);
+}
+.radio {
+  width: 24px;
+  height: 24px;
+  flex: none;
+  border-radius: 12px;
+  border: 2px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: transparent;
+}
+.card[aria-checked="true"] .radio {
+  border: none;
+  background: var(--x-btn);
+  color: var(--x-ink);
+}
