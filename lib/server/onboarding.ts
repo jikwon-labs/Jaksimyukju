@@ -8,6 +8,7 @@ import { createGuest, getSessionUser, signIn } from "@/lib/auth";
 import { devToolsEnabled, getToday } from "@/lib/clock";
 import { DEMO_INVITE } from "@/lib/constants";
 import { sortStudyDays } from "@/lib/domain/dates";
+import { nickname } from "@/lib/domain/nickname";
 import { prisma } from "@/lib/prisma";
 import { createCourse } from "./course";
 import { joinByCode } from "./social";
@@ -82,7 +83,8 @@ export async function startOnboarding(data: OnboardingInput): Promise<Onboarding
     await signIn(user);
   } else {
     const guest = await createGuest({ teacher: data.teacher });
-    user = await prisma.user.update({ where: { id: guest.id }, data: { ...profile, name: "나" } });
+    const n = await prisma.user.count();
+    user = await prisma.user.update({ where: { id: guest.id }, data: { ...profile, name: nickname(n) } });
   }
 
   await createCourse(user.id, input, plan, await getToday());

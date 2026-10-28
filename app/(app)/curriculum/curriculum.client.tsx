@@ -42,7 +42,17 @@ function nodeIcon(st: Step): keyof typeof STEP_ICONS {
 
 function Icon({ d, size, strokeWidth = 2.6 }: { d: string; size: number; strokeWidth?: number }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={strokeWidth}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
       <path d={d} />
     </svg>
   );
@@ -69,10 +79,20 @@ export function CurriculumView({ who, goal, currentWeek, finished, weeks, progre
       <header className={s.header}>
         <h1 className={s.h1}>커리큘럼</h1>
         <div role="group" aria-label="보기 방식" className={s.toggle}>
-          <button type="button" aria-pressed={view === "map"} onClick={() => setView("map")} data-testid="view-map">
+          <button
+            type="button"
+            aria-pressed={view === "map"}
+            onClick={() => setView("map")}
+            data-testid="view-map"
+          >
             지도
           </button>
-          <button type="button" aria-pressed={view === "list"} onClick={() => setView("list")} data-testid="view-list">
+          <button
+            type="button"
+            aria-pressed={view === "list"}
+            onClick={() => setView("list")}
+            data-testid="view-list"
+          >
             목록
           </button>
         </div>
@@ -127,13 +147,35 @@ export function CurriculumView({ who, goal, currentWeek, finished, weeks, progre
                   </span>
                   <span className={s.bannerMeta}>{w.bannerMeta}</span>
                 </button>
-                {open && <WeekMap who={who} week={w} sel={sel} onPick={(id) => setSel((cur) => (cur === id ? "" : id))} />}
+                {open && (
+                  <WeekMap
+                    who={who}
+                    week={w}
+                    sel={sel}
+                    onPick={(id) => setSel((cur) => (cur === id ? "" : id))}
+                  />
+                )}
               </Fragment>
             );
           })}
-          <Link href="/finish" aria-label="목적지: 과정을 마치면 도착해요" className={s.flag} data-testid="finish-flag">
+          <Link
+            href="/finish"
+            aria-label="목적지: 과정을 마치면 도착해요"
+            className={s.flag}
+            data-testid="finish-flag"
+          >
             <span className={s.flagCircle} data-finished={finished ? "true" : "false"}>
-              <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <svg
+                width="30"
+                height="30"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden
+              >
                 <path d="M5 21V4" />
                 <path d="M5 4h11l-2 4 2 4H5" />
               </svg>
@@ -149,7 +191,12 @@ export function CurriculumView({ who, goal, currentWeek, finished, weeks, progre
             const days = listDays(w, currentWeek);
             return (
               <div key={w.n} className={s.listCard} data-status={w.status}>
-                <button type="button" className={s.listHead} aria-expanded={open} onClick={() => setOpenN(open ? 0 : w.n)}>
+                <button
+                  type="button"
+                  className={s.listHead}
+                  aria-expanded={open}
+                  onClick={() => setOpenN(open ? 0 : w.n)}
+                >
                   <span className={s.badge} data-status={w.status}>
                     {w.n}주
                   </span>
@@ -157,20 +204,43 @@ export function CurriculumView({ who, goal, currentWeek, finished, weeks, progre
                     <span className={s.listTitle}>{w.title}</span>
                     <span className={s.sub12}>{w.meta}</span>
                   </span>
-                  <svg className={s.chev} data-open={open ? "true" : "false"} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                  <svg
+                    className={s.chev}
+                    data-open={open ? "true" : "false"}
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden
+                  >
                     <path d="M6 9l6 6 6-6" />
                   </svg>
                 </button>
                 {open && (
                   <div className={s.listBody}>
                     {days.length === 0 ? (
-                      <p className={s.lockedNote}>이전 주차를 마치면 레슨이 열려요. 진도에 맞춰 선생님이 내용을 다듬어요.</p>
+                      <p className={s.lockedNote}>
+                        이전 주차를 마치면 레슨이 열려요. 진도에 맞춰 선생님이 내용을 다듬어요.
+                      </p>
                     ) : (
                       days.map((d) => (
                         <div key={d.id} className={s.dayRow} data-state={d.state}>
                           <span className={s.dayLetter}>{d.day}</span>
                           <span className={s.dayCircle} aria-hidden>
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
+                            <svg
+                              width="12"
+                              height="12"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="3.5"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            >
                               <path d={STEP_ICONS.check} />
                             </svg>
                           </span>
@@ -194,7 +264,17 @@ export function CurriculumView({ who, goal, currentWeek, finished, weeks, progre
   );
 }
 
-function WeekMap({ who, week, sel, onPick }: { who: TeacherName; week: CurriculumWeek; sel: string; onPick: (id: string) => void }) {
+function WeekMap({
+  who,
+  week,
+  sel,
+  onPick,
+}: {
+  who: TeacherName;
+  week: CurriculumWeek;
+  sel: string;
+  onPick: (id: string) => void;
+}) {
   const { lastDone, todayIdx } = roadIndexes(week.steps);
   const layout = mapLayout(
     week.steps.map((x) => x.kind),
@@ -204,64 +284,94 @@ function WeekMap({ who, week, sel, onPick }: { who: TeacherName; week: Curriculu
   const selIdx = week.steps.findIndex((x) => x.id === sel);
   const selStep = selIdx >= 0 ? week.steps[selIdx] : null;
   const pop = selStep ? popoverInfo(selStep) : null;
+  const [setFitEl, zoom] = useMapScale();
   return (
-    <div className={s.canvas} style={{ height: layout.height }} data-status={week.status}>
-      <svg width={MAP_W} height={layout.height} viewBox={`0 0 ${MAP_W} ${layout.height}`} className={s.road} aria-hidden>
-        <path d={layout.todoPath} className={s.roadTodo} />
-        <path d={layout.donePath} className={s.roadDone} />
-      </svg>
-      {week.steps.map((st, i) => {
-        const n = layout.nodes[i];
-        const goal = st.kind === "goal";
-        const today = st.state === "today";
-        const selected = sel === st.id;
-        return (
-          <div key={st.id} className={s.nodeBox} style={{ left: n.left, top: n.top, width: n.size, height: n.size }}>
-            {today && <span className={`${s.pulse} mp-pulse`} aria-hidden />}
-            <button
-              type="button"
-              className={s.node}
-              data-state={st.state}
-              data-kind={st.kind}
-              aria-label={nodeLabel(st)}
-              aria-expanded={selected}
-              onClick={() => onPick(st.id)}
-              data-testid={`map-node-${st.week}-${st.i}`}
+    <div ref={setFitEl} className={s.fit}>
+      <div
+        className={s.canvas}
+        style={{ height: layout.height, zoom }}
+        data-status={week.status}
+      >
+        <svg
+          width={MAP_W}
+          height={layout.height}
+          viewBox={`0 0 ${MAP_W} ${layout.height}`}
+          className={s.road}
+          aria-hidden
+        >
+          <path d={layout.todoPath} className={s.roadTodo} />
+          <path d={layout.donePath} className={s.roadDone} />
+        </svg>
+        {week.steps.map((st, i) => {
+          const n = layout.nodes[i];
+          const goal = st.kind === "goal";
+          const today = st.state === "today";
+          const selected = sel === st.id;
+          return (
+            <div
+              key={st.id}
+              className={s.nodeBox}
+              style={{ left: n.left, top: n.top, width: n.size, height: n.size }}
             >
-              <Icon d={STEP_ICONS[nodeIcon(st)]} size={goal ? 34 : 28} />
-            </button>
-            {today && !selected && (
-              <span className={s.bob} aria-hidden>
-                시작
-              </span>
+              {today && <span className={`${s.pulse} mp-pulse`} aria-hidden />}
+              <button
+                type="button"
+                className={s.node}
+                data-state={st.state}
+                data-kind={st.kind}
+                aria-label={nodeLabel(st)}
+                aria-expanded={selected}
+                onClick={() => onPick(st.id)}
+                data-testid={`map-node-${st.week}-${st.i}`}
+              >
+                <Icon d={STEP_ICONS[nodeIcon(st)]} size={goal ? 34 : 28} />
+              </button>
+              {today && !selected && (
+                <span className={s.bob} aria-hidden>
+                  시작
+                </span>
+              )}
+            </div>
+          );
+        })}
+        {layout.char && (
+          <div className={s.char} style={{ left: layout.char.left, top: layout.char.top }}>
+            <Teacher who={who} size={72} jump label={`${who} 선생님이 오늘 칸 옆에서 기다려요`} />
+          </div>
+        )}
+        {pop && selStep && (
+          <div
+            role="dialog"
+            aria-label={`${pop.kicker} ${pop.title}`}
+            className={s.popover}
+            data-hot={pop.hot ? "true" : "false"}
+            style={{ top: popoverTop(layout.nodes[selIdx]) }}
+            data-testid="popover"
+          >
+            <span className={s.popKicker}>{pop.kicker}</span>
+            <span className={s.popTitle}>{pop.title}</span>
+            <span className={s.popMeta}>{pop.meta}</span>
+            {pop.cta && (
+              <Link href={pop.href} className={s.popCta} data-testid="popover-cta">
+                {pop.cta}
+              </Link>
             )}
           </div>
-        );
-      })}
-      {layout.char && (
-        <div className={s.char} style={{ left: layout.char.left, top: layout.char.top }}>
-          <Teacher who={who} size={72} jump label={`${who} 선생님이 오늘 칸 옆에서 기다려요`} />
-        </div>
-      )}
-      {pop && selStep && (
-        <div
-          role="dialog"
-          aria-label={`${pop.kicker} ${pop.title}`}
-          className={s.popover}
-          data-hot={pop.hot ? "true" : "false"}
-          style={{ top: popoverTop(layout.nodes[selIdx]) }}
-          data-testid="popover"
-        >
-          <span className={s.popKicker}>{pop.kicker}</span>
-          <span className={s.popTitle}>{pop.title}</span>
-          <span className={s.popMeta}>{pop.meta}</span>
-          {pop.cta && (
-            <Link href={pop.href} className={s.popCta} data-testid="popover-cta">
-              {pop.cta}
-            </Link>
-          )}
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
+}
+
+/** 좁은 화면(390보다 작게)에서는 지도(350px 기준 좌표)를 폭에 맞춰 줄인다. 가로 스크롤을 막는다 */
+function useMapScale() {
+  const [el, setEl] = useState<HTMLDivElement | null>(null);
+  const [value, setValue] = useState(1);
+  useEffect(() => {
+    if (!el) return;
+    const ro = new ResizeObserver(() => setValue(Math.min(1, el.clientWidth / MAP_W)));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [el]);
+  return [setEl, value] as const;
 }

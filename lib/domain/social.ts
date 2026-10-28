@@ -92,7 +92,7 @@ export interface MemberStatus {
 
 export function memberStatus(m: MemberStatusInput): MemberStatus {
   const chip = m.studiedToday ? "done" : "wait";
-  const chipText = m.studiedToday ? "오늘 완료" : m.me ? "오늘 아직" : "아직";
+  const chipText = m.studiedToday ? "오늘 완료" : "오늘 아직";
   const away = !m.studiedToday && !m.resting && m.missed >= 2;
   let line: string;
   if (m.resting) line = "쉬어 가는 중";

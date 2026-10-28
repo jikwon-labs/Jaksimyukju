@@ -53,12 +53,19 @@ export async function POST(req: NextRequest) {
       core: lessonBody(lesson.body).core,
       history: turns,
     });
-    await prisma.tutorMessage.create({
-      data: { lessonId, role: "ai", content: r.content, understanding: r.understanding },
+    // AI가 답을 쓰는 사이 다른 요청(새로고침, 두 번째 탭)이 먼저 답을 저장했으면 이 답은 버린다
+    const saved = await prisma.$transaction(async (tx) => {
+      const now = await tx.tutorMessage.count({ where: { lessonId } });
+      if (now !== history.length) return false;
+      await tx.tutorMessage.create({
+        data: { lessonId, role: "ai", content: r.content, understanding: r.understanding },
+      });
+      if (r.done) await tx.lesson.update({ where: { id: lessonId }, data: { tutorChecked: true } });
+      return true;
     });
-    if (r.done) await prisma.lesson.update({ where: { id: lessonId }, data: { tutorChecked: true } });
     history = await load();
-    return reply(200, undefined, r.done);
+    const done = saved ? r.done : (await prisma.lesson.findUnique({ where: { id: lessonId } }))?.tutorChecked ?? false;
+    return reply(200, undefined, done);
   } catch (e) {
     if (!(e instanceof AiError)) console.error("tutor", e);
     return reply(502, "ai", false);

@@ -50,7 +50,6 @@ export default async function ProfilePage({ searchParams }: { searchParams: Prom
     { label: "하루 학습 시간", value: `${user.minutesPerDay}분`, href: "/settings" },
     { label: "알림 시각", value: timeLabel(user.notifyTime), href: "/settings" },
     { label: "화면 테마", value: THEME_LABELS[parseTheme(user.theme)], href: "/settings" },
-    { label: "지난 과정", value: past.length ? `${past.length}개` : "없음", href: "#past" },
     { label: "계정", value: user.email ?? "게스트", href: "/settings" },
   ];
 

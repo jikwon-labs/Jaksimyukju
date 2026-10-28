@@ -149,7 +149,7 @@ test("13. 주간 회고: 질문 3개 → 다짐 카드 → 저장 → 그룹에 
   // 공유를 켜 둔 채 저장했으니 같은 그룹 민지에게 다짐 한 줄이 간다.
   // 세 번째 답(계획)은 다짐 문장에 들어갈 수 있으니, 앞의 두 답만 새지 않는지 본다
   await loginDemo(page, "/notifications", today, "demo-minji");
-  const shared = page.getByTestId("notif-item").filter({ hasText: "나님이 다음 주 다짐을 공유했어요" });
+  const shared = page.getByTestId("notif-item").filter({ hasText: "지우님이 다음 주 다짐을 공유했어요" });
   await expect(shared).toHaveCount(1);
   for (const a of answers.slice(0, 2)) await expect(page.getByText(a)).toHaveCount(0);
 });

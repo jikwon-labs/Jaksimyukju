@@ -70,7 +70,7 @@ describe("memberStatus", () => {
   const base = { me: false, studiedToday: false, resting: false, comeback: false, streak: 5, missed: 0 };
   it("labels done, waiting and me", () => {
     expect(memberStatus({ ...base, studiedToday: true })).toMatchObject({ chip: "done", chipText: "오늘 완료", canPoke: false, line: "5일째 연속" });
-    expect(memberStatus(base)).toMatchObject({ chipText: "아직", canPoke: true });
+    expect(memberStatus(base)).toMatchObject({ chipText: "오늘 아직", canPoke: true });
     expect(memberStatus({ ...base, me: true })).toMatchObject({ chipText: "오늘 아직", canPoke: false });
   });
   it("shows resting and comeback labels", () => {

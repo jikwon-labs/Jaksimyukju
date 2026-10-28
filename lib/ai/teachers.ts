@@ -19,6 +19,8 @@ export const LINES: Record<
   TeacherName,
   {
     home: string;
+    /** 오늘 몫을 끝낸 뒤 홈 인사. {n}은 연속 일수 */
+    homeDone: string;
     intro: string;
     curriculumDone: string;
     tutorFirst: string;
@@ -31,6 +33,7 @@ export const LINES: Record<
 > = {
   온: {
     home: "오늘도 와 줬네요. 10분만 같이 해요",
+    homeDone: "오늘 몫은 끝냈어요. 연속 {n}일째, 푹 쉬어요.",
     intro: "오늘은 두 가지만 볼 거예요. 천천히 읽고, 헷갈리면 바로 물어봐요.",
     curriculumDone: "천천히, 하지만 끝까지 갈 수 있게 짰어요.",
     tutorFirst: "천천히 해도 돼요. 회사가 이익을 냈는데 현금은 줄어들 수도 있을까요?",
@@ -42,6 +45,7 @@ export const LINES: Record<
   },
   결: {
     home: "이번 주 목표까지 레슨 2개 남았습니다",
+    homeDone: "오늘 몫 완료. 연속 {n}일째입니다. 내일도 같은 시간입니다.",
     intro: "오늘 볼 건 두 가지. 다 읽으면 바로 확인 질문 들어갑니다.",
     curriculumDone: "빈틈없이 짰습니다. 이대로 갑니다.",
     tutorFirst: "질문 하나 합니다. 이익을 냈는데 현금이 줄 수 있습니까? 이유까지 말해 보세요.",
@@ -53,6 +57,7 @@ export const LINES: Record<
   },
   새: {
     home: "오늘 건 요리랑 닮았어요. 왜인지 볼래요?",
+    homeDone: "오늘 탐험 끝! 연속 {n}일째예요. 내일은 어디로 갈까요?",
     intro: "외상으로 산 붕어빵 값은 언제 장부에 적힐까요? 그 얘기예요.",
     curriculumDone: "중간중간 재밌는 샛길도 숨겨 뒀어요.",
     tutorFirst: "이상한 질문 하나! 장사가 잘됐는데 지갑이 얇아질 수도 있을까요?",

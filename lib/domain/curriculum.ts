@@ -1,3 +1,4 @@
+import { TUTOR_QUESTIONS } from "./lesson";
 // 커리큘럼 화면(지도·목록)의 문구와 상태 계산 (목업 Curriculum.dc.html renderVals)
 import type { Step, StepKind, StepState, WeekView } from "./course";
 import { WEEKDAY_KO } from "./dates";
@@ -50,7 +51,7 @@ export function popoverInfo(st: Step): PopoverInfo {
             ? "복귀하며 다음 레슨에 5분씩 합쳤어요"
             : st.state === "five"
           ? `5분 버전으로 끝냈어요 · 전체 버전 약 ${st.minutes ?? 10}분`
-          : `약 ${st.minutes ?? 10}분 · 설명과 튜터 질문 3개`;
+          : `약 ${st.minutes ?? 10}분 · 설명과 튜터 질문 ${TUTOR_QUESTIONS}개`;
   const cta = lock
     ? ""
     : done

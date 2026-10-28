@@ -9,6 +9,7 @@ import { Page } from "@/components/ui";
 import { getSessionUser } from "@/lib/auth";
 import { getToday } from "@/lib/clock";
 import { LINES } from "@/lib/ai/teachers";
+import { TUTOR_QUESTIONS } from "@/lib/domain/lesson";
 import { shortPath, stepsToMilestone, type Step } from "@/lib/domain/course";
 import { WEEKDAY_KO, weekday } from "@/lib/domain/dates";
 import { NUDGE_MESSAGES } from "@/lib/domain/limits";
@@ -28,7 +29,7 @@ function stepHref(st: Step, short = false): string {
 function stepMeta(st: Step, topic: string): string {
   if (st.kind === "quiz") return `${topic} · 이번 주 레슨으로 3문제 · 약 3분`;
   if (st.kind === "goal") return `${topic} · 선생님이 기준 3개로 피드백해요`;
-  return `${topic} · 약 ${st.minutes ?? 10}분 · 설명과 튜터 질문 3개`;
+  return `${topic} · 약 ${st.minutes ?? 10}분 · 설명과 튜터 질문 ${TUTOR_QUESTIONS}개`;
 }
 
 const DAYS_KO = ["", "하루째", "이틀째", "사흘째", "나흘째", "닷새째"];
@@ -76,7 +77,7 @@ export default async function HomePage() {
         <Teacher who={who} size={48} jump />
         <div className={s.bubble}>
           <span className={s.bubbleName}>{who} 선생님</span>
-          <p>{st.studiedToday ? `오늘 몫은 끝냈어요. 연속 ${st.streak}일째예요.` : L.home}</p>
+          <p>{st.studiedToday ? L.homeDone.replace("{n}", String(st.streak)) : L.home}</p>
         </div>
       </div>
 

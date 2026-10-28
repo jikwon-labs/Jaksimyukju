@@ -1,4 +1,4 @@
-// 시드: 재무제표 읽기 6주 과정(데모 사용자 "나") + 그룹 멤버 3명(민지, 서연, 준호).
+// 시드: 재무제표 읽기 6주 과정(데모 사용자 지우, 화면에서는 "나") + 그룹 멤버 3명(민지, 서연, 준호).
 // 날짜는 시드를 돌린 날(KST)을 기준으로 잡는다. 테이블은 모두 비우고 다시 넣는다.
 import { PrismaClient } from "@prisma/client";
 import { mockCurriculum, mockLibrarian } from "../lib/ai/mock";
@@ -88,7 +88,7 @@ async function main() {
   const start = addDays(mondayOf(today), -7); // 지난주 월요일 시작 -> 오늘은 2주차
   const yesterday = addDays(today, -1);
 
-  const me = await prisma.user.create({ data: { id: "demo-me", name: "나", teacher: "온", minutesPerDay: 10 } });
+  const me = await prisma.user.create({ data: { id: "demo-me", name: "지우", teacher: "온", minutesPerDay: 10 } });
   const minji = await prisma.user.create({ data: { id: "demo-minji", name: "민지", teacher: "결" } });
   const seoyeon = await prisma.user.create({ data: { id: "demo-seoyeon", name: "서연", teacher: "새" } });
   const junho = await prisma.user.create({ data: { id: "demo-junho", name: "준호", teacher: "온" } });

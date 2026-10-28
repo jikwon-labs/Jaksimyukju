@@ -57,7 +57,7 @@ describe("칸 설명 카드", () => {
   it("오늘 레슨", () => {
     const p = popoverInfo(w2[3]);
     expect(p.kicker).toBe("2주차 목요일 레슨 · 오늘");
-    expect(p.meta).toBe("약 10분 · 설명과 튜터 질문 3개");
+    expect(p.meta).toBe("약 10분 · 설명과 튜터 질문 2개");
     expect(p.cta).toBe("학습 시작");
     expect(p.href).toBe("/lesson/l23");
     expect(p.hot).toBe(true);
@@ -202,7 +202,8 @@ describe("목적지 도착", () => {
   it("퀴즈 평균과 남은 칸", () => {
     expect(quizAverage([67, 100, null])).toBe(84);
     expect(quizAverage([null])).toBeNull();
-    expect(stepsLeft(v.weeks)).toBe(v.weeks.flatMap((w) => w.steps).length - 6 - 3);
+    // 커리큘럼 화면처럼 레슨만 센다
+    expect(stepsLeft(v.weeks)).toBe(v.lessonsTotal - v.lessonsDone);
   });
 });
 

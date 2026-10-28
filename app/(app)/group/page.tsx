@@ -115,7 +115,7 @@ export default async function GroupPage() {
                 <Teacher who={m.teacher} state={ms.away ? "sad" : "base"} size={44} decorative />
                 <div className={s.who}>
                   <div className={s.nameRow}>
-                    <span className={s.name}>{m.me && m.name !== "나" ? `${m.name} (나)` : m.name}</span>
+                    <span className={s.name}>{m.me ? `${m.name} (나)` : m.name}</span>
                     <span className={s.topic} data-testid={`topic-${m.name}`}>
                       {m.topic ?? "주제 비공개"}
                     </span>

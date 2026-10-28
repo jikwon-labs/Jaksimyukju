@@ -54,6 +54,11 @@
   border: 2px solid var(--a-text);
 }
 
+.path:focus-visible {
+  outline: 3px solid var(--a-text);
+  outline-offset: 4px;
+  border-radius: 12px;
+}
 .path {
   position: relative;
   display: flex;

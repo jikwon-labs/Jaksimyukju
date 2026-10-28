@@ -89,14 +89,16 @@
 }
 .timeRow {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 12px;
   min-height: 60px;
   padding: 8px 16px;
 }
 .timeText {
-  flex: 1;
+  flex: 1 1 160px;
   min-width: 0;
+  word-break: keep-all;
   display: flex;
   flex-direction: column;
   gap: 2px;

@@ -181,11 +181,15 @@
   font-weight: 500;
 }
 
+.fit {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
 .canvas {
   position: relative;
   width: 350px;
-  max-width: 100%;
-  align-self: center;
+  flex: none;
 }
 .road {
   position: absolute;

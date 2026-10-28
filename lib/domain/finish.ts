@@ -42,6 +42,9 @@ export function quizAverage(scores: (number | null)[]): number | null {
 }
 
 /** 목적지까지 남은 칸(완료하지 않은 칸 수) */
-export function stepsLeft(weeks: { steps: { state: string }[] }[]): number {
-  return weeks.flatMap((w) => w.steps).filter((s) => s.state !== "done" && s.state !== "five").length;
+/** 목적지까지 남은 칸: 커리큘럼 화면과 같게 레슨만 센다 */
+export function stepsLeft(weeks: { steps: { state: string; kind?: string }[] }[]): number {
+  return weeks
+    .flatMap((w) => w.steps)
+    .filter((s) => (s.kind ?? "lesson") === "lesson" && s.state !== "done" && s.state !== "five").length;
 }
