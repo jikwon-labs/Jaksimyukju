@@ -169,7 +169,6 @@
 .bannerKicker {
   font-size: 12px;
   font-weight: 700;
-  opacity: 0.85;
 }
 .bannerTitle {
   font-size: 16px;
@@ -180,7 +179,6 @@
   flex: none;
   font-size: 12px;
   font-weight: 500;
-  opacity: 0.85;
 }
 
 .canvas {
@@ -323,7 +321,6 @@
 .popKicker {
   font-size: 12px;
   font-weight: 700;
-  opacity: 0.8;
 }
 .popTitle {
   font-size: 16px;
@@ -333,7 +330,6 @@
 .popMeta {
   font-size: 13px;
   line-height: 19px;
-  opacity: 0.85;
 }
 .popCta {
   margin-top: 6px;

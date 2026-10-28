@@ -102,11 +102,19 @@ test("4. 쉬어 가기 예약: 연속이 유지된다", async ({ page }, info) =
 test("5. 커리큘럼 지도 칸 → 퀴즈 → 마일스톤", async ({ page }, info) => {
   await loginDemo(page, "/curriculum");
   await shot(page, info, "10-curriculum");
-  const quizNode = page.locator('[data-testid^="map-node-"][data-kind="quiz"]').first();
-  await quizNode.scrollIntoViewIfNeeded();
+  // 오늘 칸을 누르면 설명 카드가 열린다
   await page.locator('[data-testid^="map-node-"][data-state="today"]').first().click();
   await expect(page.getByTestId("popover")).toBeVisible();
-  await page.goto("/quiz/2");
+  await expect(page.getByTestId("popover-cta")).toHaveText("학습 시작");
+  // 같은 칸을 다시 누르면 닫힌다. 그다음 같은 주의 퀴즈 칸 -> 설명 카드의 퀴즈 풀기
+  await page.locator('[data-testid^="map-node-"][data-state="today"]').first().click();
+  await expect(page.getByTestId("popover")).toHaveCount(0);
+  const quizNode = page.locator('[data-testid^="map-node-2-"][data-kind="quiz"]');
+  await quizNode.scrollIntoViewIfNeeded();
+  await quizNode.click();
+  await expect(page.getByTestId("popover-cta")).toHaveText("퀴즈 풀기");
+  await page.getByTestId("popover-cta").click();
+  await expect(page).toHaveURL(/\/quiz\/2/);
   for (let i = 0; i < 3; i++) {
     await page.getByTestId("quiz-choice-0").click();
     await page.getByTestId("quiz-next").click();

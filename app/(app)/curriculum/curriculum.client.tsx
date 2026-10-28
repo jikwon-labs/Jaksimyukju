@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Fragment, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { STEP_ICONS } from "@/components/course/ShortPath";
 import { Teacher } from "@/components/teacher/Teacher";
 import type { TeacherName } from "@/lib/design/types";
@@ -53,6 +53,16 @@ export function CurriculumView({ who, goal, currentWeek, finished, weeks, progre
   const [openW, setOpenW] = useState(() => defaultOpenWeeks(weeks, currentWeek, finished));
   const [sel, setSel] = useState("");
   const [openN, setOpenN] = useState(finished ? 0 : currentWeek);
+
+  // 칸 설명 카드는 Esc로 닫는다
+  useEffect(() => {
+    if (!sel) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setSel("");
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [sel]);
 
   return (
     <>

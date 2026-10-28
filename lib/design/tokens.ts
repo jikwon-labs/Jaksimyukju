@@ -8,12 +8,21 @@ export interface TeacherColors {
   body: string;
   deep: string;
   tint: string;
+  /** 라이트 강조 글자. 연한 배경 위에서 진한 색이 4.5:1에 못 미치면 따로 둔다 */
+  text?: string;
 }
 
 // 목업 common.py의 teachers 그대로
 export const TEACHERS: Record<TeacherName, TeacherColors & { slug: string; trait: string }> = {
   온: { body: "#5B8CFF", deep: "#2F62D9", tint: "#E6EEFF", slug: "on", trait: "다정함" },
-  결: { body: "#FF6B5E", deep: "#D63A30", tint: "#FFE9E5", slug: "gyeol", trait: "단호하고 성격 급한 코치" },
+  결: {
+    body: "#FF6B5E",
+    deep: "#D63A30",
+    tint: "#FFE9E5",
+    text: "#B42E25",
+    slug: "gyeol",
+    trait: "단호하고 성격 급한 코치",
+  },
   새: { body: "#4CC38A", deep: "#1F7A4A", tint: "#E2F5EA", slug: "sae", trait: "호기심" },
 };
 
@@ -87,17 +96,20 @@ export interface Accent {
   glow: string;
 }
 
+export const DARK_TINT_ALPHA = 0.12;
+
 // 다크에서는 밝은 몸 색을 강조색으로, 버튼 글자는 어둡게 (대비 4.5:1 이상)
 export function accent(t: TeacherColors, dark: boolean): Accent {
   return dark
     ? {
         text: t.body,
-        tint: rgba(t.body, 0.16),
+        // 목업은 0.16. 온 파랑 글자가 카드 위에서 4.5:1을 넘도록 0.12로 낮췄다
+        tint: rgba(t.body, DARK_TINT_ALPHA),
         btnBg: t.body,
         btnInk: "#111114",
         glow: `0 0 0 6px ${rgba(t.body, 0.14)}, 0 0 32px ${rgba(t.body, 0.28)}`,
       }
-    : { text: t.deep, tint: t.tint, btnBg: t.deep, btnInk: "#FFFFFF", glow: `0 0 0 6px ${t.tint}` };
+    : { text: t.text ?? t.deep, tint: t.tint, btnBg: t.deep, btnInk: "#FFFFFF", glow: `0 0 0 6px ${t.tint}` };
 }
 
 // 잔디 진하기: 0 안 함, 1 5분 버전, 2 레슨 완료, 3 레슨+튜터, 4 퀴즈·마일스톤까지

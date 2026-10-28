@@ -24,8 +24,8 @@ export function nthStudyDayAfter(from: DayKey, n: number): DayKey {
   return d;
 }
 
-export async function loginDemo(page: Page, to = "/home", now?: DayKey) {
-  const q = new URLSearchParams({ as: "demo-me", to });
+export async function loginDemo(page: Page, to = "/home", now?: DayKey, as = "demo-me") {
+  const q = new URLSearchParams({ as, to });
   q.set("now", now ?? "");
   await page.goto(`/api/dev/login?${q.toString()}`);
 }

@@ -20,3 +20,17 @@ for (const route of ROUTES) {
     await expectNoA11yViolations(page);
   });
 }
+
+// 선생님 색마다 대비가 다르므로 결(민지)과 새(서연)로도 본다
+for (const [as, who] of [
+  ["demo-minji", "결"],
+  ["demo-seoyeon", "새"],
+] as const) {
+  for (const route of ["/home", "/curriculum", "/group", "/settings", "/profile"]) {
+    test(`접근성 ${who} ${route}`, async ({ page }) => {
+      await loginDemo(page, route, undefined, as);
+      await page.waitForLoadState("networkidle");
+      await expectNoA11yViolations(page);
+    });
+  }
+}

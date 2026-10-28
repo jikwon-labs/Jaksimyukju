@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { contrastRatio, luminance } from "./contrast";
+import { blend, contrastRatio, luminance } from "./contrast";
 import { FACES } from "./faces";
-import { accent, PALETTES, TEACHERS, TEACHER_NAMES, themeCss } from "./tokens";
+import { accent, DARK_TINT_ALPHA, PALETTES, TEACHERS, TEACHER_NAMES, themeCss } from "./tokens";
 import type { FaceState } from "./types";
 
 const STATES: FaceState[] = ["base", "listen", "think", "joy", "sad"];
@@ -38,6 +38,16 @@ describe("선생님 버튼과 강조 글자 대비 4.5:1 이상", () => {
       expect(contrastRatio(a.text, PALETTES.dark.surface)).toBeGreaterThanOrEqual(4.5);
     });
   }
+  it("연한 강조 배경(칩, 콕 찌르기) 위 강조 글자도 4.5:1 이상", () => {
+    for (const who of TEACHER_NAMES) {
+      const t = TEACHERS[who];
+      expect(contrastRatio(accent(t, false).text, t.tint), `${who} 라이트`).toBeGreaterThanOrEqual(4.5);
+      for (const under of [PALETTES.dark.bg, PALETTES.dark.surface]) {
+        const tint = blend(t.body, DARK_TINT_ALPHA, under);
+        expect(contrastRatio(t.body, tint), `${who} 다크 ${under}`).toBeGreaterThanOrEqual(4.5);
+      }
+    }
+  });
   it("본문 글자와 보조 글자도 배경 대비 4.5:1 이상", () => {
     for (const p of [PALETTES.light, PALETTES.dark]) {
       expect(contrastRatio(p.ink, p.bg)).toBeGreaterThanOrEqual(4.5);

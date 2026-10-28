@@ -22,3 +22,11 @@ export function contrastRatio(a: string, b: string): number {
   const [hi, lo] = la > lb ? [la, lb] : [lb, la];
   return (hi + 0.05) / (lo + 0.05);
 }
+
+/** 반투명 색(alpha)을 바탕색 위에 섞은 hex */
+export function blend(fg: string, alpha: number, bg: string): string {
+  const f = parseHex(fg);
+  const b = parseHex(bg);
+  const mix = f.map((c, i) => Math.round(c * alpha + b[i] * (1 - alpha)));
+  return "#" + mix.map((c) => c.toString(16).padStart(2, "0")).join("");
+}
