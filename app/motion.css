@@ -1,0 +1,37 @@
+/* 동그라미 선생님 모션 (circle_face.py CSS 그대로): 숨쉬기, 두리번, 깜빡임, 8초마다 점프 */
+.ci-breathe{transform-box:fill-box;transform-origin:50% 100%;animation:ci-breathe 3.4s ease-in-out infinite}
+.ci-blink{transform-box:fill-box;transform-origin:50% 50%;animation:ci-blink 4.8s infinite}
+.ci-look{animation:ci-look 7s ease-in-out infinite}
+.ci-hop{animation:ci-hop 1.4s ease-in-out infinite}
+.ci-dots{animation:ci-dots 1.4s ease-in-out infinite}
+.ci-jump{transform-box:fill-box;transform-origin:50% 100%;animation:ci-jump 8s infinite}
+@keyframes ci-breathe{0%,100%{transform:scale(1,1)}50%{transform:scale(1.035,0.965)}}
+@keyframes ci-blink{0%,45%,49%,100%{transform:scaleY(1)}47%{transform:scaleY(0.12)}}
+@keyframes ci-look{0%,12%,100%{transform:translate(0,0)}22%,38%{transform:translate(-3.5px,0)}50%,66%{transform:translate(3.5px,-1px)}78%,90%{transform:translate(0,1px)}}
+@keyframes ci-hop{0%,100%{transform:translateY(0)}35%{transform:translateY(-9px)}55%{transform:translateY(0)}}
+@keyframes ci-dots{0%,100%{opacity:0.3}50%{opacity:1}}
+@keyframes ci-jump{0%,84%{transform:translateY(0) scale(1,1);animation-timing-function:ease-out}85.4%{transform:translateY(0) scale(1.08,0.9);animation-timing-function:ease-out}89.5%{transform:translateY(-14px) scale(0.95,1.06);animation-timing-function:ease-in}93.8%{transform:translateY(0) scale(1.07,0.92);animation-timing-function:ease-out}98.4%,100%{transform:translateY(0) scale(1,1)}}
+
+/* 가끔 나오는 동작: 라이트는 선글라스, 다크는 손전등 (Main 목업) */
+.sl-arm-l{transform-box:fill-box;transform-origin:100% 100%;animation:sl-sway 3.2s ease-in-out infinite}
+.sl-arm-r{transform-box:fill-box;transform-origin:0% 0%;animation:sl-wave 2.4s ease-in-out infinite}
+.sl-glasses{animation:sl-glasses 12s ease-in-out infinite}
+.sl-flash{animation:sl-flash 8s ease-in-out infinite}
+.sl-beam{animation:sl-beam 8s linear infinite}
+.sl-bulb{animation:sl-beam 8s linear infinite}
+@keyframes sl-sway{0%,100%{transform:rotate(0deg)}50%{transform:rotate(10deg)}}
+@keyframes sl-wave{0%,100%{transform:rotate(0deg)}25%{transform:rotate(-22deg)}50%{transform:rotate(6deg)}75%{transform:rotate(-16deg)}}
+@keyframes sl-glasses{0%,58%{opacity:0;transform:translateY(-16px)}64%,86%{opacity:1;transform:translateY(0)}92%,100%{opacity:0;transform:translateY(-16px)}}
+@keyframes sl-flash{0%,36%{opacity:0}40%,90%{opacity:1}94%,100%{opacity:0}}
+@keyframes sl-beam{0%,42%{opacity:0}44%{opacity:0.85}45%{opacity:0.1}46%{opacity:0.85}47%{opacity:0.2}49%,63%{opacity:0.85}64%{opacity:0.15}65%,74%{opacity:0.85}75%{opacity:0.1}76%{opacity:0.6}77%{opacity:0.15}78%,86%{opacity:0.85}89%,100%{opacity:0}}
+
+/* 짧은 길: 오늘 칸 물결 */
+.mp-pulse{animation:mp-pulse 2s ease-out infinite}
+@keyframes mp-pulse{0%{transform:scale(1);opacity:0.55}100%{transform:scale(1.55);opacity:0}}
+
+/* 모든 모션은 동작 줄이기에서 멈춘다 */
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation-duration:0.001ms!important;animation-iteration-count:1!important;transition-duration:0.001ms!important}
+  .ci-breathe,.ci-blink,.ci-look,.ci-hop,.ci-dots,.ci-jump,.sl-arm-l,.sl-arm-r,.sl-glasses,.sl-flash,.sl-beam,.sl-bulb,.mp-pulse{animation:none!important}
+  .sl-glasses,.sl-flash,.sl-beam,.sl-bulb,.mp-pulse{opacity:0}
+}

@@ -1,0 +1,27 @@
+.group {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  padding: 4px;
+  border-radius: 14px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+}
+.option {
+  height: 40px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--sub);
+  font-size: 14px;
+  cursor: pointer;
+}
+.option[aria-checked="true"] {
+  background: var(--a-btn-bg);
+  color: var(--a-btn-ink);
+  font-weight: 700;
+}
+.option:focus-visible {
+  outline: 3px solid var(--a-text);
+  outline-offset: 2px;
+}

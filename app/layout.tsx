@@ -1,6 +1,11 @@
 import type { Metadata, Viewport } from "next";
 import { Jua, Noto_Sans_KR } from "next/font/google";
+import { cookies } from "next/headers";
+import { themeCss } from "@/lib/design/tokens";
+import { parseTeacher, parseTheme, TEACHER_COOKIE, THEME_COOKIE } from "@/lib/theme";
+import ui from "@/components/ui/ui.module.css";
 import "./globals.css";
+import "./motion.css";
 
 const jua = Jua({ weight: "400", subsets: ["latin"], variable: "--font-title", preload: false });
 const noto = Noto_Sans_KR({
@@ -18,12 +23,34 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#FFFFFF" },
+    { media: "(prefers-color-scheme: dark)", color: "#111114" },
+  ],
 };
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+const TOKENS = themeCss();
+
+export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  const jar = await cookies();
+  const theme = parseTheme(jar.get(THEME_COOKIE)?.value);
+  const teacher = parseTeacher(jar.get(TEACHER_COOKIE)?.value);
   return (
-    <html lang="ko" className={`${jua.variable} ${noto.variable}`}>
-      <body>{children}</body>
+    <html
+      lang="ko"
+      data-theme={theme}
+      data-teacher={teacher}
+      className={`${jua.variable} ${noto.variable}`}
+      suppressHydrationWarning
+    >
+      <head>
+        <style id="j6-tokens" dangerouslySetInnerHTML={{ __html: TOKENS }} />
+      </head>
+      <body>
+        <div className={ui.shell}>
+          <div className={ui.frame}>{children}</div>
+        </div>
+      </body>
     </html>
   );
 }

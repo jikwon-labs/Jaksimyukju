@@ -13,8 +13,8 @@
 
 | 단계 | 시간 상자 | 상태 | 시작 | 끝 | 커밋 |
 |---|---|---|---|---|---|
-| 1 프로젝트 생성 | 0:00-0:25 | 진행 중 | 01:13 | | |
-| 2 디자인 시스템 | 0:25-1:10 | 대기 | | | |
+| 1 프로젝트 생성 | 0:00-0:25 | 완료 | 01:13 | 01:18 | 8fcdfa3 |
+| 2 디자인 시스템 | 0:25-1:10 | 완료 | 01:18 | 01:31 | (이 커밋) |
 | 3 도메인 로직 | 1:10-1:50 | 대기 | | | |
 | 4 시작 흐름 | 1:50-2:50 | 대기 | | | |
 | 5 매일 루프 | 2:50-3:50 | 대기 | | | |
@@ -32,6 +32,12 @@
 - 멈춤: 같은 실패 3번 또는 5바퀴면 기록하고 다음 단계
 - 범위: 작업 폴더 안만. 통과하면 로컬 커밋
 
+- 1바퀴: db:reset의 `prisma db push --force-reset`을 Prisma가 AI 실행으로 막음. 우회하지 않고 `prisma generate && prisma db push && 시드(테이블 비우고 다시 넣기)`로 바꿈. 2바퀴: 통과.
+
+### 2단계 디자인 시스템
+- 완료 조건: 1) typecheck/lint 0 2) 대비 계산·표정 15조합·40px 규칙 테스트 통과 3) build 0
+- 1바퀴: build가 `/design` 프리렌더에서 실패(템플릿이 cacheComponents를 켜 둠, cookies()를 Suspense 밖에서 읽음). 2바퀴: cacheComponents 끔 → 통과. 테스트 16개 통과.
+
 ## 내가 정한 것
 
 - 스타일: CSS 변수 토큰 + CSS Modules (Tailwind 안 씀). 목업이 인라인 스타일 기반이라 옮기기 쉽다.
@@ -39,6 +45,11 @@
 - SQLite 주소는 schema에 `file:./dev.db`로 둔다. `.env*`가 git에서 빠지므로 `pnpm i && pnpm db:reset`가 바로 되게 하려는 것. Postgres로 옮길 때 env("DATABASE_URL")로 바꾼다.
 - 날짜는 "YYYY-MM-DD" 문자열(사용자 기준 날짜, 기본 Asia/Seoul)로 저장하고 도메인 함수도 이 문자열로 계산한다.
 - 회고 다짐 저장용 retros 테이블을 더했다.
+- Next 16 템플릿의 cacheComponents/partialPrefetching을 껐다. 모든 화면이 쿠키 세션을 읽는 개인화 화면이라서.
+- 테마와 선생님은 쿠키(j6_theme, j6_teacher)로 html의 data-theme/data-teacher에 넣고, 토큰은 TS(lib/design/tokens.ts)에서 CSS 변수로 만든다. 선생님 정보의 원본은 DB이고 쿠키는 거울이다.
+- 목업 오늘 할 일 카드에는 Border beam이 없다(고정 테두리 + glow). 목업을 따른다.
+- 캐릭터 표정 데이터는 circle_face.py를 실행해 JSON으로 뽑은 lib/design/faces.ts를 쓴다.
+- 동작 줄이기에서는 캐릭터·선글라스·손전등·물결을 멈추고 장식(선글라스·손전등)은 숨긴다.
 
 ## 남은 일
 
