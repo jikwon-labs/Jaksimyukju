@@ -1,0 +1,313 @@
+.page {
+  gap: 14px;
+}
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 44px;
+}
+.header h1 {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.4px;
+}
+.settingsLink {
+  height: 44px;
+  padding: 0 14px;
+  display: flex;
+  align-items: center;
+  border-radius: 22px;
+  border: var(--card-border);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 500;
+  text-decoration: none;
+}
+.meta {
+  font-size: 12px;
+  color: var(--sub);
+}
+.pickerWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.teacherCard {
+  background: var(--a-tint);
+  border-radius: 24px;
+  padding: 16px 18px 16px 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.teacherSlot {
+  width: 96px;
+  height: 88px;
+  flex: none;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+.teacherText {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.teacherNameRow {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.teacherName {
+  font-family: var(--font-title), "Jua", sans-serif;
+  font-weight: 400;
+  font-size: 26px;
+  color: var(--a-text);
+}
+.teacherRole {
+  font-size: 14px;
+  font-weight: 700;
+}
+.change {
+  height: 44px;
+  padding: 0 12px;
+  border-radius: 12px;
+  border: none;
+  background: #ffffff;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  flex: none;
+}
+:global(html[data-theme="dark"]) .change {
+  background: #1c1c21;
+}
+@media (prefers-color-scheme: dark) {
+  :global(html[data-theme="system"]) .change {
+    background: #1c1c21;
+  }
+}
+.options {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+.option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 12px 6px;
+  border-radius: 18px;
+  border: 2px solid transparent;
+  background: var(--surface);
+  color: var(--ink);
+  font-family: inherit;
+  cursor: pointer;
+  text-align: center;
+}
+.option[aria-checked="true"] {
+  border-color: var(--a-text);
+  background: var(--a-tint);
+}
+.optionName {
+  font-family: var(--font-title), "Jua", sans-serif;
+  font-weight: 400;
+  font-size: 20px;
+}
+.optionRole {
+  font-size: 11.5px;
+  line-height: 16px;
+  color: var(--sub);
+}
+.status {
+  font-size: 12px;
+  color: var(--sub);
+  margin-left: 4px;
+}
+.status:empty {
+  display: none;
+}
+.stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+.stat {
+  background: var(--surface);
+  border: var(--card-border);
+  border-radius: 18px;
+  padding: 14px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.statLabel {
+  font-size: 12px;
+  color: var(--sub);
+}
+.statValue {
+  font-family: var(--font-title), "Jua", sans-serif;
+  font-weight: 400;
+  font-size: 28px;
+}
+.statValue[data-accent="true"] {
+  color: var(--a-text);
+}
+.card {
+  background: var(--surface);
+  border: var(--card-border);
+  border-radius: 20px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.cardHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+}
+.cardHead h2 {
+  font-size: 15px;
+  font-weight: 700;
+}
+.grassScroll {
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+.chart {
+  display: block;
+  overflow: visible;
+}
+.gridLine {
+  stroke: var(--line);
+  stroke-width: 1;
+  stroke-dasharray: 3 4;
+}
+.line {
+  fill: none;
+  stroke: var(--a-btn-bg);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.dot {
+  fill: var(--a-btn-bg);
+  stroke: var(--surface);
+  stroke-width: 2;
+}
+.emptyDot {
+  fill: none;
+  stroke: var(--line);
+  stroke-width: 1.5;
+  stroke-dasharray: 2 2;
+}
+.dotLabel {
+  font-size: 12px;
+  font-weight: 700;
+  fill: var(--a-text);
+}
+.axisLabel {
+  font-size: 11.5px;
+  fill: var(--sub);
+}
+.note {
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--sub);
+}
+.list {
+  background: var(--surface);
+  border: var(--card-border);
+  border-radius: 20px;
+  padding: 4px 0;
+  display: flex;
+  flex-direction: column;
+}
+.row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 52px;
+  padding: 0 16px;
+  border-top: 1px solid var(--line);
+  color: var(--ink);
+  font-size: 14px;
+  text-decoration: none;
+}
+.row:first-child {
+  border-top: none;
+}
+.rowLabel {
+  flex: 1;
+}
+.rowValue {
+  font-size: 13px;
+  color: var(--sub);
+}
+.chev {
+  color: var(--sub);
+  flex: none;
+}
+.h2 {
+  font-size: 15px;
+  font-weight: 700;
+  margin: 4px 0 0 4px;
+}
+.pastWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.past {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.pastItem {
+  background: var(--surface);
+  border: var(--card-border);
+  border-radius: 18px;
+  padding: 12px 14px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 2px 8px;
+}
+.pastTopic {
+  font-size: 14px;
+  font-weight: 700;
+}
+.pastStatus {
+  grid-row: 1 / span 2;
+  grid-column: 2;
+  align-self: center;
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 999px;
+  padding: 4px 9px;
+  background: var(--future);
+  color: var(--sub);
+}
+.pastStatus[data-status="finished"] {
+  background: var(--good-bg);
+  color: var(--good);
+}
+.settingsLink:focus-visible,
+.change:focus-visible,
+.option:focus-visible,
+.row:focus-visible {
+  outline: 3px solid var(--a-text);
+  outline-offset: 2px;
+}

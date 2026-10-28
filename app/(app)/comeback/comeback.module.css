@@ -1,0 +1,254 @@
+.page {
+  gap: 14px;
+}
+.header {
+  display: flex;
+  justify-content: flex-end;
+  height: 44px;
+}
+.close {
+  width: 44px;
+  height: 44px;
+  border-radius: 22px;
+  background: var(--surface);
+  border: var(--card-border);
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.greet {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+}
+.bubble {
+  margin: 0 0 10px 0;
+  flex: 1;
+  background: var(--surface);
+  border: var(--card-border);
+  border-radius: 18px 18px 18px 4px;
+  padding: 12px 14px;
+  font-size: 15px;
+  line-height: 23px;
+}
+.card {
+  background: var(--surface);
+  border: var(--card-border);
+  border-radius: 22px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.cardHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+.cardHead h2 {
+  font-size: 15px;
+  font-weight: 700;
+}
+.meta {
+  font-size: 12px;
+  color: var(--sub);
+}
+.strip {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+}
+.cellWrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.cell {
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 10px;
+  box-sizing: border-box;
+}
+.cell[data-kind="off"] {
+  background: transparent;
+  border: 1px dashed var(--line);
+}
+.cell[data-kind="rest"] {
+  background: repeating-linear-gradient(135deg, transparent 0 4px, var(--line) 4px 5px);
+  border: 1px dashed var(--line);
+}
+.cell[data-kind="missed"] {
+  background: var(--warn-bg);
+}
+.cell[data-kind="today"] {
+  background: transparent;
+  border: 2px solid var(--a-text);
+}
+.cell[data-kind="study"][data-level="1"] {
+  background: var(--g1);
+}
+.cell[data-kind="study"][data-level="2"] {
+  background: var(--g2);
+}
+.cell[data-kind="study"][data-level="3"] {
+  background: var(--g3);
+}
+.cell[data-kind="study"][data-level="4"] {
+  background: var(--g4);
+}
+.cellDay {
+  font-size: 11px;
+  color: var(--sub);
+}
+.cellDay[data-kind="missed"] {
+  color: var(--warn);
+}
+.cellDay[data-kind="today"] {
+  color: var(--a-text);
+}
+.note {
+  font-size: 13px;
+  line-height: 20px;
+  color: var(--sub);
+}
+.note b {
+  color: var(--ink);
+}
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.h2 {
+  font-size: 15px;
+  font-weight: 700;
+  margin: 4px 0 0 4px;
+}
+.options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.option {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 18px;
+  border: 2px solid transparent;
+  background: var(--surface);
+  color: var(--ink);
+  text-align: left;
+  font-family: inherit;
+  cursor: pointer;
+}
+.option[aria-checked="true"] {
+  border-color: var(--a-text);
+  background: var(--a-tint);
+}
+.ring {
+  width: 22px;
+  height: 22px;
+  flex: none;
+  margin-top: 1px;
+  border-radius: 11px;
+  border: 2px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+.ringDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 5px;
+  background: transparent;
+}
+.option[aria-checked="true"] .ring {
+  border-color: var(--a-text);
+}
+.option[aria-checked="true"] .ringDot {
+  background: var(--a-text);
+}
+.optText {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.optTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.optTitle {
+  font-size: 15px;
+  font-weight: 700;
+}
+.reco {
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 999px;
+  padding: 2px 8px;
+  background: var(--a-btn-bg);
+  color: var(--a-btn-ink);
+}
+.optDesc {
+  font-size: 13px;
+  line-height: 19px;
+  color: var(--sub);
+}
+.privacy {
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--sub);
+}
+.pauseLink {
+  color: var(--a-text);
+  font-weight: 700;
+}
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.primary,
+.secondary {
+  border: none;
+  font-family: inherit;
+  cursor: pointer;
+}
+.primary {
+  height: 56px;
+  border-radius: 18px;
+  background: var(--a-btn-bg);
+  color: var(--a-btn-ink);
+  font-size: 16px;
+  font-weight: 700;
+}
+.secondary {
+  height: 48px;
+  border-radius: 16px;
+  background: transparent;
+  color: var(--ink);
+  font-size: 14px;
+}
+.primary:disabled,
+.secondary:disabled {
+  opacity: 0.7;
+}
+.close:focus-visible,
+.option:focus-visible,
+.pauseLink:focus-visible,
+.primary:focus-visible,
+.secondary:focus-visible {
+  outline: 3px solid var(--a-text);
+  outline-offset: 2px;
+}

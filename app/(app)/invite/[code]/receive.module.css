@@ -1,0 +1,138 @@
+.page {
+  min-height: 100dvh;
+  padding: 56px 24px 32px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.center {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 16px;
+}
+.avatars {
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+}
+.avatar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  margin: 0 -2px;
+}
+.avatarName {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--sub);
+}
+.text {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  text-align: center;
+}
+.sub {
+  font-size: 14px;
+  color: var(--sub);
+  text-align: center;
+}
+.groupName {
+  font-size: 26px;
+  line-height: 34px;
+  font-weight: 700;
+  letter-spacing: -0.6px;
+}
+.title {
+  font-size: 23px;
+  line-height: 31px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  text-align: center;
+}
+.tag {
+  align-self: center;
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: 999px;
+  padding: 4px 10px;
+  background: var(--warn-bg);
+  color: var(--warn);
+}
+.center > svg {
+  align-self: center;
+}
+.rules {
+  background: var(--surface);
+  border: var(--card-border);
+  border-radius: 20px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.rules p {
+  display: flex;
+  gap: 10px;
+  font-size: 14px;
+  line-height: 21px;
+}
+.rules svg {
+  flex: none;
+  margin-top: 2px;
+}
+.rules .ruleNote {
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--sub);
+}
+.iconGood {
+  color: var(--good);
+}
+.iconNo {
+  color: var(--sub);
+}
+.warn {
+  font-size: 13px;
+  line-height: 19px;
+  color: var(--warn);
+  text-align: center;
+}
+.warn:empty {
+  display: none;
+}
+.primary,
+.secondary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  font-family: inherit;
+}
+.primary {
+  height: 56px;
+  border-radius: 18px;
+  border: none;
+  background: var(--a-btn-bg);
+  color: var(--a-btn-ink);
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.primary:disabled {
+  opacity: 0.7;
+}
+.secondary {
+  height: 44px;
+  color: var(--sub);
+  font-size: 14px;
+}
+.primary:focus-visible,
+.secondary:focus-visible {
+  outline: 3px solid var(--a-text);
+  outline-offset: 2px;
+}

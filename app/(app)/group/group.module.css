@@ -1,0 +1,252 @@
+.page {
+  gap: 14px;
+}
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 44px;
+}
+.header h1 {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.4px;
+}
+.inviteLink {
+  height: 44px;
+  padding: 0 14px;
+  border-radius: 22px;
+  border: var(--card-border);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  text-decoration: none;
+}
+.inviteLink:focus-visible {
+  outline: 3px solid var(--a-text);
+  outline-offset: 2px;
+}
+.summary {
+  background: var(--a-tint);
+  border-radius: 24px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.sumRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+.groupName {
+  font-size: 18px;
+  font-weight: 700;
+}
+.meta {
+  font-size: 12px;
+  color: var(--sub);
+}
+.sumCount {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.count {
+  font-family: var(--font-title), "Jua", sans-serif;
+  font-weight: 400;
+  font-size: 34px;
+  line-height: 38px;
+  color: var(--a-text);
+}
+.countLabel {
+  font-size: 14px;
+  line-height: 20px;
+}
+.bars {
+  display: grid;
+  gap: 6px;
+}
+.bar {
+  height: 8px;
+  border-radius: 4px;
+  background: rgba(17, 17, 19, 0.1);
+}
+.bar[data-on="true"] {
+  background: var(--a-btn-bg);
+}
+:global(html[data-theme="dark"]) .bar[data-on="false"] {
+  background: rgba(255, 255, 255, 0.12);
+}
+@media (prefers-color-scheme: dark) {
+  :global(html[data-theme="system"]) .bar[data-on="false"] {
+    background: rgba(255, 255, 255, 0.12);
+  }
+}
+.h2 {
+  font-size: 15px;
+  font-weight: 700;
+  margin-top: 4px;
+}
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.member {
+  --m1: var(--ml1);
+  --m2: var(--ml2);
+  --m3: var(--ml3);
+  --m4: var(--ml4);
+  --mt: var(--mt-l);
+  background: var(--surface);
+  border: var(--card-border);
+  border-radius: 20px;
+  padding: 14px 14px 14px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+:global(html[data-theme="dark"]) .member {
+  --m1: var(--md1);
+  --m2: var(--md2);
+  --m3: var(--md3);
+  --m4: var(--md4);
+  --mt: var(--mt-d);
+}
+@media (prefers-color-scheme: dark) {
+  :global(html[data-theme="system"]) .member {
+    --m1: var(--md1);
+    --m2: var(--md2);
+    --m3: var(--md3);
+    --m4: var(--md4);
+    --mt: var(--mt-d);
+  }
+}
+.top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.who {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.nameRow {
+  display: flex;
+  gap: 6px;
+  align-items: baseline;
+  min-width: 0;
+}
+.name {
+  font-size: 15px;
+  font-weight: 700;
+  flex: none;
+}
+.topic {
+  font-size: 12px;
+  color: var(--sub);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.streak {
+  font-size: 12px;
+  color: var(--sub);
+}
+.streak[data-away="true"] {
+  color: #b3261e;
+}
+:global(html[data-theme="dark"]) .streak[data-away="true"] {
+  color: #ff9a90;
+}
+@media (prefers-color-scheme: dark) {
+  :global(html[data-theme="system"]) .streak[data-away="true"] {
+    color: #ff9a90;
+  }
+}
+.chip {
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 999px;
+  padding: 4px 9px;
+  background: var(--future);
+  color: var(--sub);
+  flex: none;
+}
+.chip[data-done="true"] {
+  background: var(--good-bg);
+  color: var(--good);
+}
+.bottom {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.strip {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: repeat(14, 1fr);
+  gap: 3px;
+}
+.cell {
+  height: 12px;
+  border-radius: 3px;
+  box-sizing: border-box;
+  background: var(--future);
+}
+.cell[data-kind="off"] {
+  background: transparent;
+  border: 1px dashed var(--line);
+}
+.cell[data-kind="rest"] {
+  background: repeating-linear-gradient(135deg, transparent 0 3px, var(--line) 3px 4px);
+  border: 1px dashed var(--line);
+}
+.cell[data-kind="future"] {
+  background: transparent;
+  border: 1px solid var(--line);
+}
+.cell[data-kind="today"] {
+  background: transparent;
+  border: 1.5px solid var(--mt);
+}
+.cell[data-level="1"] {
+  background: var(--m1);
+}
+.cell[data-level="2"] {
+  background: var(--m2);
+}
+.cell[data-level="3"] {
+  background: var(--m3);
+}
+.cell[data-level="4"] {
+  background: var(--m4);
+}
+.poke {
+  flex: none;
+}
+.scope {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.foot {
+  display: flex;
+  gap: 8px;
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--sub);
+}
+.lock {
+  flex: none;
+  margin-top: 1px;
+}

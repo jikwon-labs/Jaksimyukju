@@ -1,0 +1,170 @@
+.page {
+  gap: 14px;
+}
+.saved {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--sub);
+  margin: 4px 0 0 4px;
+}
+.card {
+  background: var(--surface);
+  border: var(--card-border);
+  border-radius: 20px;
+  display: flex;
+  flex-direction: column;
+}
+.pad {
+  padding: 16px;
+  gap: 14px;
+}
+.block {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.blockLabel {
+  font-size: 14px;
+}
+.caption {
+  font-size: 12px;
+  line-height: 17px;
+  color: var(--sub);
+}
+.days {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+}
+.day {
+  height: 44px;
+  border-radius: 12px;
+  padding: 0;
+  font-size: 13px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  background: transparent;
+  color: var(--sub);
+  border: 1.5px solid var(--line);
+}
+.day[aria-pressed="true"] {
+  background: var(--a-btn-bg);
+  color: var(--a-btn-ink);
+  border: none;
+}
+.mins {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+.seg {
+  height: 44px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  background: transparent;
+  color: var(--ink);
+  border: 1.5px solid var(--line);
+}
+.seg[aria-checked="true"] {
+  background: var(--a-tint);
+  color: var(--a-text);
+  border: 2px solid var(--a-text);
+}
+.timeRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 60px;
+  padding: 8px 16px;
+}
+.timeText {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.step {
+  width: 44px;
+  height: 44px;
+  flex: none;
+  border-radius: 22px;
+  border: 1.5px solid var(--line);
+  background: transparent;
+  color: var(--ink);
+  font-size: 18px;
+  font-family: inherit;
+  cursor: pointer;
+}
+.time {
+  min-width: 76px;
+  text-align: center;
+  font-size: 15px;
+  font-weight: 700;
+}
+.divider {
+  height: 1px;
+  margin: 0 16px;
+  background: var(--line);
+}
+.note {
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--sub);
+  margin: 0 4px;
+}
+.row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 52px;
+  padding: 0 16px;
+  border: none;
+  border-top: 1px solid var(--line);
+  background: transparent;
+  color: var(--ink);
+  font-size: 14px;
+  font-family: inherit;
+  text-decoration: none;
+  text-align: left;
+  cursor: pointer;
+}
+.card > .row:first-child {
+  border-top: none;
+}
+.rowLabel {
+  flex: 1;
+}
+.rowValue {
+  font-size: 13px;
+  color: var(--sub);
+}
+.chev {
+  color: var(--sub);
+  flex: none;
+}
+.day:focus-visible,
+.seg:focus-visible,
+.step:focus-visible,
+.row:focus-visible {
+  outline: 3px solid var(--a-text);
+  outline-offset: 2px;
+}
