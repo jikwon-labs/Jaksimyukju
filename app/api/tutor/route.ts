@@ -36,7 +36,6 @@ export async function POST(req: NextRequest) {
 
   // 확인이 끝난 뒤에는 아무 때나 묻는 질문만 받는다(F6)
   const free = lesson.tutorChecked;
-  if (free && !text) return reply();
   if (text) {
     await prisma.tutorMessage.create({ data: { lessonId, role: "user", content: text } });
     history = await load();
@@ -71,6 +70,6 @@ export async function POST(req: NextRequest) {
     return reply(200, undefined, done);
   } catch (e) {
     if (!(e instanceof AiError)) console.error("tutor", e);
-    return reply(502, "ai", false);
+    return reply(502, "ai", free);
   }
 }

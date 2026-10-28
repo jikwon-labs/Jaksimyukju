@@ -1,19 +1,31 @@
 import { describe, expect, it } from "vitest";
 import { coachNotes } from "./coach";
 
-const base = { today: "2026-10-29", missed: 0, studiedToday: false, restingToday: false, sent: [], retroDoneThisWeek: false };
+const base = { today: "2026-10-29", missedDay: null as string | null, missed: 0, studiedToday: false, restingToday: false, sent: [], retroDoneThisWeek: false };
 
 describe("앱을 열 때 선생님 알림", () => {
   it("학습일 1일 빔이면 하루 한 번", () => {
-    expect(coachNotes({ ...base, missed: 1 }).map((n) => n.key)).toEqual(["missed_one"]);
-    expect(coachNotes({ ...base, missed: 1, sent: [{ key: "missed_one", day: "2026-10-29" }] })).toEqual([]);
-    expect(coachNotes({ ...base, missed: 1, studiedToday: true })).toEqual([]);
+    const one = { ...base, missed: 1, missedDay: "2026-10-28" };
+    expect(coachNotes(one).map((n) => [n.key, n.yesterday])).toEqual([["missed_one", true]]);
+    expect(coachNotes({ ...one, sent: [{ key: "missed_one", day: "2026-10-29" }] })).toEqual([]);
+    expect(coachNotes({ ...one, studiedToday: true })).toEqual([]);
+  });
+  it("빈 학습일 하나에 한 번만: 사이에 쉬는 요일이 껴도 다음 날들에 반복하지 않는다", () => {
+    // 월·수·금 학습, 수(10-28) 빔. 목에 한 번 남기면 금·토·일에는 다시 안 남긴다
+    const sent = [{ key: "missed_one", day: "2026-10-29" }];
+    for (const today of ["2026-10-30", "2026-10-31", "2026-11-01"]) {
+      const notes = coachNotes({ ...base, today, missed: 1, missedDay: "2026-10-28", sent }).filter((n) => n.key === "missed_one");
+      expect(notes, today).toEqual([]);
+    }
+    // 아직 안 남겼으면 금요일에 남기되 "어제" 문구는 쓰지 않는다
+    const fri = coachNotes({ ...base, today: "2026-10-30", missed: 1, missedDay: "2026-10-28" });
+    expect(fri[0]).toMatchObject({ key: "missed_one", yesterday: false, dedupe: "missed_one:2026-10-28" });
   });
   it("2일 이상은 복귀 화면이 맡으므로 남기지 않는다", () => {
-    expect(coachNotes({ ...base, missed: 2 })).toEqual([]);
+    expect(coachNotes({ ...base, missed: 2, missedDay: "2026-10-27" })).toEqual([]);
   });
   it("쉬는 날에는 아무것도 남기지 않는다", () => {
-    expect(coachNotes({ ...base, missed: 1, restingToday: true })).toEqual([]);
+    expect(coachNotes({ ...base, missed: 1, missedDay: "2026-10-28", restingToday: true })).toEqual([]);
   });
   it("일요일에는 주간 회고 알림을 한 주에 한 번", () => {
     const sun = { ...base, today: "2026-11-01" };

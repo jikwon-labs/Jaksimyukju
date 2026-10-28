@@ -353,8 +353,12 @@ test("21. 학습일 하루를 비우면 다음 날 선생님 알림이 한 번 �
   await loginDemo(page, "/home", next);
   await expect(page).toHaveURL(/\/home/);
   await page.reload(); // 두 번 열어도 한 번만
+  // 이어지는 쉬는 요일(주말)에 다시 열어도 같은 빈 날에 대한 알림은 늘지 않는다
+  for (let k = 1; k <= 2; k++) {
+    await loginDemo(page, "/home", addDays(next, k));
+  }
   await page.goto("/notifications");
-  const items = page.getByTestId("notif-item").filter({ hasText: "어제는 쉬어 갔네요" });
+  const items = page.getByTestId("notif-item").filter({ hasText: "쉬어 갔네요" });
   await expect(items).toHaveCount(1);
 });
 

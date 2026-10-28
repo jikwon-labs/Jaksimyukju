@@ -37,6 +37,8 @@ export async function completeLesson(
 ): Promise<{ ok: boolean; firstTime: boolean }> {
   const lesson = await prisma.lesson.findFirst({ where: { id: lessonId, course: { userId: user.id } } });
   if (!lesson) return { ok: false, firstTime: false };
+  // 복귀 재조정으로 닫힌 레슨(요약으로 넘김, 다음 레슨에 합침)은 다시 읽기만 한다. 잔디를 두 번 채우지 않는다
+  if (lesson.status === "merged" || lesson.status === "summary") return { ok: true, firstTime: false };
   const plan = planCompletion(lesson, mode, today);
   if (!plan.changed) return { ok: true, firstTime: false };
   const applied = await prisma.$transaction(async (tx) => {

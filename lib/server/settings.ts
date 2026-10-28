@@ -28,7 +28,11 @@ export async function updateSettings(user: User, patch: unknown): Promise<User |
   const p = parsed.data;
   if (p.studyDays) {
     // 진행 중 과정에 요일 변경 이력을 남겨, 지난 날의 연속·복귀 판정이 바뀌지 않게 한다
-    const course = await prisma.course.findFirst({ where: { userId: user.id, status: "active" }, orderBy: { createdAt: "desc" } });
+    // 화면이 보여 주는 과정(진행 중 또는 방금 완주)에 이력을 남긴다
+    const course = await prisma.course.findFirst({
+      where: { userId: user.id, status: { in: ["active", "finished"] } },
+      orderBy: { createdAt: "desc" },
+    });
     if (course) {
       const today = await getToday();
       const schedule = nextSchedule(

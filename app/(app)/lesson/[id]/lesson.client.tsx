@@ -55,7 +55,11 @@ export function LessonView({ lesson, initialShort }: { lesson: LessonPayload; in
       </div>
       <div className={s.ctaBar}>
         {!online && <p className={s.ctaNote}>{OFFLINE_NOTE}</p>}
-        {short ? (
+        {lesson.status === "merged" || lesson.status === "summary" ? (
+          <Link href="/home" className={s.cta} data-testid="lesson-cta">
+            홈으로
+          </Link>
+        ) : short ? (
           completed && lesson.status !== "short" ? (
             <Link href="/home" className={s.cta} data-testid="lesson-cta">
               홈으로

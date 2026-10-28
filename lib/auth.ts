@@ -22,6 +22,8 @@ export async function signIn(user: Pick<User, "id" | "teacher">): Promise<void> 
   const current = jar.get(SESSION_COOKIE)?.value;
   const existing = current ? await prisma.session.findUnique({ where: { id: current } }) : null;
   if (existing?.userId !== user.id) {
+    // 다른 사용자로 바꾸면 예전 토큰은 지운다(남은 토큰이 계속 유효하지 않게)
+    if (existing) await prisma.session.delete({ where: { id: existing.id } });
     const token = randomBytes(32).toString("base64url");
     await prisma.session.create({ data: { id: token, userId: user.id } });
     jar.set(SESSION_COOKIE, token, {

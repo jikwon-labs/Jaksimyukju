@@ -219,6 +219,7 @@ model Notification {
   title     String
   body      String
   href      String?
+  dedupeKey String?   @unique // 같은 알림을 두 번 남기지 않기 위한 키(코치 알림)
   readAt    DateTime?
   createdAt DateTime  @default(now())
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
