@@ -8,6 +8,7 @@ import {
   FINANCE_WEEKS,
 } from "./finance";
 import { lessonsPerWeek } from "@/lib/domain/course";
+import { eul, iga } from "@/lib/domain/josa";
 import type {
   AiProvider,
   CurriculumInput,
@@ -58,14 +59,14 @@ function genericLesson(topic: string, title: string, minutes: number, ref: numbe
     sections: [
       {
         heading: `1. ${title}의 뜻`,
-        text: `${title}이 무엇인지 한 문장으로 말할 수 있으면 오늘의 절반은 끝난다. 먼저 정의를 읽고, 내 말로 바꿔 적어 본다.`,
-        example: `${topic}을 처음 배우는 동료에게 30초 안에 설명한다고 생각하고 말해 본다.`,
+        text: `${iga(title)} 무엇인지 한 문장으로 말할 수 있으면 오늘의 절반은 끝난다. 먼저 정의를 읽고, 내 말로 바꿔 적어 본다.`,
+        example: `${eul(topic)} 처음 배우는 동료에게 30초 안에 설명한다고 생각하고 말해 본다.`,
         ref,
       },
       {
         heading: `2. 실제로 쓰이는 곳`,
         text: `배운 것은 바로 써 볼 때 남는다. 오늘 분량(약 ${minutes}분)의 마지막 몇 분은 작은 예제로 손을 움직여 본다.`,
-        example: `내 업무나 일상에서 ${title}이 보이는 장면 하나를 찾아 적는다.`,
+        example: `내 업무나 일상에서 ${iga(title)} 보이는 장면 하나를 찾아 적는다.`,
         ref: (ref + 1) % 3,
       },
     ],
@@ -82,7 +83,7 @@ function genericQuiz(topic: string, week: PlannedWeek): QuizQuestion[] {
       why: `이번 주는 "${l0 ?? week.title}"으로 시작했어요. 순서를 기억하면 다음 레슨이 쉬워져요.`,
     },
     {
-      q: `${topic}을 배울 때 오늘 분량을 끝내는 가장 좋은 방법은?`,
+      q: `${eul(topic)} 배울 때 오늘 분량을 끝내는 가장 좋은 방법은?`,
       choices: ["한 번에 몰아서 하기", "정해 둔 분량만 매일 하기", "기분 좋은 날만 하기", "건너뛰기"],
       answer: 1,
       why: "작게 매일 하는 게 끝까지 가는 가장 확실한 길이에요.",

@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { setVisibilityAction } from "@/app/actions/social";
+import { ro } from "@/lib/domain/josa";
 import s from "./visibility.module.css";
 
 type V = "grass" | "grass_topic";
@@ -32,7 +33,7 @@ export function VisibilityControl({ initial }: { initial: V }) {
               setV(o.v);
               start(async () => {
                 const r = await setVisibilityAction(o.v);
-                setMsg(r.ok ? `${o.title}로 바꿨어요` : "저장하지 못했어요. 다시 눌러 주세요");
+                setMsg(r.ok ? `${ro(o.title)} 바꿨어요` : "저장하지 못했어요. 다시 눌러 주세요");
               });
             }}
           >

@@ -1,3 +1,4 @@
+import { durationLabel } from "@/lib/domain/prefs";
 import { redirect } from "next/navigation";
 import { Page } from "@/components/ui";
 import { getSessionUser } from "@/lib/auth";
@@ -37,7 +38,7 @@ export default async function CurriculumPage() {
         }))}
         progress={{
           topic: course.topic,
-          info: `${course.weeksCount}주 · ${studyDaysLabel(st.cal.studyDays)} · 하루 ${user.minutesPerDay}분`,
+          info: `${durationLabel(course.weeksCount, course.extraDays, st.cal.studyDays.length)} · ${studyDaysLabel(st.cal.studyDays)} · 하루 ${user.minutesPerDay}분`,
           done,
           total,
           pct,

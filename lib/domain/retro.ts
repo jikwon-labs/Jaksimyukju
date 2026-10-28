@@ -1,3 +1,4 @@
+import { eun } from "./josa";
 // 주간 회고(룸메이트) 대화 순서와 문구
 import type { TeacherName } from "@/lib/design/types";
 
@@ -57,7 +58,7 @@ export function retroPlan(answer: string, opts: { days: string[]; shortDay: stri
   if (a === RETRO_YES) {
     const sd = opts.shortDay;
     if (sd && opts.days.includes(sd) && opts.days.length > 1) {
-      return `${opts.days.filter((x) => x !== sd).join("·")}은 ${opts.minutes}분, ${sd}요일은 5분 버전`;
+      return `${eun(opts.days.filter((x) => x !== sd).join("·"))} ${opts.minutes}분, ${sd}요일은 5분 버전`;
     }
     return `${opts.daysLabel} 힘든 날은 5분 버전으로`;
   }

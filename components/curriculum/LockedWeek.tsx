@@ -1,3 +1,4 @@
+import { eun } from "@/lib/domain/josa";
 import Link from "next/link";
 import { Teacher } from "@/components/teacher/Teacher";
 import type { TeacherName } from "@/lib/design/types";
@@ -30,7 +31,7 @@ export function LockedWeek({
       <div className={s.lockedBody} data-testid="week-locked">
         <Teacher who={who} state="think" size={120} jump />
         <span className={s.lockedTag}>잠김</span>
-        <h1>{week}주차 {what}는 아직 열리지 않았어요</h1>
+        <h1>{week}주차 {eun(what)} 아직 열리지 않았어요</h1>
         <p>
           지금은 {currentWeek}주차를 걷는 중이에요. 앞 칸을 마치면 열려요.
         </p>
