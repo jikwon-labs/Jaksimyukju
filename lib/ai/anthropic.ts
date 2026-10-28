@@ -55,13 +55,13 @@ const Milestone = z.object({
 });
 const Retro = z.object({ bridge: z.string(), pledge: z.string() });
 
-function parsed<T>(res: { parsed_output: T | null; stop_reason: string | null }): T {
+export function parsed<T>(res: { parsed_output: T | null; stop_reason: string | null }): T {
   if (res.stop_reason === "refusal") throw new AiError("AI가 답을 거절했어요", "refusal");
   if (res.parsed_output === null) throw new AiError("AI 응답을 읽지 못했어요", "parse");
   return res.parsed_output;
 }
 
-async function guard<T>(fn: () => Promise<T>): Promise<T> {
+export async function guard<T>(fn: () => Promise<T>): Promise<T> {
   try {
     return await fn();
   } catch (e) {
