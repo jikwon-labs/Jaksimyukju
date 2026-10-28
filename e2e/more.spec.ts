@@ -226,23 +226,23 @@ test("16. 없는 초대 코드: 오류 화면", async ({ page, context }, info) 
 
 test("17. 그룹 공개 범위: 잔디만이면 내 주제가 감춰지고, 서연 주제는 늘 감춰진다", async ({ page }, info) => {
   await loginDemo(page, "/group");
-  await expect(page.getByTestId("topic-나")).not.toHaveText("주제 비공개");
+  await expect(page.getByTestId("topic-지우")).not.toHaveText("주제 비공개");
   await expect(page.getByTestId("topic-서연")).toHaveText("주제 비공개");
   await expect(page.getByTestId("topic-민지")).toHaveText("영어 회화");
   await expect(page.getByTestId("visibility-topic")).toHaveAttribute("aria-checked", "true");
 
   await page.getByTestId("visibility-grass").click();
   await expect(page.getByTestId("visibility-grass")).toHaveAttribute("aria-checked", "true");
-  await expect(page.getByTestId("topic-나")).toHaveText("주제 비공개");
+  await expect(page.getByTestId("topic-지우")).toHaveText("주제 비공개");
   await page.reload();
   await expect(page.getByTestId("visibility-grass")).toHaveAttribute("aria-checked", "true");
-  await expect(page.getByTestId("topic-나")).toHaveText("주제 비공개");
+  await expect(page.getByTestId("topic-지우")).toHaveText("주제 비공개");
   await expect(page.getByTestId("topic-서연")).toHaveText("주제 비공개");
   await shot(page, info, "more-group-visibility");
 
   // 다른 멤버가 봐도 내 주제는 감춰져 있다
   await loginDemo(page, "/group", undefined, "demo-minji");
-  await expect(page.getByTestId("topic-나")).toHaveText("주제 비공개");
+  await expect(page.getByTestId("topic-지우")).toHaveText("주제 비공개");
   await expect(page.getByTestId("topic-서연")).toHaveText("주제 비공개");
   await expect(page.getByText("디자인 기초")).toHaveCount(0);
 });
