@@ -345,3 +345,25 @@ test("20. 레슨 완료 화면 계정 연결: 한 번 연결하면 다음 완료
   await expect(page.getByRole("region", { name: "오늘 배운 한 줄" })).toBeVisible();
   await expect(page.getByTestId("link-account")).toHaveCount(0);
 });
+
+test("21. 학습일 하루를 비우면 다음 날 선생님 알림이 한 번 생긴다", async ({ page }) => {
+  // 데모는 어제까지 학습. 오늘(학습일)을 비우고 다음 학습일에 연다 -> 빈 학습일 1개
+  const next = nthStudyDayAfter(seedToday(), 1);
+  await loginDemo(page, "/home", next);
+  await expect(page).toHaveURL(/\/home/);
+  await page.reload(); // 두 번 열어도 한 번만
+  await page.goto("/notifications");
+  const items = page.getByTestId("notif-item").filter({ hasText: "어제는 쉬어 갔네요" });
+  await expect(items).toHaveCount(1);
+});
+
+test("22. 일요일에는 주간 회고 알림이 생기고 회고로 이어진다", async ({ page }) => {
+  let sunday = seedToday();
+  while (new Date(`${sunday}T00:00:00Z`).getUTCDay() !== 0) sunday = addDays(sunday, 1);
+  await loginDemo(page, "/home", sunday, "demo-minji");
+  await page.goto("/notifications");
+  const retro = page.getByTestId("notif-item").filter({ hasText: "주간 회고" });
+  await expect(retro).toHaveCount(1);
+  await retro.click();
+  await expect(page).toHaveURL(/\/retro/);
+});

@@ -7,7 +7,7 @@ import { ShortPath } from "@/components/course/ShortPath";
 import { NudgeButton } from "@/components/NudgeButton";
 import { Page } from "@/components/ui";
 import { getSessionUser } from "@/lib/auth";
-import { getToday } from "@/lib/clock";
+import { getHour, getNow, getToday } from "@/lib/clock";
 import { LINES } from "@/lib/ai/teachers";
 import { TUTOR_QUESTIONS } from "@/lib/domain/lesson";
 import { shortPath, stepsToMilestone, type Step } from "@/lib/domain/course";
@@ -15,6 +15,7 @@ import { WEEKDAY_KO, weekday } from "@/lib/domain/dates";
 import { NUDGE_MESSAGES } from "@/lib/domain/limits";
 import { prisma } from "@/lib/prisma";
 import { loadState, teacherOf } from "@/lib/server/course";
+import { runCoach } from "@/lib/server/coach";
 import { getGroupView } from "@/lib/server/group";
 import s from "./home.module.css";
 
@@ -41,6 +42,7 @@ export default async function HomePage() {
   const st = await loadState(user, today);
   if (!st) redirect("/start/personality");
   if (st.comeback) redirect("/comeback");
+  await runCoach(user, st, today, await getHour(), await getNow());
   const who = teacherOf(user);
   const L = LINES[who];
   const { view, course } = st;
