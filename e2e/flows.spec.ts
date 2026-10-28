@@ -1,12 +1,8 @@
-import { expect, test } from "@playwright/test";
+import { expect, type Page, test, type TestInfo } from "@playwright/test";
 import { addDays } from "../lib/domain/dates";
 import { filledCells, loginDemo, nthStudyDayAfter, resetDb, seedToday, shot, streak } from "./helpers";
 
-test.beforeEach(() => {
-  resetDb();
-});
-
-test("1. 처음 시작부터 첫 레슨 완료: 잔디 한 칸, 연속 1", async ({ page }, info) => {
+async function onboard(page: Page, info: TestInfo, topic = "사진 보정") {
   await page.goto("/");
   await shot(page, info, "01-welcome");
   await page.getByTestId("start").click();
@@ -19,7 +15,7 @@ test("1. 처음 시작부터 첫 레슨 완료: 잔디 한 칸, 연속 1", async
   await shot(page, info, "02-teacher");
   await page.getByTestId("teacher-next").click();
   await expect(page).toHaveURL(/\/start\/topic/);
-  await page.getByTestId("topic-input").fill("사진 보정");
+  await page.getByTestId("topic-input").fill(topic);
   await page.getByTestId("send").click();
   await page.getByTestId("topic-input").fill("여행 사진 10장을 내 느낌대로 보정하기");
   await page.getByTestId("send").click();
@@ -32,6 +28,14 @@ test("1. 처음 시작부터 첫 레슨 완료: 잔디 한 칸, 연속 1", async
   await shot(page, info, "03-preview");
   await page.getByTestId("preview-start").click();
   await expect(page).toHaveURL(/\/home/);
+}
+
+test.beforeEach(() => {
+  resetDb();
+});
+
+test("1. 처음 시작부터 첫 레슨 완료: 잔디 한 칸, 연속 1", async ({ page }, info) => {
+  await onboard(page, info);
   const before = await filledCells(page);
   expect(await streak(page)).toBe(0);
 
@@ -165,4 +169,24 @@ test("8. 오프라인에서 저장된 레슨 읽기", async ({ page, context }, 
   await expect(page.getByTestId("lesson-title")).toHaveText(title);
   await shot(page, info, "15-offline");
   await context.setOffline(false);
+});
+
+test("9. 초대 링크로 들어와 시작하면 그 그룹에 들어간다", async ({ page, context }, info) => {
+  // 데모가 초대 링크를 새로 만들면 예전 코드(JAKSIM6)는 못 쓴다. 그래서 새 코드로 들어와야만 그룹에 들어간다
+  await loginDemo(page, "/group/invite");
+  await page.getByTestId("regenerate-invite").click();
+  await expect(page.getByTestId("invite-link")).not.toContainText("JAKSIM6");
+  const link = (await page.getByTestId("invite-link").innerText()).trim();
+  const code = link.split("/invite/")[1];
+  expect(code).toBeTruthy();
+  await context.clearCookies();
+  await page.goto(`/invite/${code}`);
+  await expect(page.getByTestId("invite-group-name")).toContainText("퇴근 후 공부방");
+  await page.getByTestId("join-group").click();
+  await expect(page).toHaveURL(/\/$/);
+  await expect(page.getByTestId("inviter")).toContainText("민지");
+  await onboard(page, info, "영어 회화");
+  await page.goto("/group");
+  await expect(page.getByTestId("group-member-민지")).toBeVisible();
+  await shot(page, info, "16-invite-group");
 });
