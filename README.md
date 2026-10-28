@@ -38,6 +38,7 @@ pnpm dev        # http://localhost:3100
 | `pnpm test` | Vitest 단위 테스트 |
 | `pnpm e2e` | Playwright E2E(라이트·다크, 390x844) + axe 접근성. 3100에 서버가 없으면 `pnpm dev`를 띄운다. 테스트마다 시드를 다시 넣으므로 데모 데이터가 초기화된다. 화면 캡처는 `e2e/screenshots/` |
 | `pnpm db:reset` | 스키마 동기화 + 시드 |
+| `pnpm check:offline` | 서비스 워커 오프라인 확인. 운영 서버(`pnpm build && pnpm start`)를 3100에 띄운 뒤 실행 |
 
 ## 폴더
 
@@ -48,6 +49,11 @@ pnpm dev        # http://localhost:3100
 - `lib/auth.ts` 게스트 세션(sessions 테이블 + 무작위 토큰 쿠키). 나중에 Supabase Auth로 바꿀 자리
 - `prisma/` 스키마와 시드
 - `docs/specs/` 목업에서 뽑은 화면 설계 메모
+
+## 오프라인
+
+- 레슨을 열면 내용이 기기(localStorage)에 저장되고, 연결이 끊기면 같은 화면에 오프라인 배너가 뜬 채 계속 읽을 수 있다.
+- 운영 빌드에서는 서비스 워커(`public/sw.js`)가 한 번 연 레슨 화면을 저장해 두어, 오프라인에서 새로고침하거나 다른 화면을 열어도 마지막 레슨을 보여 준다. 개발 모드에서는 등록하지 않는다.
 
 ## Supabase Postgres로 옮길 때
 
