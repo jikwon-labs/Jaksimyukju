@@ -271,3 +271,82 @@
   outline: 3px solid var(--a-text);
   outline-offset: 2px;
 }
+.editBtn {
+  flex: none;
+  min-width: 44px;
+  height: 44px;
+  margin-left: auto;
+  padding: 0 10px;
+  border: none;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--a-text);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.weekEdit {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 0;
+  border-top: 1px solid var(--line);
+}
+.weekEdit:first-child {
+  border-top: none;
+}
+.editLabel {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--sub);
+}
+.editInput {
+  height: 44px;
+  padding: 0 12px;
+  border-radius: 12px;
+  border: 1.5px solid var(--line);
+  background: var(--bg);
+  color: var(--ink);
+  font-size: 15px;
+  outline-color: var(--a-text);
+}
+.editActions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+.editCancel,
+.editSave {
+  height: 44px;
+  padding: 0 16px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.editCancel {
+  border: 1.5px solid var(--line);
+  background: transparent;
+  color: var(--ink);
+}
+.editSave {
+  border: none;
+  background: var(--a-btn-bg);
+  color: var(--a-btn-ink);
+}
+.editBtn:focus-visible,
+.editCancel:focus-visible,
+.editSave:focus-visible {
+  outline: 3px solid var(--a-text);
+  outline-offset: 2px;
+}
+.editMsg {
+  font-size: 12px;
+  color: var(--sub);
+  min-height: 0;
+}
+.editMsg:empty {
+  display: none;
+}

@@ -2,7 +2,7 @@ import { expect, type Page, test, type TestInfo } from "@playwright/test";
 import { addDays } from "../lib/domain/dates";
 import { filledCells, loginDemo, nthStudyDayAfter, resetDb, seedToday, shot, streak } from "./helpers";
 
-async function onboard(page: Page, info: TestInfo, topic = "사진 보정") {
+async function onboard(page: Page, info: TestInfo, topic = "사진 보정", editWeek?: string) {
   await page.goto("/");
   await shot(page, info, "01-welcome");
   await page.getByTestId("start").click();
@@ -26,6 +26,13 @@ async function onboard(page: Page, info: TestInfo, topic = "사진 보정") {
   await expect(page).toHaveURL(/\/start\/preview/);
   await expect(page.getByTestId("preview-start")).toBeVisible({ timeout: 20_000 });
   await shot(page, info, "03-preview");
+  if (editWeek) {
+    // F3: 미리보기에서 주차 제목을 고친다
+    await page.getByTestId("week-edit-1").click();
+    await page.getByTestId("week-title-input-1").fill(editWeek);
+    await page.getByTestId("week-save-1").click();
+    await expect(page.getByTestId("week-title-1")).toHaveText(editWeek);
+  }
   await page.getByTestId("preview-start").click();
   await expect(page).toHaveURL(/\/home/);
 }
@@ -35,7 +42,10 @@ test.beforeEach(() => {
 });
 
 test("1. 처음 시작부터 첫 레슨 완료: 잔디 한 칸, 연속 1", async ({ page }, info) => {
-  await onboard(page, info);
+  await onboard(page, info, "사진 보정", "내가 고친 첫 주");
+  await page.goto("/curriculum");
+  await expect(page.getByText("내가 고친 첫 주").first()).toBeVisible();
+  await page.goto("/home");
   const before = await filledCells(page);
   expect(await streak(page)).toBe(0);
 

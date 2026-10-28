@@ -9,6 +9,7 @@ import type { OnboardingSummary } from "@/lib/server/onboarding";
 import { draftTeacher, readDraft, useDraft, type Draft } from "../draft";
 import st from "../start.module.css";
 import s from "./preview.module.css";
+import { WeekList } from "./WeekList.client";
 
 const STEPS = [
   { doing: "목적지를 정리하는 중", done: "목적지를 정리했어요" },
@@ -188,19 +189,7 @@ export function Preview() {
           <strong className={s.summaryTopic}>{d.topic}</strong>
           <span className={s.summaryGoal}>목적지: {d.goal}</span>
         </section>
-        <section aria-label="주차별 계획" className={s.weeks}>
-          {d.weeks.map((w, i) => (
-            <div key={i} className={s.week}>
-              <span className={s.badge} data-first={i === 0 ? "true" : "false"}>
-                {i + 1}주
-              </span>
-              <div className={s.weekText}>
-                <span className={s.weekTitle}>{w.title}</span>
-                <span className={s.weekMs}>마일스톤: {w.milestone}</span>
-              </div>
-            </div>
-          ))}
-        </section>
+        <WeekList key={d.weeks.map((w) => w.title).join("|")} initial={d.weeks} />
         {d.excludes.length > 0 && (
           <section aria-label="지금은 건너뛰는 것" className={s.skip}>
             <h2 className={s.skipTitle}>지금은 건너뛰어요</h2>
