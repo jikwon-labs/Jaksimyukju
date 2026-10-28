@@ -1,0 +1,236 @@
+// 작심육주 데이터 모델 (기획서 10장 + rest_days, notifications, retros)
+// SQLite 전용 기능은 쓰지 않는다. Supabase Postgres로 옮길 때는 provider와 url만 바꾼다.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String    @default("나")
+  teacher       String    @default("온") // 온 | 결 | 새
+  studyDays     String    @default("1,2,3,4,5") // 학습 요일, 0=일 ~ 6=토
+  minutesPerDay Int       @default(20)
+  notifyTime    String    @default("21:00")
+  pushToken     String?
+  theme         String    @default("system") // system | light | dark
+  email         String?
+  linkedAt      DateTime?
+  notifyNudge   Boolean   @default(true)
+  notifyTeacher Boolean   @default(true)
+  notifyRetro   Boolean   @default(true)
+  notifyGroup   Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+
+  courses       Course[]
+  memberships   GroupMember[]
+  groupsCreated Group[]        @relation("GroupCreator")
+  nudgesSent    Nudge[]        @relation("NudgeFrom")
+  nudgesGot     Nudge[]        @relation("NudgeTo")
+  restDays      RestDay[]
+  notifications Notification[]
+  retros        Retro[]
+
+  @@map("users")
+}
+
+model Group {
+  id              String        @id @default(cuid())
+  name            String
+  inviteCode      String        @unique
+  inviteExpiresAt DateTime
+  createdById     String
+  createdBy       User          @relation("GroupCreator", fields: [createdById], references: [id], onDelete: Cascade)
+  createdAt       DateTime      @default(now())
+  members         GroupMember[]
+
+  @@map("groups")
+}
+
+model GroupMember {
+  id         String   @id @default(cuid())
+  groupId    String
+  userId     String
+  visibility String   @default("grass") // grass(잔디만) | grass_topic(잔디와 주제)
+  joinedAt   DateTime @default(now())
+  group      Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([groupId, userId])
+  @@map("group_members")
+}
+
+model Course {
+  id         String    @id @default(cuid())
+  userId     String
+  topic      String
+  goal       String
+  level      String
+  excludes   Json      @default("[]")
+  status     String    @default("active") // active | finished | stopped
+  startDate  String // YYYY-MM-DD (사용자 기준 날짜)
+  weeksCount Int       @default(6)
+  extraDays  Int       @default(0) // 미루기·쉬어 가기로 늘어난 학습일
+  createdAt  DateTime  @default(now())
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  weeks      Week[]
+  lessons    Lesson[]
+  restDays   RestDay[]
+
+  @@index([userId])
+  @@map("courses")
+}
+
+model Week {
+  id                String                @id @default(cuid())
+  courseId          String
+  index             Int // 1부터
+  goal              String
+  milestoneTitle    String
+  milestoneCriteria Json // string[]
+  quiz              Json // QuizQuestion[]
+  course            Course                @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  lessons           Lesson[]
+  quizAttempts      QuizAttempt[]
+  milestones        MilestoneSubmission[]
+
+  @@unique([courseId, index])
+  @@map("weeks")
+}
+
+model Lesson {
+  id           String         @id @default(cuid())
+  weekId       String
+  courseId     String
+  order        Int // 과정 전체에서 0부터
+  title        String
+  body         Json // LessonSentence[]
+  shortBody    Json // LessonSentence[] (5분 버전)
+  minutes      Int
+  extraMinutes Int            @default(0) // 압축 재조정으로 붙은 시간
+  status       String         @default("todo") // todo | done | short | summary
+  tutorChecked Boolean        @default(false)
+  oneLiner     String?
+  completedAt  DateTime?
+  completedDay String? // YYYY-MM-DD
+  week         Week           @relation(fields: [weekId], references: [id], onDelete: Cascade)
+  course       Course         @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  resources    Resource[]
+  messages     TutorMessage[]
+
+  @@unique([courseId, order])
+  @@map("lessons")
+}
+
+model Resource {
+  id        String    @id @default(cuid())
+  lessonId  String
+  title     String
+  url       String
+  kind      String // 글 | 영상 | 문서
+  minutes   Int
+  reason    String
+  summary   Json // string[] 최대 3줄
+  checkedAt DateTime?
+  lesson    Lesson    @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@map("resources")
+}
+
+model TutorMessage {
+  id            String   @id @default(cuid())
+  lessonId      String
+  role          String // user | ai
+  content       String
+  understanding String? // 이해 | 부분 | 미흡
+  createdAt     DateTime @default(now())
+  lesson        Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@map("tutor_messages")
+}
+
+model QuizAttempt {
+  id        String   @id @default(cuid())
+  weekId    String
+  score     Int
+  answers   Json // { choice: number, correct: boolean }[]
+  day       String // YYYY-MM-DD
+  createdAt DateTime @default(now())
+  week      Week     @relation(fields: [weekId], references: [id], onDelete: Cascade)
+
+  @@map("quiz_attempts")
+}
+
+model MilestoneSubmission {
+  id        String   @id @default(cuid())
+  weekId    String
+  content   String
+  feedback  Json
+  round     Int
+  day       String // YYYY-MM-DD
+  createdAt DateTime @default(now())
+  week      Week     @relation(fields: [weekId], references: [id], onDelete: Cascade)
+
+  @@map("milestone_submissions")
+}
+
+model Nudge {
+  id         String   @id @default(cuid())
+  fromUserId String?
+  toUserId   String
+  kind       String   @default("friend") // friend | ai
+  day        String // YYYY-MM-DD
+  sentAt     DateTime @default(now())
+  from       User?    @relation("NudgeFrom", fields: [fromUserId], references: [id], onDelete: Cascade)
+  to         User     @relation("NudgeTo", fields: [toUserId], references: [id], onDelete: Cascade)
+
+  @@index([toUserId, day])
+  @@map("nudges")
+}
+
+model RestDay {
+  id        String   @id @default(cuid())
+  userId    String
+  courseId  String
+  day       String // YYYY-MM-DD
+  reason    String?
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([courseId, day])
+  @@map("rest_days")
+}
+
+model Notification {
+  id        String    @id @default(cuid())
+  userId    String
+  kind      String // nudge | teacher | retro | invite | comeback | group
+  title     String
+  body      String
+  href      String?
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@map("notifications")
+}
+
+model Retro {
+  id        String   @id @default(cuid())
+  userId    String
+  weekIndex Int
+  answers   Json // string[]
+  pledge    String
+  shared    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("retros")
+}
