@@ -1,0 +1,273 @@
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px 20px 24px 20px;
+}
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 44px;
+}
+.back {
+  width: 44px;
+  height: 44px;
+  border-radius: 22px;
+  border: var(--card-border);
+  background: var(--surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+}
+.segment {
+  display: flex;
+  padding: 4px;
+  border-radius: 14px;
+  background: var(--surface);
+  border: var(--card-border);
+}
+.segBtn {
+  height: 36px;
+  padding: 0 12px;
+  border: none;
+  border-radius: 10px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  background: transparent;
+  color: var(--sub);
+  cursor: pointer;
+}
+.segBtn[aria-pressed="true"] {
+  background: var(--a-btn-bg);
+  color: var(--a-btn-ink);
+}
+.segBtn:disabled {
+  cursor: default;
+}
+.back:focus-visible,
+.segBtn:focus-visible,
+.resRow:focus-visible,
+.mark a:focus-visible {
+  outline: 3px solid var(--a-text);
+  outline-offset: 2px;
+}
+.titleBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.titleBlock h1 {
+  font-size: 24px;
+  line-height: 33px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+.metaRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.meta {
+  font-size: 12px;
+  color: var(--sub);
+}
+.donePill {
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: 999px;
+  padding: 3px 9px;
+  background: var(--good-bg);
+  color: var(--good);
+}
+.extra {
+  font-size: 13px;
+  line-height: 19px;
+  color: var(--a-text);
+  font-weight: 500;
+}
+.intro {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+.intro p {
+  flex: 1;
+  background: var(--surface);
+  border: var(--card-border);
+  border-radius: 4px 16px 16px 16px;
+  padding: 10px 14px;
+  font-size: 14px;
+  line-height: 21px;
+}
+.core {
+  background: var(--a-tint);
+  border-radius: 20px;
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.coreLabel {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--a-text);
+}
+.core p {
+  font-size: 16px;
+  line-height: 25px;
+  font-weight: 700;
+}
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.section h2 {
+  font-size: 17px;
+  font-weight: 700;
+}
+.section > p {
+  font-size: 15px;
+  line-height: 25px;
+}
+.mark {
+  font-size: 11px;
+  line-height: 0;
+  margin-left: 2px;
+}
+.mark a {
+  display: inline-block;
+  min-width: 24px;
+  min-height: 24px;
+  line-height: 24px;
+  text-align: center;
+  color: var(--a-text);
+  font-weight: 700;
+  text-decoration: none;
+  border-radius: 6px;
+}
+.example {
+  border: 1.5px solid var(--line);
+  border-radius: 16px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.exampleLabel {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--sub);
+}
+.example p {
+  font-size: 14px;
+  line-height: 22px;
+}
+.shortNote {
+  font-size: 13px;
+  line-height: 19px;
+  color: var(--sub);
+}
+.resHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+.resRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 56px;
+  padding: 10px 14px;
+  border-radius: 16px;
+  background: var(--surface);
+  border: var(--card-border);
+  color: var(--ink);
+  text-decoration: none;
+}
+.kind {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--a-tint);
+  color: var(--a-text);
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+}
+.resText {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.resTitle {
+  font-size: 14px;
+  font-weight: 500;
+}
+.resNum {
+  color: var(--a-text);
+  font-weight: 700;
+}
+
+/* 하단 고정 버튼 띠 */
+.screen {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+.grow {
+  flex: 1;
+}
+.ctaBar {
+  position: sticky;
+  bottom: 0;
+  box-sizing: border-box;
+  padding: 12px 20px 28px 20px;
+  background: var(--bg);
+  border-top: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.cta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 56px;
+  border-radius: 18px;
+  background: var(--a-btn-bg);
+  color: var(--a-btn-ink);
+  font-size: 17px;
+  font-weight: 700;
+  border: none;
+  width: 100%;
+  font-family: inherit;
+  cursor: pointer;
+  text-decoration: none;
+}
+.cta:focus-visible {
+  outline: 3px solid var(--a-text);
+  outline-offset: 2px;
+}
+.cta[aria-disabled="true"],
+.cta:disabled {
+  background: var(--line);
+  color: var(--sub);
+  cursor: not-allowed;
+}
+.ctaNote {
+  font-size: 12px;
+  line-height: 17px;
+  color: var(--sub);
+  text-align: center;
+}

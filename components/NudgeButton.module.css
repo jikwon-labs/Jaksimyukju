@@ -13,7 +13,7 @@
   font-weight: 700;
   cursor: pointer;
 }
-.btn[aria-disabled="true"] {
+.btn[data-blocked="true"] {
   background: var(--future);
   color: var(--sub);
 }

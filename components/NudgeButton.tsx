@@ -24,7 +24,7 @@ export function NudgeButton({
         type="button"
         className={s.btn}
         aria-label={`${name}님 ${label}`}
-        aria-disabled={done || !!disabledMessage}
+        data-blocked={done || !!disabledMessage ? "true" : undefined}
         disabled={pending}
         onClick={() => {
           if (disabledMessage) {
