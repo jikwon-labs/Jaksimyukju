@@ -1,0 +1,540 @@
+/* 목업 고정색: 초록, 완료 주차 길, 완료 마일스톤 칸, 다크 테두리 */
+.page {
+  gap: 14px;
+  --c-green: #1f6b42;
+  --c-green-bg: #e2f5ea;
+  --c-trail: #4cc38a;
+  --c-goal-bg: #1f7a4a;
+  --c-goal-ink: #ffffff;
+  --c-goal-shadow: #15563a;
+  --c-todo-shadow: color-mix(in srgb, var(--t-deep) 22%, transparent);
+  --c-quiet-border: 2px solid transparent;
+  --c-banner-border: none;
+  --c-pop-btn: #ffffff;
+}
+:global(html[data-theme="dark"]) .page {
+  --c-green: #7fd9ac;
+  --c-green-bg: rgba(76, 195, 138, 0.18);
+  --c-trail: #7fd9ac;
+  --c-goal-bg: #7fd9ac;
+  --c-goal-ink: #111114;
+  --c-goal-shadow: rgba(127, 217, 172, 0.4);
+  --c-todo-shadow: color-mix(in srgb, var(--t-body) 25%, transparent);
+  --c-quiet-border: 1px solid #26262d;
+  --c-banner-border: 1px solid #26262d;
+  --c-pop-btn: #111114;
+}
+@media (prefers-color-scheme: dark) {
+  :global(html[data-theme="system"]) .page {
+    --c-green: #7fd9ac;
+    --c-green-bg: rgba(76, 195, 138, 0.18);
+    --c-trail: #7fd9ac;
+    --c-goal-bg: #7fd9ac;
+    --c-goal-ink: #111114;
+    --c-goal-shadow: rgba(127, 217, 172, 0.4);
+    --c-todo-shadow: color-mix(in srgb, var(--t-body) 25%, transparent);
+    --c-quiet-border: 1px solid #26262d;
+    --c-banner-border: 1px solid #26262d;
+    --c-pop-btn: #111114;
+  }
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 44px;
+}
+.h1 {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.4px;
+}
+.toggle {
+  display: flex;
+  padding: 3px;
+  border-radius: 14px;
+  background: var(--surface);
+  border: var(--card-border);
+}
+.toggle button {
+  height: 36px;
+  padding: 0 14px;
+  border: none;
+  border-radius: 11px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  background: transparent;
+  color: var(--sub);
+  cursor: pointer;
+}
+.toggle button[aria-pressed="true"] {
+  background: var(--a-btn-bg);
+  color: var(--a-btn-ink);
+}
+
+.progress {
+  background: var(--surface);
+  border: var(--card-border);
+  border-radius: 20px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.progressRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+.topic {
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+}
+.sub12 {
+  font-size: 12px;
+  color: var(--sub);
+}
+.sub {
+  color: var(--sub);
+}
+.bar {
+  height: 8px;
+  border-radius: 4px;
+  background: var(--future);
+  overflow: hidden;
+}
+.bar span {
+  display: block;
+  height: 100%;
+  border-radius: 4px;
+  background: var(--a-btn-bg);
+}
+.progressFoot {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+}
+.pct {
+  font-weight: 700;
+  color: var(--a-text);
+}
+
+/* 지도 */
+.map {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.banner {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  min-height: 64px;
+  border-radius: 20px;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+  border: none;
+}
+.banner[data-status="done"] {
+  background: var(--c-green-bg);
+  color: var(--c-green);
+}
+.banner[data-status="current"] {
+  background: var(--a-btn-bg);
+  color: var(--a-btn-ink);
+  box-shadow: 0 4px 0 var(--a-shadow);
+}
+.banner[data-status="todo"] {
+  background: var(--surface);
+  color: var(--sub);
+  border: var(--c-banner-border);
+}
+.banner[aria-disabled="true"] {
+  cursor: default;
+}
+.bannerText {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.bannerKicker {
+  font-size: 12px;
+  font-weight: 700;
+  opacity: 0.85;
+}
+.bannerTitle {
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+}
+.bannerMeta {
+  flex: none;
+  font-size: 12px;
+  font-weight: 500;
+  opacity: 0.85;
+}
+
+.canvas {
+  position: relative;
+  width: 350px;
+  max-width: 100%;
+  align-self: center;
+}
+.road {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+.road path {
+  fill: none;
+  stroke-width: 6;
+  stroke-linecap: round;
+  stroke-dasharray: 1 14;
+}
+.roadTodo {
+  stroke: var(--line);
+}
+.roadDone {
+  stroke: var(--a-text);
+}
+.canvas[data-status="done"] .roadDone {
+  stroke: var(--c-trail);
+}
+.nodeBox {
+  position: absolute;
+}
+.pulse {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 3px solid var(--a-text);
+  pointer-events: none;
+}
+.node {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.12s ease-out;
+  background: var(--future);
+  color: var(--sub);
+  box-shadow: 0 6px 0 var(--line);
+}
+.node:active {
+  transform: translateY(4px);
+}
+.node[data-state="done"],
+.node[data-state="five"],
+.node[data-state="today"] {
+  background: var(--a-btn-bg);
+  color: var(--a-btn-ink);
+  box-shadow: 0 6px 0 var(--a-shadow);
+}
+.node[data-state="todo"] {
+  background: var(--a-tint);
+  color: var(--a-text);
+  box-shadow: 0 6px 0 var(--c-todo-shadow);
+}
+.node[data-kind="goal"][data-state="done"],
+.node[data-kind="goal"][data-state="five"] {
+  background: var(--c-goal-bg);
+  color: var(--c-goal-ink);
+  box-shadow: 0 6px 0 var(--c-goal-shadow);
+}
+.node:focus-visible,
+.banner:focus-visible,
+.toggle button:focus-visible,
+.listHead:focus-visible,
+.popCta:focus-visible,
+.flag:focus-visible {
+  outline: 3px solid var(--a-text);
+  outline-offset: 3px;
+}
+.bob {
+  position: absolute;
+  left: 50%;
+  top: -38px;
+  margin-left: -34px;
+  width: 68px;
+  height: 30px;
+  border-radius: 10px;
+  background: var(--surface);
+  border: 2px solid var(--a-text);
+  color: var(--a-text);
+  font-size: 13px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  animation: mp-bob 1.6s ease-in-out infinite;
+}
+@keyframes mp-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bob {
+    animation: none;
+  }
+}
+.char {
+  position: absolute;
+  width: 72px;
+  height: 66px;
+  pointer-events: none;
+}
+.popover {
+  position: absolute;
+  left: 20px;
+  right: 20px;
+  z-index: 2;
+  border-radius: 20px;
+  padding: 16px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: var(--surface);
+  color: var(--ink);
+}
+.popover[data-hot="true"] {
+  background: var(--a-btn-bg);
+  color: var(--a-btn-ink);
+}
+.popKicker {
+  font-size: 12px;
+  font-weight: 700;
+  opacity: 0.8;
+}
+.popTitle {
+  font-size: 16px;
+  line-height: 23px;
+  font-weight: 700;
+}
+.popMeta {
+  font-size: 13px;
+  line-height: 19px;
+  opacity: 0.85;
+}
+.popCta {
+  margin-top: 6px;
+  height: 46px;
+  border-radius: 14px;
+  background: var(--a-btn-bg);
+  color: var(--a-btn-ink);
+  font-size: 15px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
+.popover[data-hot="true"] .popCta {
+  background: var(--c-pop-btn);
+  color: var(--a-text);
+}
+
+.flag {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 0 4px 0;
+  color: var(--ink);
+  text-decoration: none;
+  border-radius: 16px;
+}
+.flagCircle {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 3px dashed var(--line);
+  color: var(--sub);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.flagCircle[data-finished="true"] {
+  border-style: solid;
+  border-color: var(--a-text);
+  color: var(--a-text);
+}
+.flagTitle {
+  font-size: 14px;
+  font-weight: 700;
+}
+.flagGoal {
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--sub);
+  text-align: center;
+  max-width: 220px;
+  word-break: keep-all;
+}
+
+/* 목록 */
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.listCard {
+  background: var(--surface);
+  border: var(--c-quiet-border);
+  border-radius: 20px;
+  overflow: hidden;
+}
+.listCard[data-status="current"] {
+  border: 2px solid var(--a-text);
+}
+.listHead {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  min-height: 64px;
+  background: transparent;
+  color: var(--ink);
+  border: none;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.badge {
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  flex: none;
+  font-size: 13px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--future);
+  color: var(--sub);
+}
+.badge[data-status="done"] {
+  background: var(--c-green-bg);
+  color: var(--c-green);
+}
+.badge[data-status="current"] {
+  background: var(--a-btn-bg);
+  color: var(--a-btn-ink);
+}
+.listText {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.listTitle {
+  font-size: 15px;
+  font-weight: 700;
+}
+.chev {
+  flex: none;
+  color: var(--sub);
+}
+.chev[data-open="true"] {
+  transform: rotate(180deg);
+}
+.listBody {
+  padding: 0 16px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.lockedNote {
+  font-size: 13px;
+  line-height: 19px;
+  color: var(--sub);
+  background: var(--bg);
+  border-radius: 14px;
+  padding: 12px 14px;
+}
+.dayRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 4px;
+  border-top: 1px solid var(--line);
+}
+.dayLetter {
+  width: 20px;
+  flex: none;
+  font-size: 12px;
+  color: var(--sub);
+}
+.dayCircle {
+  width: 22px;
+  height: 22px;
+  flex: none;
+  border-radius: 11px;
+  border: 2px solid var(--line);
+  background: transparent;
+  color: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.dayRow[data-state="today"] .dayCircle {
+  border-color: var(--a-text);
+}
+.dayRow[data-state="done"] .dayCircle,
+.dayRow[data-state="five"] .dayCircle {
+  border: none;
+  background: var(--a-btn-bg);
+  color: var(--a-btn-ink);
+}
+.dayTitle {
+  flex: 1;
+  min-width: 0;
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--ink);
+}
+.dayRow[data-state="today"] .dayTitle {
+  font-weight: 700;
+}
+.dayRow[data-state="todo"] .dayTitle {
+  color: var(--sub);
+}
+.tag {
+  flex: none;
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 999px;
+  padding: 3px 8px;
+  background: var(--c-green-bg);
+  color: var(--c-green);
+}
+.tag[data-tag="오늘"] {
+  background: var(--a-btn-bg);
+  color: var(--a-btn-ink);
+}
+.tag[data-tag="5분 버전"] {
+  background: var(--future);
+  color: var(--sub);
+}
