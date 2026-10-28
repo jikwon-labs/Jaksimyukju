@@ -32,6 +32,8 @@ export default async function FinishPage() {
   const finished = view.finished || course.status === "finished";
   const weeks = course.weeksCount;
   const lastWeek = course.weeks[course.weeks.length - 1];
+  const doneDays = course.weeks.flatMap((w) => [...w.lessons.map((l) => l.completedDay ?? ""), ...w.milestones.map((m) => m.day)]);
+  const lastDay = doneDays.filter(Boolean).sort().pop() ?? today;
 
   const subs = course.weeks
     .flatMap((w) => w.milestones.map((m) => ({ ...m, weekIndex: w.index })))
@@ -116,7 +118,19 @@ export default async function FinishPage() {
 
       {finished ? (
         <>
-          <SaveCard />
+          <SaveCard
+            card={{
+              name: user.name,
+              topic: course.topic,
+              goal: course.goal,
+              weeks,
+              lessons: view.lessonsTotal,
+              longest: st.longest,
+              start: course.startDate,
+              end: lastDay,
+              teacher: who,
+            }}
+          />
           <section aria-label="다음 과정" className={s.next}>
             <h2 className={s.nextTitle}>{who} 선생님이 추천하는 다음 길</h2>
             {nextCourses(course.topic, course.level).map((c) => (

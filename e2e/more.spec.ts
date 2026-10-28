@@ -1,4 +1,5 @@
 import { type BrowserContext, expect, type Page, test, type TestInfo } from "@playwright/test";
+import { execSync } from "node:child_process";
 import { addDays } from "../lib/domain/dates";
 import { loginDemo, nthStudyDayAfter, resetDb, seedToday, shot, streak } from "./helpers";
 
@@ -374,4 +375,17 @@ test("23. 레슨에서 '설명이 이상해요' 신고", async ({ page }) => {
   await page.getByTestId("report-open").click();
   await page.getByRole("button", { name: "설명이 틀린 것 같아요" }).click();
   await expect(page.getByTestId("report-done")).toBeVisible();
+});
+
+test("24. 과정을 마치면 수료 카드를 PNG로 저장한다", async ({ page }) => {
+  execSync("pnpm exec tsx e2e/finish-demo.ts", { stdio: "pipe" });
+  await loginDemo(page, "/finish");
+  const save = page.getByTestId("save-card");
+  await expect(save).toBeVisible();
+  const [download] = await Promise.all([page.waitForEvent("download"), save.click()]);
+  expect(download.suggestedFilename()).toMatch(/^작심육주-수료-.*\.png$/);
+  await expect(save).toHaveText("수료 카드를 저장했어요");
+  // 완주한 과정은 빈 날이 있어도 복귀 화면으로 보내지 않는다
+  await loginDemo(page, "/home", nthStudyDayAfter(seedToday(), 5));
+  await expect(page).toHaveURL(/\/home/);
 });
