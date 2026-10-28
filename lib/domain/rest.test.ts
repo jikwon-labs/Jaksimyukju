@@ -185,10 +185,45 @@ describe("쉬어 가기 한도", () => {
     expect(validatePause(cal(), "2026-10-29", ["2026-10-28"], 0).ok).toBe(false);
     expect(validatePause(cal(), "2026-10-29", ["2026-10-31"], 0).ok).toBe(false);
     expect(validatePause(cal(), "2026-10-29", [], 0).ok).toBe(false);
+    // 2주보다 먼 날(2030년 등)로 한도를 써 버리지 않게 막는다
+    expect(validatePause(cal(), "2026-10-29", ["2030-01-07"], 0).ok).toBe(false);
+    expect(validatePause(cal(), "2026-10-29", ["2026-11-11"], 0).ok).toBe(true);
+    expect(validatePause(cal(), "2026-10-29", ["2026-11-12"], 0).ok).toBe(false);
   });
   it("dayKind", () => {
     expect(dayKind(cal(["2026-10-30"]), "2026-10-30")).toBe("rest");
     expect(dayKind(cal(), "2026-10-31")).toBe("off");
     expect(dayKind(cal(), "2026-10-29")).toBe("study");
+  });
+});
+
+describe("학습 요일 변경 이력", () => {
+  it("요일을 바꿔도 지난 날은 그때 요일로 판정한다", async () => {
+    const { nextSchedule, studyDaysOn } = await import("./rest");
+    // 주말(토·일)에 하던 사람이 수요일(10-28)에 월~금으로 바꾼다
+    const weekendStart = "2026-10-24"; // 토
+    const levels = lv([
+      ["2026-10-24", "lesson"],
+      ["2026-10-25", "lesson"],
+    ]);
+    const schedule = nextSchedule([], weekendStart, [0, 6], [1, 2, 3, 4, 5], "2026-10-28");
+    const c: StudyCalendar = { startDate: weekendStart, studyDays: [1, 2, 3, 4, 5], restDays: new Set(), schedule };
+    expect(studyDaysOn(c, "2026-10-26")).toEqual([0, 6]);
+    expect(studyDaysOn(c, "2026-10-28")).toEqual([1, 2, 3, 4, 5]);
+    // 월·화는 그때 학습 요일이 아니었으니 빈 날이 아니다
+    expect(currentStreak(c, levels, "2026-10-28")).toBe(2);
+    expect(needsComeback(c, levels, "2026-10-28", null)).toBe(false);
+    // 이력 없이 지금 요일로만 보면 월·화가 빈 학습일이 되어 버린다
+    const naive: StudyCalendar = { ...c, schedule: [] };
+    expect(currentStreak(naive, levels, "2026-10-28")).toBe(0);
+  });
+  it("같은 날 여러 번 바꾸면 마지막 것만 남는다", async () => {
+    const { nextSchedule } = await import("./rest");
+    const a = nextSchedule([], "2026-10-19", [1, 2, 3, 4, 5], [1, 3, 5], "2026-10-28");
+    const b = nextSchedule(a, "2026-10-19", [1, 3, 5], [2, 4], "2026-10-28");
+    expect(b).toEqual([
+      { from: "2026-10-19", days: [1, 2, 3, 4, 5] },
+      { from: "2026-10-28", days: [2, 4] },
+    ]);
   });
 });

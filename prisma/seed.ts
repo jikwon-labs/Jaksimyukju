@@ -13,6 +13,7 @@ const STUDY = [1, 2, 3, 4, 5];
 
 async function wipe() {
   // 자식 테이블부터
+  await prisma.session.deleteMany();
   await prisma.notification.deleteMany();
   await prisma.retro.deleteMany();
   await prisma.nudge.deleteMany();

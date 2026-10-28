@@ -44,7 +44,11 @@ export function popoverInfo(st: Step): PopoverInfo {
         : "이번 주 레슨으로 3문제 · 약 3분"
       : st.kind === "goal"
         ? "선생님이 기준 3개로 피드백해요"
-        : st.state === "five"
+        : st.closed === "summary"
+          ? "복귀하며 3분 요약 카드로 넘겼어요 · 요약 다시 보기"
+          : st.closed === "merged"
+            ? "복귀하며 다음 레슨에 5분씩 합쳤어요"
+            : st.state === "five"
           ? `5분 버전으로 끝냈어요 · 전체 버전 약 ${st.minutes ?? 10}분`
           : `약 ${st.minutes ?? 10}분 · 설명과 튜터 질문 3개`;
   const cta = lock
@@ -57,7 +61,7 @@ export function popoverInfo(st: Step): PopoverInfo {
           ? "결과물 제출하기"
           : "학습 시작";
   return {
-    kicker: `${st.week}주차 ${st.day ? st.day + "요일 " : ""}${KIND_WORD[st.kind]} · ${STATE_WORD[st.state]}`,
+    kicker: `${st.week}주차 ${st.day ? st.day + "요일 " : ""}${KIND_WORD[st.kind]} · ${st.closed === "summary" ? "요약으로 넘김" : st.closed === "merged" ? "다음 레슨에 합침" : STATE_WORD[st.state]}`,
     title: st.title,
     meta,
     cta,
@@ -96,7 +100,7 @@ export interface DayRow {
   day: string;
   title: string;
   state: StepState;
-  tag: "" | "오늘" | "5분 버전" | "제출";
+  tag: "" | "오늘" | "5분 버전" | "제출" | "요약" | "합침";
 }
 
 /** 목록 보기의 날짜 줄. 퀴즈 칸은 빼고, 아직 열리지 않은 주차는 빈 배열(잠김 안내) */
@@ -109,7 +113,7 @@ export function listDays(w: WeekView, currentWeek: number): DayRow[] {
       day: s.day,
       title: s.title,
       state: s.state,
-      tag: s.state === "today" ? "오늘" : s.state === "five" ? "5분 버전" : s.kind === "goal" && s.state === "done" ? "제출" : "",
+      tag: s.state === "today" ? "오늘" : s.closed === "summary" ? "요약" : s.closed === "merged" ? "합침" : s.state === "five" ? "5분 버전" : s.kind === "goal" && s.state === "done" ? "제출" : "",
     }));
 }
 

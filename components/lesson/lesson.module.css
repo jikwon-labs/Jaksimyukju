@@ -271,3 +271,13 @@
   color: var(--sub);
   text-align: center;
 }
+.closedNote {
+  margin: 12px 20px 0 20px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: var(--a-tint);
+  color: var(--a-text);
+  font-size: 13px;
+  line-height: 20px;
+  font-weight: 500;
+}

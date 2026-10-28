@@ -78,6 +78,12 @@ export async function applyComeback(user: User, today: DayKey, kind: ReplanKind)
   const r = replan(kind, st.missed, pendingOrders(st.course));
   const lessons = st.course.weeks.flatMap((w) => w.lessons);
   const byOrder = new Map(lessons.map((l) => [l.order, l]));
+  // 이번 공백에 대해 아직 고르지 않았을 때만 적용한다(중복 제출 막기)
+  const claimed = await prisma.course.updateMany({
+    where: { id: st.course.id, OR: [{ comebackDay: null }, { comebackDay: { not: today } }] },
+    data: { comebackDay: today, replan: kind },
+  });
+  if (claimed.count === 0) return false;
   const ops = [];
   if (r.extraDays > 0) {
     ops.push(prisma.course.update({ where: { id: st.course.id }, data: { extraDays: { increment: r.extraDays } } }));
@@ -94,7 +100,6 @@ export async function applyComeback(user: User, today: DayKey, kind: ReplanKind)
     const l = byOrder.get(order);
     if (l) ops.push(prisma.lesson.update({ where: { id: l.id }, data: { status: "summary" } }));
   }
-  ops.push(prisma.course.update({ where: { id: st.course.id }, data: { comebackDay: today, replan: kind } }));
   await prisma.$transaction(ops);
   await notifyGroup(user, today, {
     kind: "comeback",

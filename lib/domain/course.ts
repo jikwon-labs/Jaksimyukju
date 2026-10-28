@@ -27,6 +27,8 @@ export interface Step {
   order?: number;
   minutes?: number;
   note?: string;
+  /** 복귀 재조정으로 닫힌 레슨: summary(3분 요약 카드로 넘김) | merged(다음 레슨에 합침) */
+  closed?: "summary" | "merged";
 }
 
 export type WeekStatus = "done" | "current" | "todo";
@@ -77,6 +79,7 @@ export function buildCourseView(weeks: WeekInput[], studyDays: number[]): Course
       lessonId: l.id,
       order: l.order,
       minutes: l.minutes,
+      closed: l.status === "summary" || l.status === "merged" ? l.status : undefined,
     }));
     steps.push({
       id: `${w.index}-${steps.length}`,

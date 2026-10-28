@@ -39,15 +39,17 @@ export async function completeLesson(
   if (!lesson) return { ok: false, firstTime: false };
   const plan = planCompletion(lesson, mode, today);
   if (!plan.changed) return { ok: true, firstTime: false };
-  await prisma.$transaction(async (tx) => {
-    await tx.lesson.update({
-      where: { id: lesson.id },
+  const applied = await prisma.$transaction(async (tx) => {
+    // 읽은 상태 그대로일 때만 바꾼다. 두 탭에서 동시에 눌러도 한 번만 반영된다
+    const changed = await tx.lesson.updateMany({
+      where: { id: lesson.id, status: lesson.status },
       data: {
         status: plan.status,
         completedDay: plan.completedDay,
         completedAt: plan.firstTime ? now : (lesson.completedAt ?? now),
       },
     });
+    if (changed.count === 0) return false;
     if (plan.carryToNext > 0) {
       const next = await tx.lesson.findFirst({
         where: { courseId: lesson.courseId, status: "todo", order: { gt: lesson.order } },
@@ -60,8 +62,9 @@ export async function completeLesson(
         });
       }
     }
+    return true;
   });
-  return { ok: true, firstTime: plan.firstTime };
+  return { ok: true, firstTime: applied && plan.firstTime };
 }
 
 export function completionTitle(name: string): string {

@@ -3,7 +3,8 @@ import type { User } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import type { TeacherName } from "@/lib/design/types";
 import type { DayKey } from "@/lib/domain/dates";
-import { canNudge, type NudgeDecision } from "@/lib/domain/limits";
+import { canNudge, type NotifyDecision, type NudgeDecision } from "@/lib/domain/limits";
+import { notifyDecision } from "./notify";
 import type { GrassCell } from "@/lib/domain/rest";
 import { loadState, teacherOf } from "./course";
 
@@ -73,22 +74,30 @@ export async function getGroupView(user: User, today: DayKey): Promise<GroupView
   return { id: g.id, name: g.name, inviteCode: g.inviteCode, inviteExpiresAt: g.inviteExpiresAt, members };
 }
 
-export async function sendNudge(from: User, toId: string, today: DayKey): Promise<NudgeDecision> {
+export type NudgeResult = NudgeDecision | { ok: true; delivered: false; why: Exclude<NotifyDecision, { ok: true }>["reason"] };
+
+/**
+ * 콕 찌르기. 하루 1번은 nudges 행으로 센다. 알림은 받는 사람의 알림 제한을 지켜서
+ * 막히면(밤 시간, 하루 2번, 콕 찌르기 끔) 찌른 기록만 남기고 알림은 보내지 않는다.
+ */
+export async function sendNudge(from: User, toId: string, today: DayKey, hour: number): Promise<NudgeResult> {
   const view = await getGroupView(from, today);
   const target = view?.members.find((m) => m.id === toId);
   if (!view || !target) return { ok: false, reason: "self" };
   if (!target.nudge.ok) return target.nudge;
-  await prisma.$transaction([
-    prisma.nudge.create({ data: { fromUserId: from.id, toUserId: toId, kind: "friend", day: today } }),
-    prisma.notification.create({
-      data: {
-        userId: toId,
-        kind: "nudge",
-        title: `${from.name}님이 콕 찔렀어요`,
-        body: "오늘 10분만 같이 해요",
-        href: "/home",
-      },
-    }),
-  ]);
-  return { ok: true };
+  const to = await prisma.user.findUnique({ where: { id: toId } });
+  if (!to) return { ok: false, reason: "self" };
+  const decision = await notifyDecision(to, "nudge", today, hour);
+  await prisma.$transaction(async (tx) => {
+    // 같은 날 두 번 눌러도 한 번만 남긴다
+    const dup = await tx.nudge.count({ where: { fromUserId: from.id, toUserId: toId, kind: "friend", day: today } });
+    if (dup > 0) return;
+    await tx.nudge.create({ data: { fromUserId: from.id, toUserId: toId, kind: "friend", day: today } });
+    if (decision.ok) {
+      await tx.notification.create({
+        data: { userId: toId, kind: "nudge", title: `${from.name}님이 콕 찔렀어요`, body: "오늘 10분만 같이 해요", href: "/home" },
+      });
+    }
+  });
+  return decision.ok ? { ok: true } : { ok: true, delivered: false, why: decision.reason };
 }

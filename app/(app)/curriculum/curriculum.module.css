@@ -530,7 +530,9 @@
   background: var(--a-btn-bg);
   color: var(--a-btn-ink);
 }
-.tag[data-tag="5분 버전"] {
+.tag[data-tag="5분 버전"],
+.tag[data-tag="요약"],
+.tag[data-tag="합침"] {
   background: var(--future);
   color: var(--sub);
 }

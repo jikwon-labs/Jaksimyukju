@@ -35,6 +35,7 @@ model User {
   restDays      RestDay[]
   notifications Notification[]
   retros        Retro[]
+  sessions      Session[]
 
   @@map("users")
 }
@@ -77,6 +78,7 @@ model Course {
   weeksCount  Int       @default(6)
   extraDays   Int       @default(0) // 미루기·쉬어 가기로 늘어난 학습일
   comebackDay String? // 복귀 화면에서 재조정을 고른 날
+  schedule    Json      @default("[]") // 학습 요일 변경 이력 [{ from: YYYY-MM-DD, days: number[] }]
   replan      String? // 마지막 재조정: delay | squeeze | skip
   createdAt   DateTime  @default(now())
   user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -235,4 +237,15 @@ model Retro {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("retros")
+}
+
+// 게스트 세션. 쿠키에는 무작위 토큰만 둔다(사용자 id를 쿠키에 그대로 두지 않는다)
+model Session {
+  id        String   @id // 무작위 토큰
+  userId    String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("sessions")
 }

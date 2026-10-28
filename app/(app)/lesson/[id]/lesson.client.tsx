@@ -41,6 +41,13 @@ export function LessonView({ lesson, initialShort }: { lesson: LessonPayload; in
   return (
     <main className={s.screen}>
       {!online && <OfflineBar />}
+      {(lesson.status === "summary" || lesson.status === "merged") && (
+        <p className={s.closedNote} role="note" data-testid="lesson-closed">
+          {lesson.status === "summary"
+            ? "3분 요약 카드예요. 복귀하며 요약으로 넘긴 레슨이라 핵심만 담았어요. 전체가 궁금하면 전체 버전을 눌러 보세요."
+            : "이 레슨은 복귀하며 다음 레슨에 5분씩 합쳐졌어요. 여기서는 다시 읽기만 할 수 있어요."}
+        </p>
+      )}
       <div className={s.grow}>
         <LessonContent lesson={lesson} short={short} onMode={onMode} />
       </div>

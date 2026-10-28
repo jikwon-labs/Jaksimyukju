@@ -19,6 +19,7 @@ import {
   missedStudyDays,
   needsComeback,
   pauseRemaining,
+  type ScheduleChange,
   type StudyCalendar,
 } from "@/lib/domain/rest";
 
@@ -74,8 +75,15 @@ export function activityOf(course: CourseFull): ActivityInput[] {
       else if (l.status === "done")
         items.push({ day: l.completedDay, kind: l.tutorChecked ? "lesson_tutor" : "lesson" });
     }
-    for (const q of w.quizAttempts) items.push({ day: q.day, kind: "quiz" });
-    for (const m of w.milestones) items.push({ day: m.day, kind: "milestone" });
+    // 퀴즈는 주차마다 첫 응시만 센다(옛 퀴즈 재응시로 연속을 이어 가지 않게)
+    const firstQuiz = w.quizAttempts[w.quizAttempts.length - 1];
+    if (firstQuiz) items.push({ day: firstQuiz.day, kind: "quiz" });
+    // 마일스톤은 통과할 때까지 낸 차수만 센다
+    const asc = [...w.milestones].reverse();
+    for (const m of asc) {
+      items.push({ day: m.day, kind: "milestone" });
+      if (json<{ passed?: boolean }>(m.feedback).passed === true) break;
+    }
   }
   return items;
 }
@@ -102,6 +110,7 @@ export function courseState(course: CourseFull, user: Pick<User, "studyDays">, t
     startDate: course.startDate,
     studyDays: parseStudyDays(user.studyDays),
     restDays: new Set(course.restDays.map((r) => r.day)),
+    schedule: json<ScheduleChange[]>(course.schedule),
   };
   const levels = activityLevels(activityOf(course));
   const view = buildCourseView(
@@ -160,4 +169,12 @@ export function pendingOrders(course: CourseFull): number[] {
     .filter((l) => l.status === "todo")
     .map((l) => l.order)
     .sort((a, b) => a - b);
+}
+
+/** 모든 칸을 마쳤으면 과정을 완주로 바꾼다. 레슨·퀴즈·마일스톤 완료 뒤에 부른다 */
+export async function syncCourseStatus(user: User, today: DayKey): Promise<boolean> {
+  const st = await loadState(user, today);
+  if (!st || st.course.status !== "active" || !st.view.finished) return false;
+  await prisma.course.update({ where: { id: st.course.id }, data: { status: "finished" } });
+  return true;
 }

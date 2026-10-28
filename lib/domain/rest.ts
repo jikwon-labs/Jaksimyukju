@@ -5,17 +5,49 @@ import { addDays, type DayKey, diffDays, mondayOf, weekday } from "./dates";
 /** 0 안 함, 1 5분 버전, 2 레슨 완료, 3 레슨 + 튜터 확인, 4 퀴즈·마일스톤까지 */
 export type GrassLevel = 0 | 1 | 2 | 3 | 4;
 
+export interface ScheduleChange {
+  from: DayKey;
+  days: number[];
+}
+
 export interface StudyCalendar {
   startDate: DayKey;
-  studyDays: number[]; // 0=일 ~ 6=토
+  studyDays: number[]; // 0=일 ~ 6=토 (지금 요일)
   restDays: ReadonlySet<DayKey>;
+  /** 학습 요일 변경 이력. 지난 날은 그때 정해 둔 요일로 판정한다 */
+  schedule?: ScheduleChange[];
 }
 
 export type DayKind = "study" | "off" | "rest";
 
+/** 그날 적용되던 학습 요일 */
+export function studyDaysOn(cal: StudyCalendar, day: DayKey): number[] {
+  let days = cal.studyDays;
+  let best: DayKey | null = null;
+  for (const c of cal.schedule ?? []) {
+    if (diffDays(day, c.from) >= 0 && (best === null || diffDays(c.from, best) > 0)) {
+      best = c.from;
+      days = c.days;
+    }
+  }
+  return days;
+}
+
 export function dayKind(cal: StudyCalendar, day: DayKey): DayKind {
   if (cal.restDays.has(day)) return "rest";
-  return cal.studyDays.includes(weekday(day)) ? "study" : "off";
+  return studyDaysOn(cal, day).includes(weekday(day)) ? "study" : "off";
+}
+
+/** 학습 요일을 바꿀 때 이력에 더할 항목. 처음 바꾸면 그 전 요일을 시작일부터로 먼저 남긴다 */
+export function nextSchedule(
+  current: ScheduleChange[],
+  startDate: DayKey,
+  oldDays: number[],
+  newDays: number[],
+  today: DayKey,
+): ScheduleChange[] {
+  const base = current.length ? current : [{ from: startDate, days: oldDays }];
+  return [...base.filter((c) => c.from !== today), { from: today, days: newDays }];
 }
 
 export interface ActivityInput {
@@ -167,7 +199,10 @@ export function pauseRemaining(used: number): number {
   return Math.max(0, PAUSE_LIMIT - used);
 }
 
-/** 쉬어 가기 예약 검사: 학습일만, 오늘 이후만, 한도 안에서 */
+/** 미리 쉴 수 있는 범위: 오늘부터 이만큼 뒤까지(이번 주 + 다음 주) */
+export const PAUSE_AHEAD_DAYS = 13;
+
+/** 쉬어 가기 예약 검사: 학습일만, 오늘부터 2주 안, 한도 안에서 */
 export function validatePause(
   cal: StudyCalendar,
   today: DayKey,
@@ -178,6 +213,7 @@ export function validatePause(
   if (days.length === 0) return { ok: false, reason: "쉴 날을 골라 주세요" };
   for (const d of days) {
     if (diffDays(d, today) < 0) return { ok: false, reason: "지난 날은 고를 수 없어요" };
+    if (diffDays(d, today) > PAUSE_AHEAD_DAYS) return { ok: false, reason: "다음 주까지만 미리 쉴 수 있어요" };
     if (dayKind(cal, d) === "off") return { ok: false, reason: "학습일만 고를 수 있어요" };
   }
   const fresh = days.filter((d) => !cal.restDays.has(d));

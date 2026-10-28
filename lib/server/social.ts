@@ -1,9 +1,9 @@
 import "server-only";
+import { notifyDecision } from "./notify";
 import type { User } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { getHour, TIME_ZONE } from "@/lib/clock";
-import { type DayKey, dayKeyAt, mondayOf, diffDays } from "@/lib/domain/dates";
-import { canNotify } from "@/lib/domain/limits";
+import { getHour } from "@/lib/clock";
+import { type DayKey, mondayOf, diffDays } from "@/lib/domain/dates";
 import {
   GROUP_MAX,
   inviteExpired,
@@ -168,16 +168,9 @@ export async function notifyGroup(
     include: { user: true },
   });
   const hour = await getHour();
-  const since = new Date(Date.now() - 2 * 86_400_000);
   let sent = 0;
   for (const o of others) {
-    const recent = await prisma.notification.findMany({
-      where: { userId: o.userId, createdAt: { gte: since } },
-      select: { createdAt: true },
-    });
-    const sentToday = recent.filter((r) => dayKeyAt(r.createdAt, TIME_ZONE) === today).length;
-    const resting = await prisma.restDay.count({ where: { userId: o.userId, day: today } });
-    const d = canNotify({ hour, sentToday, resting: resting > 0, enabled: o.user.notifyGroup });
+    const d = await notifyDecision(o.user, "group", today, hour);
     if (!d.ok) continue;
     await prisma.notification.create({
       data: { userId: o.userId, kind: n.kind, title: n.title, body: n.body, href: n.href ?? "/group" },

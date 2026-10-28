@@ -48,5 +48,5 @@ export default async function LessonPage({
       source: hostOf(r.url),
     })),
   };
-  return <LessonView lesson={payload} initialShort={sp.mode === "short"} />;
+  return <LessonView lesson={payload} initialShort={sp.mode === "short" || lesson.status === "summary"} />;
 }

@@ -5,11 +5,12 @@ import { z } from "zod";
 import { getAi } from "@/lib/ai";
 import type { CurriculumInput } from "@/lib/ai/types";
 import { createGuest, getSessionUser, signIn } from "@/lib/auth";
-import { getToday } from "@/lib/clock";
+import { devToolsEnabled, getToday } from "@/lib/clock";
 import { DEMO_INVITE } from "@/lib/constants";
 import { sortStudyDays } from "@/lib/domain/dates";
 import { prisma } from "@/lib/prisma";
 import { createCourse } from "./course";
+import { joinByCode } from "./social";
 
 /** /invite/[code]가 남기는 초대 코드 쿠키 */
 export const INVITE_COOKIE = "j6_invite";
@@ -40,7 +41,9 @@ export interface OnboardingSummary {
 
 /** 초대 쿠키(없으면 데모 그룹)의 그룹. 만료됐거나 없으면 null */
 export async function inviteGroup(now = new Date()) {
-  const code = (await cookies()).get(INVITE_COOKIE)?.value || DEMO_INVITE;
+  // 초대 쿠키가 없을 때 데모 그룹으로 보내는 것은 개발 모드에서만
+  const code = (await cookies()).get(INVITE_COOKIE)?.value || (devToolsEnabled() ? DEMO_INVITE : null);
+  if (!code) return null;
   const group = await prisma.group.findUnique({
     where: { inviteCode: code },
     include: { createdBy: { select: { id: true, name: true } } },
@@ -84,14 +87,14 @@ export async function startOnboarding(data: OnboardingInput): Promise<Onboarding
 
   await createCourse(user.id, input, plan, await getToday());
 
-  const group = await inviteGroup();
-  if (group) {
-    await prisma.groupMember.upsert({
-      where: { groupId_userId: { groupId: group.id, userId: user.id } },
-      create: { groupId: group.id, userId: user.id, visibility: "grass_topic" },
-      update: {},
-    });
-  }
+  // 초대 링크로 왔으면 그 그룹에, 아직 그룹이 없으면 기본 초대 그룹에 들어간다.
+  // 그룹 규칙(최대 인원, 한 사람 한 그룹, 공개 범위 기본 "잔디만")은 joinByCode가 지킨다
+  const jar = await cookies();
+  const invited = jar.get(INVITE_COOKIE)?.value;
+  const inGroup = await prisma.groupMember.count({ where: { userId: user.id } });
+  const group = invited || inGroup === 0 ? await inviteGroup() : null;
+  if (group) await joinByCode(user, group.inviteCode, await getToday());
+  if (invited) jar.delete(INVITE_COOKIE);
 
   return {
     teacher: data.teacher,

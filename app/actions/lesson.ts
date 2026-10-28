@@ -6,6 +6,7 @@ import { getSessionUser, linkAccount } from "@/lib/auth";
 import { getHour, getNow, getToday } from "@/lib/clock";
 import { cleanOneLiner, type CompleteMode, isEmail } from "@/lib/domain/lesson";
 import { prisma } from "@/lib/prisma";
+import { syncCourseStatus } from "@/lib/server/course";
 import { completeLesson, notifyGroupDone } from "@/lib/server/lesson";
 
 function revalidateLoop(lessonId: string) {
@@ -19,8 +20,10 @@ function revalidateLoop(lessonId: string) {
 export async function completeLessonAction(lessonId: string, mode: CompleteMode): Promise<void> {
   const user = await getSessionUser();
   if (!user) redirect("/");
-  const r = await completeLesson(user, lessonId, mode === "short" ? "short" : "full", await getToday(), await getNow());
+  const today = await getToday();
+  const r = await completeLesson(user, lessonId, mode === "short" ? "short" : "full", today, await getNow());
   if (!r.ok) redirect("/home");
+  await syncCourseStatus(user, today);
   revalidateLoop(lessonId);
   redirect(`/lesson/${lessonId}/complete`);
 }

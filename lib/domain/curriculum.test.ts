@@ -205,3 +205,32 @@ describe("목적지 도착", () => {
     expect(stepsLeft(v.weeks)).toBe(v.weeks.flatMap((w) => w.steps).length - 6 - 3);
   });
 });
+
+describe("복귀 재조정으로 닫힌 레슨", () => {
+  it("요약으로 넘긴 레슨과 합친 레슨을 설명 카드와 목록 태그에 드러낸다", async () => {
+    const { buildCourseView } = await import("./course");
+    const { popoverInfo, listDays } = await import("./curriculum");
+    const v = buildCourseView(
+      [
+        {
+          index: 1,
+          goal: "기본",
+          milestoneTitle: "요약",
+          lessons: [
+            { id: "a", order: 0, title: "가", status: "summary", minutes: 10 },
+            { id: "b", order: 1, title: "나", status: "merged", minutes: 10 },
+            { id: "c", order: 2, title: "다", status: "todo", minutes: 15 },
+          ],
+          quizScore: null,
+          milestoneDone: false,
+        },
+      ],
+      [1, 2, 3, 4],
+    );
+    const [a, b] = v.weeks[0].steps;
+    expect(a.closed).toBe("summary");
+    expect(popoverInfo(a).meta).toContain("3분 요약 카드");
+    expect(popoverInfo(b).kicker).toContain("다음 레슨에 합침");
+    expect(listDays(v.weeks[0], 1).map((d) => d.tag).slice(0, 2)).toEqual(["요약", "합침"]);
+  });
+});

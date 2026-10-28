@@ -1,9 +1,11 @@
 import "server-only";
-import type { User } from "@prisma/client";
+import type { Prisma, User } from "@prisma/client";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { MINUTE_OPTIONS, normalizeTime } from "@/lib/domain/prefs";
-import { sortStudyDays } from "@/lib/domain/dates";
+import { parseStudyDays, sortStudyDays } from "@/lib/domain/dates";
+import { nextSchedule, type ScheduleChange } from "@/lib/domain/rest";
+import { getToday } from "@/lib/clock";
 
 export const settingsSchema = z
   .object({
@@ -24,6 +26,24 @@ export async function updateSettings(user: User, patch: unknown): Promise<User |
   const parsed = settingsSchema.safeParse(patch);
   if (!parsed.success) return null;
   const p = parsed.data;
+  if (p.studyDays) {
+    // 진행 중 과정에 요일 변경 이력을 남겨, 지난 날의 연속·복귀 판정이 바뀌지 않게 한다
+    const course = await prisma.course.findFirst({ where: { userId: user.id, status: "active" }, orderBy: { createdAt: "desc" } });
+    if (course) {
+      const today = await getToday();
+      const schedule = nextSchedule(
+        course.schedule as unknown as ScheduleChange[],
+        course.startDate,
+        parseStudyDays(user.studyDays),
+        sortStudyDays(p.studyDays),
+        today,
+      );
+      await prisma.course.update({
+        where: { id: course.id },
+        data: { schedule: schedule as unknown as Prisma.InputJsonValue },
+      });
+    }
+  }
   return prisma.user.update({
     where: { id: user.id },
     data: {

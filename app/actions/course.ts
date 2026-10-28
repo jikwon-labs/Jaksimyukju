@@ -1,5 +1,6 @@
 "use server";
 
+import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import { getSessionUser } from "@/lib/auth";
@@ -8,7 +9,7 @@ import { AiError, getAi, type MilestoneFeedback } from "@/lib/ai";
 import { MILESTONE_MAX, normalizeFeedback } from "@/lib/domain/milestone";
 import { scoreQuiz } from "@/lib/domain/quiz";
 import { prisma } from "@/lib/prisma";
-import { quizOf, teacherOf } from "@/lib/server/course";
+import { quizOf, syncCourseStatus, teacherOf } from "@/lib/server/course";
 import { criteriaOf, weekAccess } from "@/lib/server/progress";
 
 /** 개발·E2E에서 AI 실패 화면을 보려면 이 쿠키를 1로 둔다 */
@@ -25,7 +26,14 @@ function refresh(week: number) {
 
 export type QuizResult = { ok: true; score: number } | { ok: false; message: string };
 
+const QuizInput = z.object({
+  week: z.number().int().min(1).max(52),
+  picks: z.array(z.number().int().min(0).max(9)).max(10),
+});
+
 export async function submitQuizAction(week: number, picks: number[]): Promise<QuizResult> {
+  const input = QuizInput.safeParse({ week, picks });
+  if (!input.success) return { ok: false, message: "답을 다시 골라 주세요" };
   const user = await getSessionUser();
   if (!user) return { ok: false, message: "다시 들어와 주세요" };
   const today = await getToday();
@@ -37,6 +45,7 @@ export async function submitQuizAction(week: number, picks: number[]): Promise<Q
   await prisma.quizAttempt.create({
     data: { weekId: access.week.id, score: scored.score, answers: scored.answers.map((a) => ({ choice: a.choice, correct: a.correct })), day: today },
   });
+  await syncCourseStatus(user, today);
   refresh(week);
   return { ok: true, score: scored.score };
 }
@@ -83,12 +92,7 @@ export async function submitMilestoneAction(week: number, content: string): Prom
       day: today,
     },
   });
-  if (feedback.passed && access.last) {
-    const remaining = st.view.weeks.flatMap((w) => w.steps).filter((s) => s.state !== "done" && s.state !== "five" && !(s.kind === "goal" && s.week === week));
-    if (remaining.length === 0) {
-      await prisma.course.update({ where: { id: st.course.id }, data: { status: "finished" } });
-    }
-  }
+  if (feedback.passed) await syncCourseStatus(user, today);
   refresh(week);
   return { ok: true, feedback, round, content: text };
 }

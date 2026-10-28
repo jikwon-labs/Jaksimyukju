@@ -190,3 +190,12 @@ test("9. 초대 링크로 들어와 시작하면 그 그룹에 들어간다", as
   await expect(page.getByTestId("group-member-민지")).toBeVisible();
   await shot(page, info, "16-invite-group");
 });
+
+test("10. 세션 쿠키에 다른 사람 id를 넣어도 그 사람으로 들어가지지 않는다", async ({ page, context }) => {
+  for (const name of ["j6_session", "j6_uid"]) {
+    await context.clearCookies();
+    await context.addCookies([{ name, value: "demo-junho", domain: "localhost", path: "/" }]);
+    await page.goto("/home");
+    await expect(page).toHaveURL(/\/$/);
+  }
+});
