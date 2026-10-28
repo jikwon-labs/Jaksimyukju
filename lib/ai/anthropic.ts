@@ -111,7 +111,9 @@ export function createAnthropicProvider(apiKey: string): AiProvider {
           max_tokens: 2000,
           system: systemPrompt(
             input.teacher,
-            `Tutor. 레슨 "${input.lessonTitle}"(핵심: ${input.core})을 이해했는지 되묻는다. 답을 바로 주지 않고 한 번에 질문 하나만 한다. 두 번 제대로 답하면 마무리하고 done=true.`,
+            input.free
+              ? `Tutor. 레슨 "${input.lessonTitle}"(핵심: ${input.core}) 확인은 끝났고 사용자가 자유롭게 묻는다. 답을 바로 주지 않고 스스로 찾게 되묻는다. 한 번에 질문 하나. done=true, understanding="이해".`
+              : `Tutor. 레슨 "${input.lessonTitle}"(핵심: ${input.core})을 이해했는지 되묻는다. 답을 바로 주지 않고 한 번에 질문 하나만 한다. 두 번 제대로 답하면 마무리하고 done=true.`,
           ),
           messages:
             input.history.length === 0

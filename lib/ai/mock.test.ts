@@ -72,3 +72,18 @@ describe("mock 마일스톤", () => {
     expect(r.headline).toContain("3주차");
   });
 });
+
+describe("mock 튜터: 확인 뒤 자유 질문", () => {
+  it("답을 바로 주지 않고 되묻는다", () => {
+    const r = mockTutor({
+      teacher: "온",
+      lessonTitle: "현금흐름표는 왜 손익계산서와 다를까",
+      core: "",
+      free: true,
+      history: [{ role: "user", content: "감가상각은 왜 현금이 안 나가요?" }],
+    });
+    expect(r.done).toBe(true);
+    expect(r.content).toContain("감가상각은 왜 현금이 안 나가요?");
+    expect(r.content.trim().endsWith("?")).toBe(true);
+  });
+});

@@ -59,6 +59,11 @@ test("1. 처음 시작부터 첫 레슨 완료: 잔디 한 칸, 연속 1", async
     await expect(page.getByTestId("tutor-input")).toHaveValue("");
   }
   await expect(page.getByTestId("tutor-complete")).toBeVisible({ timeout: 15_000 });
+  // F6: 확인이 끝난 뒤에도 아무 때나 물을 수 있다. 튜터는 답 대신 되묻는다
+  await page.getByTestId("tutor-input").fill("보정할 때 색온도는 왜 먼저 봐요?");
+  await page.getByTestId("tutor-send").click();
+  await expect(page.getByText(/색온도는 왜 먼저 봐요/).last()).toBeVisible();
+  await expect(page.getByText(/떠올려 볼래요\?/)).toBeVisible({ timeout: 15_000 });
   await page.getByTestId("tutor-complete").click();
   await expect(page).toHaveURL(/\/complete/);
   await shot(page, info, "04-complete");

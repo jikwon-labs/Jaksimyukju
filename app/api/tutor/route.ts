@@ -34,7 +34,9 @@ export async function POST(req: NextRequest) {
   const reply = (status = 200, error?: "ai", done = lesson.tutorChecked) =>
     NextResponse.json<TutorResponse>({ messages: history.map(view), done, error }, { status });
 
-  if (lesson.tutorChecked) return reply();
+  // 확인이 끝난 뒤에는 아무 때나 묻는 질문만 받는다(F6)
+  const free = lesson.tutorChecked;
+  if (free && !text) return reply();
   if (text) {
     await prisma.tutorMessage.create({ data: { lessonId, role: "user", content: text } });
     history = await load();
@@ -52,6 +54,7 @@ export async function POST(req: NextRequest) {
       lessonTitle: lesson.title,
       core: lessonBody(lesson.body).core,
       history: turns,
+      free,
     });
     // AI가 답을 쓰는 사이 다른 요청(새로고침, 두 번째 탭)이 먼저 답을 저장했으면 이 답은 버린다
     const saved = await prisma.$transaction(async (tx) => {
@@ -60,11 +63,11 @@ export async function POST(req: NextRequest) {
       await tx.tutorMessage.create({
         data: { lessonId, role: "ai", content: r.content, understanding: r.understanding },
       });
-      if (r.done) await tx.lesson.update({ where: { id: lessonId }, data: { tutorChecked: true } });
+      if (r.done && !free) await tx.lesson.update({ where: { id: lessonId }, data: { tutorChecked: true } });
       return true;
     });
     history = await load();
-    const done = saved ? r.done : (await prisma.lesson.findUnique({ where: { id: lessonId } }))?.tutorChecked ?? false;
+    const done = free || (saved ? r.done : ((await prisma.lesson.findUnique({ where: { id: lessonId } }))?.tutorChecked ?? false));
     return reply(200, undefined, done);
   } catch (e) {
     if (!(e instanceof AiError)) console.error("tutor", e);

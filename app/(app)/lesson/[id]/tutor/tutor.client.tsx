@@ -86,7 +86,7 @@ export function TutorChat({
   function send(e: React.FormEvent) {
     e.preventDefault();
     const text = draft.trim();
-    if (!text || thinking || done) return;
+    if (!text || thinking) return;
     setDraft("");
     setFailed(false);
     setThinking(true);
@@ -185,11 +185,10 @@ export function TutorChat({
         <input
           id="tutor-input"
           className={s.input}
-          placeholder={done ? "오늘 확인은 끝났어요" : "내 생각을 적어 보세요"}
+          placeholder={done ? "더 궁금한 게 있으면 물어보세요" : "내 생각을 적어 보세요"}
           autoComplete="off"
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
-          disabled={done}
           maxLength={1000}
           data-testid="tutor-input"
         />
@@ -197,7 +196,7 @@ export function TutorChat({
           type="submit"
           aria-label="보내기"
           className={s.send}
-          disabled={done || thinking || !draft.trim()}
+          disabled={thinking || !draft.trim()}
           data-testid="tutor-send"
         >
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">

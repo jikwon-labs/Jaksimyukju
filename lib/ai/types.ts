@@ -61,6 +61,8 @@ export interface TutorInput {
   lessonTitle: string;
   core: string;
   history: TutorTurn[];
+  /** 확인이 끝난 뒤 사용자가 아무 때나 묻는 질문(F6). 답을 바로 주지 않고 되묻는다 */
+  free?: boolean;
 }
 
 export interface TutorReply {

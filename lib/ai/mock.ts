@@ -143,8 +143,19 @@ export function mockCurriculum(input: CurriculumInput): CurriculumPlan {
   };
 }
 
+const FREE_REPLY: Record<TutorInput["teacher"], (q: string) => string> = {
+  온: (q) => `좋은 질문이에요. "${q}"에 답하기 전에, 오늘 레슨의 핵심 한 줄과 어떻게 이어지는지 먼저 떠올려 볼래요?`,
+  결: (q) => `"${q}" 답은 레슨 안에 있습니다. 핵심 한 줄에서 어떤 단어가 단서인지 먼저 짚어 보세요.`,
+  새: (q) => `오, "${q}"! 그거 탐험해 볼 만해요. 내 일에서 비슷한 장면을 하나 찾으면 답이 보일 거예요. 어떤 장면이 떠올라요?`,
+};
+
 export function mockTutor(input: TutorInput): TutorReply {
   const L = LINES[input.teacher];
+  if (input.free) {
+    const last = [...input.history].reverse().find((h) => h.role === "user")?.content.trim() ?? "";
+    const q = last.length > 24 ? `${last.slice(0, 24)}...` : last;
+    return { content: FREE_REPLY[input.teacher](q), understanding: "이해", done: true };
+  }
   const finance = input.lessonTitle === "현금흐름표는 왜 손익계산서와 다를까";
   const userTurns = input.history.filter((h) => h.role === "user");
   const first = finance
