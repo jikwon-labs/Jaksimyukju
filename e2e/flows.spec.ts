@@ -88,10 +88,15 @@ test("4. 쉬어 가기 예약: 연속이 유지된다", async ({ page }, info) =
   const d1 = nthStudyDayAfter(addDays(today, -1), 1);
   const d2 = nthStudyDayAfter(addDays(today, -1), 2);
   await page.goto("/pause");
+  // 목업 기본값(다음 주 5일)을 모두 풀고 이틀만 고른다
+  const pressed = page.locator('[data-testid^="pause-day-"][aria-pressed="true"]');
+  while ((await pressed.count()) > 0) await pressed.first().click();
   await page.getByTestId(`pause-day-${d1}`).click();
   await page.getByTestId(`pause-day-${d2}`).click();
+  await expect(page.getByTestId("pause-submit")).toContainText("2일 쉬어 가기");
   await shot(page, info, "08-pause");
   await page.getByTestId("pause-submit").click();
+  await expect(page.getByText("2일 쉬어 가기를 예약했어요")).toBeVisible();
   const after = nthStudyDayAfter(d2, 1);
   await loginDemo(page, "/home", after);
   await expect(page).toHaveURL(/\/home/);
