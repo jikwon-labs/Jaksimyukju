@@ -1,0 +1,114 @@
+.grassWrap {
+  display: flex;
+  gap: 6px;
+}
+.grassDays {
+  display: grid;
+  width: 12px;
+  font-size: 10.5px;
+  color: var(--sub);
+  text-align: right;
+}
+.grass {
+  display: grid;
+  grid-auto-flow: column;
+}
+.cell {
+  display: block;
+  box-sizing: border-box;
+  background: var(--future);
+}
+.cell[data-kind="level"][data-level="0"] {
+  background: transparent;
+  border: 1.5px solid var(--line);
+}
+.cell[data-kind="level"][data-level="1"],
+.cell[data-kind="today"][data-level="1"] {
+  background: var(--g1);
+}
+.cell[data-kind="level"][data-level="2"],
+.cell[data-kind="today"][data-level="2"] {
+  background: var(--g2);
+}
+.cell[data-kind="level"][data-level="3"],
+.cell[data-kind="today"][data-level="3"] {
+  background: var(--g3);
+}
+.cell[data-kind="level"][data-level="4"],
+.cell[data-kind="today"][data-level="4"] {
+  background: var(--g4);
+}
+.cell[data-kind="off"] {
+  background: transparent;
+  border: 1px dashed var(--line);
+}
+.cell[data-kind="rest"] {
+  background: repeating-linear-gradient(135deg, transparent 0 3px, var(--line) 3px 4px);
+  border: 1px dashed var(--line);
+}
+.cell[data-kind="today"] {
+  background: var(--surface);
+  border: 2px solid var(--a-text);
+}
+.cell[data-kind="today"]:not([data-level="0"]) {
+  border: 2px solid var(--a-text);
+}
+
+.path {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 36px;
+  margin-right: 96px;
+  text-decoration: none;
+}
+.pathTrack,
+.pathFill {
+  position: absolute;
+  left: 14px;
+  top: 16px;
+  height: 4px;
+  border-radius: 2px;
+}
+.pathTrack {
+  right: 14px;
+  background: var(--line);
+}
+.pathFill {
+  background: var(--a-text);
+}
+.pathNode {
+  position: relative;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface);
+  border: 2px solid var(--line);
+  stroke: var(--sub);
+}
+.pathNode[data-state="done"],
+.pathNode[data-state="five"],
+.pathNode[data-state="today"] {
+  background: var(--a-btn-bg);
+  border: none;
+  stroke: var(--a-btn-ink);
+}
+.pathNode[data-state="five"] {
+  opacity: 0.7;
+}
+.pathNode[data-state="today"] {
+  width: 34px;
+  height: 34px;
+  box-shadow: 0 3px 0 var(--a-shadow);
+}
+.pathPulse {
+  position: absolute;
+  inset: -2px;
+  border-radius: 50%;
+  border: 2px solid var(--a-text);
+}

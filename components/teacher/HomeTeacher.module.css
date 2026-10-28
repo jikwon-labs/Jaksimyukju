@@ -1,0 +1,19 @@
+.peek {
+  position: absolute;
+  top: -66px;
+  right: 18px;
+  pointer-events: none;
+}
+:global(html[data-theme="dark"]) .glasses,
+:global(html[data-theme="light"]) .flash,
+:global(html[data-theme="system"]) .flash {
+  display: none;
+}
+@media (prefers-color-scheme: dark) {
+  :global(html[data-theme="system"]) .flash {
+    display: inline;
+  }
+  :global(html[data-theme="system"]) .glasses {
+    display: none;
+  }
+}

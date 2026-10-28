@@ -1,0 +1,40 @@
+.wrap {
+  position: relative;
+  flex: none;
+}
+.btn {
+  height: 44px;
+  padding: 0 14px;
+  border: none;
+  border-radius: 14px;
+  background: var(--a-tint);
+  color: var(--a-text);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.btn[aria-disabled="true"] {
+  background: var(--future);
+  color: var(--sub);
+}
+.btn:focus-visible {
+  outline: 3px solid var(--a-text);
+  outline-offset: 2px;
+}
+.toast {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 8px);
+  width: max-content;
+  max-width: 240px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: var(--ink);
+  color: var(--bg);
+  font-size: 12px;
+  line-height: 17px;
+  z-index: 5;
+}
+.hidden {
+  display: none;
+}
