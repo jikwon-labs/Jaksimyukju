@@ -66,21 +66,23 @@ model GroupMember {
 }
 
 model Course {
-  id         String    @id @default(cuid())
-  userId     String
-  topic      String
-  goal       String
-  level      String
-  excludes   Json      @default("[]")
-  status     String    @default("active") // active | finished | stopped
-  startDate  String // YYYY-MM-DD (사용자 기준 날짜)
-  weeksCount Int       @default(6)
-  extraDays  Int       @default(0) // 미루기·쉬어 가기로 늘어난 학습일
-  createdAt  DateTime  @default(now())
-  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  weeks      Week[]
-  lessons    Lesson[]
-  restDays   RestDay[]
+  id          String    @id @default(cuid())
+  userId      String
+  topic       String
+  goal        String
+  level       String
+  excludes    Json      @default("[]")
+  status      String    @default("active") // active | finished | stopped
+  startDate   String // YYYY-MM-DD (사용자 기준 날짜)
+  weeksCount  Int       @default(6)
+  extraDays   Int       @default(0) // 미루기·쉬어 가기로 늘어난 학습일
+  comebackDay String? // 복귀 화면에서 재조정을 고른 날
+  replan      String? // 마지막 재조정: delay | squeeze | skip
+  createdAt   DateTime  @default(now())
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  weeks       Week[]
+  lessons     Lesson[]
+  restDays    RestDay[]
 
   @@index([userId])
   @@map("courses")
