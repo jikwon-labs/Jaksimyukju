@@ -36,6 +36,13 @@ pnpm dev        # http://localhost:3100
 - 공급자 콘솔에 등록할 리다이렉트 URI: `{APP_URL}/api/auth/kakao/callback`, `{APP_URL}/api/auth/google/callback` (로컬은 `http://localhost:3100/...`). 구글 범위는 `openid email profile`. 카카오는 동의 항목을 콘솔에서 정한다(이메일은 비즈 앱에서만 받을 수 있어 없어도 동작).
 - 코드: 순수 함수 `lib/domain/oauth.ts`, 공급자 설정과 교환 `lib/server/oauth.ts`, 연결·로그인 `lib/auth.ts`(`linkSocial`, `findSocialUser`), 라우트 `app/api/auth/[provider]/{start,callback}`.
 
+## 스케줄러(알림)
+
+- `POST /api/cron/tick`(GET도 됨) 한 번에, 진행 중 과정이 있는 사용자마다 선생님 알림을 만든다: 학습 시각이 지났는데 오늘 칸이 비면 "학습 시간", 학습일 하루를 비웠으면 다음 날 한 번, 일요일 주간 회고.
+- 하루 2번, 밤 11시~아침 7시, 쉬어 가기 날, 종류별 끔을 지키고 같은 알림은 한 번만 남긴다. 실제 푸시는 보내지 않고 알림 목록에만 남긴다(붙일 자리: `lib/server/scheduler.ts`).
+- 로컬: 서버를 띄운 채 `pnpm cron:tick`. 개발 모드에서는 `?now=2026-11-02T21:10:00%2B09:00`로 시각을 흉내 낼 수 있다.
+- 운영: `CRON_SECRET`을 넣고 외부 cron이 10~30분마다 `Authorization: Bearer <CRON_SECRET>`로 부른다. 비밀이 없으면 운영에서는 401.
+
 ## 스크립트
 
 | 명령 | 하는 일 |

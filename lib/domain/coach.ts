@@ -1,4 +1,4 @@
-// 앱을 열 때 선생님이 남기는 알림(Coach). 푸시·스케줄러가 없는 대신 알림 목록에만 남긴다.
+// 선생님이 남기는 알림(Coach). 앱을 열 때와 스케줄러(/api/cron/tick)가 부른다. 실제 푸시는 보내지 않고 알림 목록에 남긴다.
 import type { TeacherName } from "@/lib/design/types";
 import { diffDays, mondayOf, weekday, type DayKey } from "./dates";
 
@@ -21,6 +21,19 @@ export const RETRO_LINE: Record<TeacherName, string> = {
   새: "이번 주에 배운 걸 엉뚱한 데랑 이어 볼 시간이에요!",
 };
 
+/** 학습 시각이 됐는데 오늘 칸이 비어 있을 때(스케줄러만 남긴다) */
+export const STUDY_LINE: Record<TeacherName, string> = {
+  온: "약속한 학습 시간이에요. 오늘 한 칸, 같이 채워요.",
+  결: "학습 시간입니다. 오늘 분량을 시작합니다.",
+  새: "학습 시간이에요! 오늘은 뭘 알게 될까요?",
+};
+
+/** "21:00" -> 21 */
+export function notifyHourOf(time: string): number {
+  const h = Number(time.split(":")[0]);
+  return Number.isInteger(h) && h >= 0 && h <= 23 ? h : 21;
+}
+
 export interface CoachInput {
   today: DayKey;
   /** 어제부터 거꾸로 이어진 빈 학습일 수 */
@@ -33,10 +46,14 @@ export interface CoachInput {
   sent: { key: string; day: DayKey }[];
   /** 이번 주(월요일 기준) 회고를 이미 했는지 */
   retroDoneThisWeek: boolean;
+  /** 오늘이 학습일인지 */
+  studyDay?: boolean;
+  /** 스케줄러가 학습 시각 이후에 불렀는지(앱을 열 때는 학습 시간 알림을 남기지 않는다) */
+  remind?: boolean;
 }
 
 export interface CoachNote {
-  key: "missed_one" | "retro";
+  key: "missed_one" | "retro" | "study";
   kind: "teacher" | "retro";
   href: string;
   /** 같은 빈 날·같은 주에 한 번만 남기기 위한 키 */
@@ -47,7 +64,7 @@ export interface CoachNote {
 
 /**
  * 남길 알림. 학습일 1일 빔이면 다음 날 선생님 알림 한 번(2일 이상은 복귀 화면이 맡는다),
- * 일요일이면 주간 회고 알림 한 번.
+ * 일요일이면 주간 회고 알림 한 번, 스케줄러가 학습 시각 뒤에 부르면 비어 있는 학습일에 학습 시간 알림 한 번.
  */
 export function coachNotes(i: CoachInput): CoachNote[] {
   const out: CoachNote[] = [];
@@ -63,6 +80,9 @@ export function coachNotes(i: CoachInput): CoachNote[] {
       dedupe: `missed_one:${missedDay}`,
       yesterday: diffDays(i.today, missedDay) === 1,
     });
+  }
+  if (i.remind && i.studyDay && !i.studiedToday && !i.sent.some((s) => s.key === "study" && s.day === i.today)) {
+    out.push({ key: "study", kind: "teacher", href: "/home", dedupe: `study:${i.today}` });
   }
   const week = mondayOf(i.today);
   const retroSent = i.sent.some((s) => s.key === "retro" && mondayOf(s.day) === week);

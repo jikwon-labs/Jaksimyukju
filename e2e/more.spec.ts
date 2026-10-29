@@ -503,3 +503,28 @@ test("26c. 기록이 있는 게스트가 다른 계정으로 들어가려 하면
   await page.getByRole("button", { name: /알겠어요/ }).click();
   await expect(page.getByTestId("login-kakao")).toBeVisible();
 });
+
+test("27. 스케줄러: 학습 시각이 지나면 학습 시간 알림을 하루 한 번 남기고, 밤 11시 뒤에는 남기지 않는다", async ({ page }) => {
+  const tick = async (day: string, time: string) => {
+    const r = await page.request.post(`/api/cron/tick?now=${encodeURIComponent(`${day}T${time}:00+09:00`)}`);
+    expect(r.ok()).toBe(true);
+  };
+  // 시드 알림이 시드 날에 이미 있어서 다음 학습일부터 본다. 데모의 알림 시각은 21:00
+  const d1 = nthStudyDayAfter(seedToday(), 1);
+  const d2 = nthStudyDayAfter(seedToday(), 2);
+  const study = page.getByText("약속한 학습 시간이에요");
+  const expectStudy = async (n: number) => {
+    await loginDemo(page, "/notifications", d2);
+    await expect(study).toHaveCount(n);
+  };
+  await tick(d1, "20:30"); // 알림 시각 전
+  await expectStudy(0);
+  await tick(d1, "21:10");
+  await expectStudy(1);
+  await tick(d1, "21:40"); // 같은 날 두 번째 tick
+  await expectStudy(1);
+  await tick(d2, "23:30"); // 밤 11시 뒤
+  await expectStudy(1);
+  await tick(d2, "21:10"); // 같은 날 학습 시각에는 남는다
+  await expectStudy(2);
+});

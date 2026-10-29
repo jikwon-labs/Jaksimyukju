@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { coachNotes } from "./coach";
+import { coachNotes, notifyHourOf } from "./coach";
 
 const base = { today: "2026-10-29", missedDay: null as string | null, missed: 0, studiedToday: false, restingToday: false, sent: [], retroDoneThisWeek: false };
 
@@ -33,5 +33,30 @@ describe("앱을 열 때 선생님 알림", () => {
     expect(coachNotes({ ...sun, retroDoneThisWeek: true })).toEqual([]);
     expect(coachNotes({ ...sun, sent: [{ key: "retro", day: "2026-11-01" }] })).toEqual([]);
     expect(coachNotes({ ...base, today: "2026-10-31" })).toEqual([]); // 토요일
+  });
+});
+
+describe("스케줄러의 학습 시간 알림", () => {
+  // 2026-10-29는 목요일(학습일)
+  const due = { ...base, studyDay: true, remind: true };
+
+  it("학습 시각 뒤 비어 있는 학습일에 한 번", () => {
+    expect(coachNotes(due).map((n) => n.key)).toEqual(["study"]);
+    expect(coachNotes(due)[0].dedupe).toBe("study:2026-10-29");
+  });
+  it("앱을 열 때(remind 없음), 이미 했을 때, 쉬는 요일, 쉬어 가기 날에는 없다", () => {
+    expect(coachNotes({ ...due, remind: false })).toEqual([]);
+    expect(coachNotes({ ...due, studiedToday: true })).toEqual([]);
+    expect(coachNotes({ ...due, studyDay: false })).toEqual([]);
+    expect(coachNotes({ ...due, restingToday: true })).toEqual([]);
+  });
+  it("같은 날 이미 남겼으면 다시 남기지 않는다", () => {
+    expect(coachNotes({ ...due, sent: [{ key: "study", day: "2026-10-29" }] })).toEqual([]);
+    expect(coachNotes({ ...due, sent: [{ key: "study", day: "2026-10-28" }] }).map((n) => n.key)).toEqual(["study"]);
+  });
+  it("알림 시각 문자열에서 시를 꺼낸다", () => {
+    expect(notifyHourOf("21:00")).toBe(21);
+    expect(notifyHourOf("07:30")).toBe(7);
+    expect(notifyHourOf("bad")).toBe(21);
   });
 });

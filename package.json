@@ -13,7 +13,8 @@
     "e2e": "playwright test",
     "db:reset": "prisma generate && prisma db push --skip-generate && tsx prisma/seed.ts",
     "postinstall": "prisma generate",
-    "check:offline": "node scripts/check-offline.mjs"
+    "check:offline": "node scripts/check-offline.mjs",
+    "cron:tick": "node scripts/cron-tick.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.3.0",
