@@ -448,3 +448,18 @@ test("24. 과정을 마치면 수료 카드를 PNG로 저장한다", async ({ pa
   await loginDemo(page, "/home", nthStudyDayAfter(seedToday(), 5));
   await expect(page).toHaveURL(/\/home/);
 });
+
+test("25. 초대 링크는 7일 동안만 열린다", async ({ page, context }) => {
+  // 시드 그룹 초대는 시드를 넣은 때부터 7일. 개발용 오늘(j6_now, 그날 오후 8시)로 앞뒤를 본다
+  await context.addCookies([{ name: "j6_now", value: addDays(seedToday(), 6), domain: "localhost", path: "/" }]);
+  await page.goto("/invite/JAKSIM6");
+  await expect(page.getByRole("heading", { name: "초대 링크가 만료됐어요" })).toHaveCount(0);
+  await expect(page.getByText("퇴근 후 공부방").first()).toBeVisible();
+
+  await context.addCookies([{ name: "j6_now", value: addDays(seedToday(), 8), domain: "localhost", path: "/" }]);
+  await page.goto("/invite/JAKSIM6");
+  await expect(page.getByRole("heading", { name: "초대 링크가 만료됐어요" })).toBeVisible();
+  // 첫 화면의 초대 문구도 사라진다
+  await page.goto("/");
+  await expect(page.getByTestId("inviter")).toHaveCount(0);
+});

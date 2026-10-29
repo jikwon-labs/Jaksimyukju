@@ -2,7 +2,7 @@ import "server-only";
 import { notifyDecision } from "./notify";
 import type { User } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { getHour } from "@/lib/clock";
+import { getHour, getNow } from "@/lib/clock";
 import { type DayKey, mondayOf, diffDays } from "@/lib/domain/dates";
 import {
   GROUP_MAX,
@@ -65,7 +65,7 @@ export async function ensureGroup(user: User) {
     data: {
       name: "퇴근 후 공부방",
       inviteCode: await uniqueCode(),
-      inviteExpiresAt: inviteExpiry(new Date()),
+      inviteExpiresAt: inviteExpiry(await getNow()),
       createdById: user.id,
       members: { create: { userId: user.id, visibility: "grass" } },
     },
@@ -79,7 +79,7 @@ export async function regenerateInvite(user: User) {
   const g = await ensureGroup(user);
   return prisma.group.update({
     where: { id: g.id },
-    data: { inviteCode: await uniqueCode(), inviteExpiresAt: inviteExpiry(new Date()) },
+    data: { inviteCode: await uniqueCode(), inviteExpiresAt: inviteExpiry(await getNow()) },
   });
 }
 
@@ -107,7 +107,7 @@ export async function lookupInvite(code: string, today: DayKey): Promise<InviteL
     include: { createdBy: true, members: { include: { user: true }, orderBy: { joinedAt: "asc" } } },
   });
   if (!group) return { ok: false, reason: "unknown" };
-  if (inviteExpired(group.inviteExpiresAt, new Date())) return { ok: false, reason: "expired" };
+  if (inviteExpired(group.inviteExpiresAt, await getNow())) return { ok: false, reason: "expired" };
   const mon = mondayOf(today);
   let weekCells = 0;
   for (const m of group.members) {

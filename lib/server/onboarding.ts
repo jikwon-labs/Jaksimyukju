@@ -5,7 +5,7 @@ import { z } from "zod";
 import { getAi } from "@/lib/ai";
 import type { CurriculumInput } from "@/lib/ai/types";
 import { createGuest, getSessionUser, signIn } from "@/lib/auth";
-import { devToolsEnabled, getToday } from "@/lib/clock";
+import { devToolsEnabled, getNow, getToday } from "@/lib/clock";
 import { DEMO_INVITE } from "@/lib/constants";
 import { sortStudyDays } from "@/lib/domain/dates";
 import { nickname } from "@/lib/domain/nickname";
@@ -41,7 +41,7 @@ export interface OnboardingSummary {
 }
 
 /** 초대 쿠키(없으면 데모 그룹)의 그룹. 만료됐거나 없으면 null */
-export async function inviteGroup(now = new Date()) {
+export async function inviteGroup(now?: Date) {
   // 초대 쿠키가 없을 때 데모 그룹으로 보내는 것은 개발 모드에서만
   const code = (await cookies()).get(INVITE_COOKIE)?.value || (devToolsEnabled() ? DEMO_INVITE : null);
   if (!code) return null;
@@ -49,7 +49,7 @@ export async function inviteGroup(now = new Date()) {
     where: { inviteCode: code },
     include: { createdBy: { select: { id: true, name: true } } },
   });
-  if (!group || group.inviteExpiresAt <= now) return null;
+  if (!group || group.inviteExpiresAt <= (now ?? (await getNow()))) return null;
   return group;
 }
 
