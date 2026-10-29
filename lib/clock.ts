@@ -7,7 +7,8 @@ export const TIME_ZONE = "Asia/Seoul";
 
 /** 개발·E2E에서만 시간 조작 쿠키를 읽는다 */
 export function devToolsEnabled(): boolean {
-  return process.env.NODE_ENV !== "production" || process.env.J6_DEV_TOOLS === "1";
+  // 운영 빌드에서는 어떤 환경 변수로도 열지 않는다(가짜 로그인·날짜 바꾸기는 곧 계정 탈취다)
+  return process.env.NODE_ENV !== "production";
 }
 
 export async function getNow(): Promise<Date> {

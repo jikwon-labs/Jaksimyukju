@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import type { TeacherName } from "@/lib/design/types";
 import type { DayKey } from "@/lib/domain/dates";
 import { canNudge, type NotifyDecision, type NudgeDecision } from "@/lib/domain/limits";
-import { notifyDecision } from "./notify";
+import { createCapped, notifyDecision } from "./notify";
 import type { GrassCell } from "@/lib/domain/rest";
 import { loadState, teacherOf } from "./course";
 
@@ -88,16 +88,21 @@ export async function sendNudge(from: User, toId: string, today: DayKey, hour: n
   const to = await prisma.user.findUnique({ where: { id: toId } });
   if (!to) return { ok: false, reason: "self" };
   const decision = await notifyDecision(to, "nudge", today, hour);
-  await prisma.$transaction(async (tx) => {
+  const created = await prisma.$transaction(async (tx) => {
     // 같은 날 두 번 눌러도 한 번만 남긴다
     const dup = await tx.nudge.count({ where: { fromUserId: from.id, toUserId: toId, kind: "friend", day: today } });
-    if (dup > 0) return;
+    if (dup > 0) return false;
     await tx.nudge.create({ data: { fromUserId: from.id, toUserId: toId, kind: "friend", day: today } });
-    if (decision.ok) {
-      await tx.notification.create({
-        data: { userId: toId, kind: "nudge", title: `${from.name}님이 콕 찔렀어요`, body: "오늘 10분만 같이 해요", href: "/home" },
-      });
-    }
+    return true;
   });
-  return decision.ok ? { ok: true } : { ok: true, delivered: false, why: decision.reason };
+  // 알림은 하루 한도 칸을 차지하며 따로 만든다(동시에 다른 알림이 들어와도 하루 2개를 넘지 않게)
+  const delivered =
+    created &&
+    decision.ok &&
+    (await createCapped(
+      { userId: toId, kind: "nudge", title: `${from.name}님이 콕 찔렀어요`, body: "오늘 10분만 같이 해요", href: "/home" },
+      today,
+    ));
+  if (decision.ok && (delivered || !created)) return { ok: true };
+  return { ok: true, delivered: false, why: decision.ok ? "daily_max" : decision.reason };
 }

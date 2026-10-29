@@ -221,6 +221,7 @@ model Notification {
   body      String
   href      String?
   dedupeKey String?   @unique // 같은 알림을 두 번 남기지 않기 위한 키(코치 알림)
+  capKey    String?   @unique // 하루 한도 칸 "userId:날짜:번호". 동시에 만들어도 하루 2개를 넘지 않게
   readAt    DateTime?
   createdAt DateTime  @default(now())
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -278,6 +279,6 @@ model Account {
   user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerUserId])
-  @@index([userId])
+  @@unique([userId, provider]) // 한 사용자에 공급자마다 계정 하나
   @@map("accounts")
 }

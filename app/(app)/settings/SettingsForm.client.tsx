@@ -7,7 +7,7 @@ import { ThemeControl } from "@/components/ThemeControl";
 import { Switch } from "@/components/ui";
 import type { TeacherName } from "@/lib/design/types";
 import { WEEKDAY_KO } from "@/lib/domain/dates";
-import { GUEST_LOSS_WARNING, LINK_ERROR_MESSAGE, linkSucceeded, PROVIDER_LABEL, type ProviderId } from "@/lib/domain/oauth";
+import { GUEST_LOSS_WARNING, LINK_ERROR_MESSAGE, linkSucceeded, messageFor, PROVIDER_LABEL, type ProviderId } from "@/lib/domain/oauth";
 import { MINUTE_OPTIONS, shiftTime, timeLabel, toggleStudyDay } from "@/lib/domain/prefs";
 import type { ThemeMode } from "@/lib/theme";
 import s from "./settings.module.css";
@@ -48,7 +48,7 @@ function ProviderLinks({ providers }: { providers: ProviderId[] }) {
 /** 계정 줄과 로그아웃. 연결 전이면 로그아웃 전에 기록을 잃는다고 한 번 더 묻는다 */
 function AccountSection({ account }: { account: Account }) {
   const [confirm, setConfirm] = useState(false);
-  const error = account.result ? LINK_ERROR_MESSAGE[account.result] : undefined;
+  const error = messageFor(LINK_ERROR_MESSAGE, account.result);
   return (
     <section aria-label="계정" className={s.section}>
       <h2 className={s.label}>계정</h2>

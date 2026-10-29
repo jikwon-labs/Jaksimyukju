@@ -76,9 +76,13 @@ export async function linkSocial(userId: string, provider: ProviderId, profile: 
       });
     });
   } catch (e) {
-    // 같은 계정으로 동시에 두 번 연결하면 유일 제약에 걸린다
-    if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") return "taken";
-    throw e;
+    // 동시에 두 번 연결하면 유일 제약에 걸린다. 무엇과 부딪혔는지 다시 보고 가른다
+    if (!(e instanceof Prisma.PrismaClientKnownRequestError) || e.code !== "P2002") throw e;
+    const again = await prisma.account.findUnique({
+      where: { provider_providerUserId: { provider, providerUserId: profile.sub } },
+    });
+    if (again) return again.userId === userId ? "already" : "taken";
+    return "other";
   }
   return "linked";
 }

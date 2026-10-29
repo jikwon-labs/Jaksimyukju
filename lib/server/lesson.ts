@@ -5,6 +5,7 @@ import type { DayKey } from "@/lib/domain/dates";
 import { addDays } from "@/lib/domain/dates";
 import { type CompleteMode, groupNotifyTargets, planCompletion } from "@/lib/domain/lesson";
 import { getGroupView } from "./group";
+import { createCapped } from "./notify";
 
 /** 내 과정의 레슨만 연다 */
 export async function getOwnLesson(user: User, id: string) {
@@ -98,8 +99,9 @@ export async function notifyGroupDone(user: User, today: DayKey, hour: number, n
     hour,
   );
   if (targets.length === 0) return 0;
-  await prisma.notification.createMany({
-    data: targets.map((id) => ({ userId: id, kind: "group", title, body: group.name, href: "/group", createdAt: now })),
-  });
-  return targets.length;
+  let sentCount = 0;
+  for (const id of targets) {
+    if (await createCapped({ userId: id, kind: "group", title, body: group.name, href: "/group", createdAt: now }, today)) sentCount++;
+  }
+  return sentCount;
 }

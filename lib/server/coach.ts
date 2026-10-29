@@ -3,15 +3,15 @@ import type { User } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { TIME_ZONE } from "@/lib/clock";
 import { addDays, dayKeyAt, mondayOf, type DayKey } from "@/lib/domain/dates";
-import { coachNotes, MISSED_EARLIER_LINE, MISSED_ONE_LINE, notifyHourOf, RETRO_LINE, STUDY_LINE } from "@/lib/domain/coach";
+import { coachNotes, MISSED_EARLIER_LINE, MISSED_ONE_LINE, reminderDue, RETRO_LINE, STUDY_LINE } from "@/lib/domain/coach";
 import { dayKind, missedStudyDays } from "@/lib/domain/rest";
 import type { CourseState } from "./course";
 import { teacherOf } from "./course";
-import { notifyDecision } from "./notify";
+import { createCapped, notifyDecision } from "./notify";
 
 /**
  * 홈을 열 때와 스케줄러가 부른다. 남길 선생님 알림이 있으면 알림 목록에 넣는다(알림 제한을 지킨다).
- * scheduled: 스케줄러에서 부르면 학습 시각 뒤 학습 시간 알림도 남긴다
+ * tickMinute: 스케줄러가 부를 때 그 시각(KST 하루 중 분). 있으면 학습 시각 뒤 학습 시간 알림도 남긴다
  */
 export async function runCoach(
   user: User,
@@ -19,7 +19,7 @@ export async function runCoach(
   today: DayKey,
   hour: number,
   now: Date,
-  scheduled = false,
+  tickMinute: number | null = null,
 ): Promise<number> {
   // 완주했거나 멈춘 과정에는 남기지 않는다
   if (st.course.status !== "active") return 0;
@@ -54,7 +54,7 @@ export async function runCoach(
     sent,
     retroDoneThisWeek,
     studyDay: dayKind(st.cal, today) === "study",
-    remind: scheduled && hour >= notifyHourOf(user.notifyTime),
+    remind: tickMinute !== null && reminderDue(tickMinute, user.notifyTime),
   });
   let made = 0;
   for (const n of notes) {
@@ -69,20 +69,19 @@ export async function runCoach(
             ? MISSED_ONE_LINE[who]
             : MISSED_EARLIER_LINE[who];
     // 같은 키는 DB가 한 번만 받는다(두 탭에서 동시에 열어도 중복이 생기지 않는다)
-    const r = await prisma.notification.createMany({
-      data: [
-        {
-          userId: user.id,
-          kind: n.kind,
-          title: n.key === "retro" ? "주간 회고" : n.key === "study" ? "학습 시간" : `${who} 선생님`,
-          body,
-          href: n.href,
-          dedupeKey: `${user.id}:${n.dedupe}`,
-          createdAt: now,
-        },
-      ],
-    }).catch(() => ({ count: 0 }));
-    made += r.count;
+    const ok = await createCapped(
+      {
+        userId: user.id,
+        kind: n.kind,
+        title: n.key === "retro" ? "주간 회고" : n.key === "study" ? "학습 시간" : `${who} 선생님`,
+        body,
+        href: n.href,
+        dedupeKey: `${user.id}:${n.dedupe}`,
+        createdAt: now,
+      },
+      today,
+    );
+    if (ok) made++;
   }
   return made;
 }

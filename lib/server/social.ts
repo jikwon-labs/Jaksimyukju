@@ -1,5 +1,5 @@
 import "server-only";
-import { notifyDecision } from "./notify";
+import { createCapped, notifyDecision } from "./notify";
 import type { User } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getHour, getNow } from "@/lib/clock";
@@ -172,10 +172,11 @@ export async function notifyGroup(
   for (const o of others) {
     const d = await notifyDecision(o.user, "group", today, hour);
     if (!d.ok) continue;
-    await prisma.notification.create({
-      data: { userId: o.userId, kind: n.kind, title: n.title, body: n.body, href: n.href ?? "/group" },
-    });
-    sent++;
+    const ok = await createCapped(
+      { userId: o.userId, kind: n.kind, title: n.title, body: n.body, href: n.href ?? "/group" },
+      today,
+    );
+    if (ok) sent++;
   }
   return sent;
 }

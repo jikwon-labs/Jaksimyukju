@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { coachNotes, notifyHourOf } from "./coach";
+import { coachNotes, notifyMinutesOf, reminderDue } from "./coach";
 
 const base = { today: "2026-10-29", missedDay: null as string | null, missed: 0, studiedToday: false, restingToday: false, sent: [], retroDoneThisWeek: false };
 
@@ -54,9 +54,14 @@ describe("스케줄러의 학습 시간 알림", () => {
     expect(coachNotes({ ...due, sent: [{ key: "study", day: "2026-10-29" }] })).toEqual([]);
     expect(coachNotes({ ...due, sent: [{ key: "study", day: "2026-10-28" }] }).map((n) => n.key)).toEqual(["study"]);
   });
-  it("알림 시각 문자열에서 시를 꺼낸다", () => {
-    expect(notifyHourOf("21:00")).toBe(21);
-    expect(notifyHourOf("07:30")).toBe(7);
-    expect(notifyHourOf("bad")).toBe(21);
+  it("알림 시각은 분까지 본다(21:30이면 21:00 tick에는 아직)", () => {
+    expect(notifyMinutesOf("21:30")).toBe(1290);
+    expect(notifyMinutesOf("bad")).toBe(1260);
+    expect(reminderDue(21 * 60, "21:30")).toBe(false);
+    expect(reminderDue(21 * 60 + 30, "21:30")).toBe(true);
+  });
+  it("밤 11시 이후 알림 시각은 22:30에 보낸다(조용한 시간에 막혀 영영 안 가지 않게)", () => {
+    expect(reminderDue(22 * 60 + 29, "23:00")).toBe(false);
+    expect(reminderDue(22 * 60 + 30, "23:00")).toBe(true);
   });
 });

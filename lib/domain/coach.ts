@@ -1,6 +1,7 @@
 // 선생님이 남기는 알림(Coach). 앱을 열 때와 스케줄러(/api/cron/tick)가 부른다. 실제 푸시는 보내지 않고 알림 목록에 남긴다.
 import type { TeacherName } from "@/lib/design/types";
 import { diffDays, mondayOf, weekday, type DayKey } from "./dates";
+import { QUIET_START } from "./limits";
 
 export const MISSED_ONE_LINE: Record<TeacherName, string> = {
   온: "어제는 쉬어 갔네요. 괜찮아요, 오늘 5분만 같이 해요.",
@@ -28,10 +29,20 @@ export const STUDY_LINE: Record<TeacherName, string> = {
   새: "학습 시간이에요! 오늘은 뭘 알게 될까요?",
 };
 
-/** "21:00" -> 21 */
-export function notifyHourOf(time: string): number {
-  const h = Number(time.split(":")[0]);
-  return Number.isInteger(h) && h >= 0 && h <= 23 ? h : 21;
+/** "21:30" -> 1290(하루 중 분). 깨진 값은 21:00 */
+export function notifyMinutesOf(time: string): number {
+  const m = /^(\d{1,2}):(\d{2})$/.exec(time);
+  const h = m ? Number(m[1]) : NaN;
+  const min = m ? Number(m[2]) : NaN;
+  return h >= 0 && h <= 23 && min >= 0 && min <= 59 ? h * 60 + min : 21 * 60;
+}
+
+/** 밤 11시부터는 알림을 못 보내므로, 그보다 늦은 알림 시각은 마지막으로 보낼 수 있는 22:30에 보낸다 */
+export const LAST_REMIND_MINUTES = QUIET_START * 60 - 30;
+
+/** 스케줄러 tick 시각(하루 중 분)에 학습 시간 알림을 보낼 때가 됐는지 */
+export function reminderDue(minuteOfDay: number, notifyTime: string): boolean {
+  return minuteOfDay >= Math.min(notifyMinutesOf(notifyTime), LAST_REMIND_MINUTES);
 }
 
 export interface CoachInput {

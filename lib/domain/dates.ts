@@ -63,3 +63,7 @@ export function hourAt(date: Date, timeZone = "Asia/Seoul"): number {
   );
   return Number(h);
 }
+
+export function minuteAt(date: Date, timeZone = "Asia/Seoul"): number {
+  return Number(new Intl.DateTimeFormat("en-US", { timeZone, minute: "numeric" }).format(date));
+}

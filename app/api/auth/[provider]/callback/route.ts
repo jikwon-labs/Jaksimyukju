@@ -5,10 +5,12 @@ import { fetchProfile, getProvider } from "@/lib/server/oauth";
 
 /** 연결은 next 경로에 ?link=결과, 로그인 실패는 첫 화면에 ?login=사유를 붙여 돌려보낸다 */
 function back(req: NextRequest, flow: OAuthFlow | null, result: string): NextResponse {
-  const url =
+  let url =
     flow?.mode === "link"
       ? new URL(flow.next, req.url)
       : new URL(result === "ok" ? (flow?.next ?? "/home") : "/", req.url);
+  // safeNext를 지나도 다른 출처로 풀리면 홈으로 보낸다(두 번째 방어선)
+  if (url.origin !== req.nextUrl.origin) url = new URL("/home", req.url);
   if (flow?.mode === "link") url.searchParams.set("link", result);
   else if (result !== "ok") url.searchParams.set("login", result);
   const res = NextResponse.redirect(url);

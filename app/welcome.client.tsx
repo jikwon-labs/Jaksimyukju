@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { Teacher } from "@/components/teacher/Teacher";
 import type { TeacherName } from "@/lib/design/types";
-import { PROVIDER_LABEL, type ProviderId } from "@/lib/domain/oauth";
+import { messageFor, PROVIDER_LABEL, type ProviderId } from "@/lib/domain/oauth";
 import s from "./welcome.module.css";
 
 const POINTS = [
@@ -34,7 +34,7 @@ export function Welcome({
 }) {
   // 로그인에서 돌아온 경우(?login=사유)에는 로그인 단계를 바로 보여 준다
   const [step, setStep] = useState<"intro" | "login">(loginResult ? "login" : "intro");
-  const error = loginResult ? LOGIN_MESSAGE[loginResult] : undefined;
+  const error = messageFor(LOGIN_MESSAGE, loginResult);
   const [accepted, setAccepted] = useState(false);
   const showProviders = !guestAtRisk || accepted;
 

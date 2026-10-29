@@ -4,6 +4,7 @@ import {
   authorizeUrl,
   challengeOf,
   decodeFlow,
+  messageFor,
   encodeFlow,
   newFlow,
   parseProfile,
@@ -31,6 +32,10 @@ describe("safeNext", () => {
     expect(safeNext("//evil.example", "/home")).toBe("/home");
     expect(safeNext("/\\evil.example", "/home")).toBe("/home");
     expect(safeNext(null, "/home")).toBe("/home");
+    // URL 해석기가 탭·줄바꿈을 지워 "//evil.com"이 되는 경우
+    expect(safeNext("/\t/evil.example", "/home")).toBe("/home");
+    expect(safeNext("/\n/evil.example", "/home")).toBe("/home");
+    expect(safeNext("/ /evil.example", "/home")).toBe("/home");
   });
 });
 
@@ -95,6 +100,16 @@ describe("parseProfile", () => {
     });
     expect(parseProfile("kakao", { id: 1, kakao_account: { email: "k@k.com", is_email_verified: false } })?.email).toBeNull();
     expect(parseProfile("kakao", {})).toBeNull();
+  });
+});
+
+describe("messageFor", () => {
+  it("표에 있는 키만 꺼낸다", () => {
+    const t = { failed: "실패" };
+    expect(messageFor(t, "failed")).toBe("실패");
+    expect(messageFor(t, "constructor")).toBeUndefined();
+    expect(messageFor(t, "__proto__")).toBeUndefined();
+    expect(messageFor(t, null)).toBeUndefined();
   });
 });
 

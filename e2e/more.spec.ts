@@ -402,6 +402,13 @@ test("20b. 이미 계정이 있어요: 연결된 계정은 들어가고, 없는 
   await expect(page.getByText("재무제표").first()).toBeVisible();
 });
 
+test("20c. 로그인 뒤 돌아갈 주소(next)로 다른 사이트에 보낼 수 없다", async ({ page }) => {
+  // 탭 문자를 끼우면 URL 해석기가 "//evil.example"로 바꾼다
+  await page.goto("/api/auth/kakao/start?mode=login&next=%2F%09%2Fevil.example");
+  await page.getByRole("button", { name: "데모 지우로 계속하기" }).click();
+  await expect(page).toHaveURL(/^http:\/\/localhost:3100\/home/);
+});
+
 test("21. 학습일 하루를 비우면 다음 날 선생님 알림이 한 번 생긴다", async ({ page }) => {
   // 데모는 어제까지 학습. 오늘(학습일)을 비우고 다음 학습일에 연다 -> 빈 학습일 1개
   const next = nthStudyDayAfter(seedToday(), 1);

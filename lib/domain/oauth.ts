@@ -85,7 +85,14 @@ export function sameState(a: string, b: string): boolean {
 /** 앱 안 경로만 허용한다(다른 사이트로 보내는 열린 리다이렉트 막기) */
 export function safeNext(next: string | null | undefined, fallback: string): string {
   if (!next || !next.startsWith("/") || next.startsWith("//") || next.includes("\\")) return fallback;
+  // URL 해석기는 탭·줄바꿈을 지운다("/\t/evil.com" -> "//evil.com"). 제어 문자와 공백은 아예 받지 않는다
+  if (/[\u0000-\u0020\u007f]/.test(next)) return fallback;
   return next;
+}
+
+/** 안내 문구 표에서 찾는다. ?link=constructor 같은 값이 Object.prototype을 꺼내지 않게 */
+export function messageFor(table: Record<string, string>, key: string | null | undefined): string | undefined {
+  return key && Object.hasOwn(table, key) ? table[key] : undefined;
 }
 
 export function challengeOf(verifier: string): string {

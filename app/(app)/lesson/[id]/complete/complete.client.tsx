@@ -5,7 +5,7 @@ import { useFormStatus } from "react-dom";
 import { wrapUpAction } from "@/app/actions/lesson";
 import { Switch } from "@/components/ui";
 import { ONE_LINER_MAX } from "@/lib/domain/lesson";
-import { LINK_ERROR_MESSAGE, linkSucceeded, PROVIDER_LABEL, type ProviderId } from "@/lib/domain/oauth";
+import { LINK_ERROR_MESSAGE, linkSucceeded, messageFor, PROVIDER_LABEL, type ProviderId } from "@/lib/domain/oauth";
 import s from "./complete.module.css";
 
 const FORM = "wrapup";
@@ -25,7 +25,7 @@ function Buttons() {
 }
 
 function LinkCard({ lessonId, providers, result }: { lessonId: string; providers: ProviderId[]; result: string | null }) {
-  const error = result ? LINK_ERROR_MESSAGE[result] : undefined;
+  const error = messageFor(LINK_ERROR_MESSAGE, result);
   const next = encodeURIComponent(`/lesson/${lessonId}/complete`);
   return (
     <section aria-label="계정 연결" className={s.linkCard} data-testid="link-account">
