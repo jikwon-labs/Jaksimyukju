@@ -8,6 +8,7 @@ import { getSessionUser } from "@/lib/auth";
 import { getToday } from "@/lib/clock";
 import { diffDays, parseStudyDays } from "@/lib/domain/dates";
 import { durationLabel, studyDaysLabel, timeLabel } from "@/lib/domain/prefs";
+import { accountLabel } from "@/lib/domain/oauth";
 import { prisma } from "@/lib/prisma";
 import { THEME_LABELS, parseTheme } from "@/lib/theme";
 import { loadState, quizPercent, teacherOf } from "@/lib/server/course";
@@ -38,6 +39,7 @@ export default async function ProfilePage({ searchParams }: { searchParams: Prom
   const nextQuiz = scores.findIndex((v) => v === null);
   const since = Math.max(1, diffDays(today, course.startDate) + 1);
   const studyDays = parseStudyDays(user.studyDays);
+  const accounts = await prisma.account.findMany({ where: { userId: user.id }, select: { provider: true } });
   const past = await prisma.course.findMany({
     where: { userId: user.id, status: { in: ["stopped", "finished"] }, id: { not: course.id } },
     orderBy: { createdAt: "desc" },
@@ -50,7 +52,7 @@ export default async function ProfilePage({ searchParams }: { searchParams: Prom
     { label: "하루 학습 시간", value: `${user.minutesPerDay}분`, href: "/settings" },
     { label: "알림 시각", value: timeLabel(user.notifyTime), href: "/settings" },
     { label: "화면 테마", value: THEME_LABELS[parseTheme(user.theme)], href: "/settings" },
-    { label: "계정", value: user.email ?? "게스트", href: "/settings" },
+    { label: "계정", value: accountLabel(accounts, user.email), href: "/settings" },
   ];
 
   return (

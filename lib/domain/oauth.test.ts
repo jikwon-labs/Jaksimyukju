@@ -1,0 +1,107 @@
+import { describe, expect, it } from "vitest";
+import {
+  accountLabel,
+  authorizeUrl,
+  challengeOf,
+  decodeFlow,
+  encodeFlow,
+  newFlow,
+  parseProfile,
+  type Provider,
+  safeNext,
+  sameState,
+} from "./oauth";
+
+const google: Provider = {
+  id: "google",
+  mock: false,
+  authorizeUrl: "https://accounts.google.com/o/oauth2/v2/auth",
+  tokenUrl: "https://oauth2.googleapis.com/token",
+  userinfoUrl: "https://openidconnect.googleapis.com/v1/userinfo",
+  clientId: "cid",
+  clientSecret: null,
+  scope: "openid email profile",
+  pkce: true,
+};
+
+describe("safeNext", () => {
+  it("앱 안 경로만 받는다", () => {
+    expect(safeNext("/lesson/a/complete", "/home")).toBe("/lesson/a/complete");
+    expect(safeNext("https://evil.example", "/home")).toBe("/home");
+    expect(safeNext("//evil.example", "/home")).toBe("/home");
+    expect(safeNext("/\\evil.example", "/home")).toBe("/home");
+    expect(safeNext(null, "/home")).toBe("/home");
+  });
+});
+
+describe("state 쿠키", () => {
+  it("넣은 그대로 꺼낸다", () => {
+    const f = newFlow("kakao", "link", "/lesson/x/complete");
+    expect(decodeFlow(encodeFlow(f))).toEqual(f);
+  });
+  it("열린 리다이렉트 경로는 /home으로 바꿔 둔다", () => {
+    expect(newFlow("google", "login", "https://evil.example").next).toBe("/home");
+  });
+  it("깨진 값이나 모르는 공급자는 null", () => {
+    expect(decodeFlow(undefined)).toBeNull();
+    expect(decodeFlow("not-base64-json")).toBeNull();
+    const bad = Buffer.from(JSON.stringify({ ...newFlow("kakao", "login", "/"), provider: "naver" })).toString("base64url");
+    expect(decodeFlow(bad)).toBeNull();
+  });
+  it("state 비교는 길이가 달라도 터지지 않는다", () => {
+    expect(sameState("abc", "abc")).toBe(true);
+    expect(sameState("abc", "abd")).toBe(false);
+    expect(sameState("abc", "abcd")).toBe(false);
+  });
+});
+
+describe("authorizeUrl", () => {
+  it("PKCE S256과 state, scope를 붙인다", () => {
+    const f = newFlow("google", "login", "/home");
+    const u = new URL(authorizeUrl(google, f, "http://localhost:3100/api/auth/google/callback"));
+    expect(u.origin + u.pathname).toBe(google.authorizeUrl);
+    expect(u.searchParams.get("state")).toBe(f.state);
+    expect(u.searchParams.get("code_challenge")).toBe(challengeOf(f.verifier));
+    expect(u.searchParams.get("code_challenge_method")).toBe("S256");
+    expect(u.searchParams.get("scope")).toBe("openid email profile");
+    expect(u.searchParams.get("redirect_uri")).toBe("http://localhost:3100/api/auth/google/callback");
+  });
+  it("PKCE를 쓰지 않는 공급자에는 challenge를 붙이지 않는다", () => {
+    const f = newFlow("kakao", "login", "/home");
+    const u = new URL(authorizeUrl({ ...google, id: "kakao", pkce: false, scope: null }, f, "http://x/cb"));
+    expect(u.searchParams.has("code_challenge")).toBe(false);
+    expect(u.searchParams.has("scope")).toBe(false);
+  });
+  it("challenge는 RFC 7636 예시와 같다", () => {
+    expect(challengeOf("dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk")).toBe("E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM");
+  });
+});
+
+describe("parseProfile", () => {
+  it("구글: 확인된 이메일만 받는다", () => {
+    expect(parseProfile("google", { sub: "1", email: "a@b.com", email_verified: true, name: "가" })).toEqual({
+      sub: "1",
+      email: "a@b.com",
+      name: "가",
+    });
+    expect(parseProfile("google", { sub: "1", email: "a@b.com", email_verified: false })?.email).toBeNull();
+    expect(parseProfile("google", { email: "a@b.com" })).toBeNull();
+  });
+  it("카카오: 숫자 id를 문자열로, 이메일이 없어도 된다", () => {
+    expect(parseProfile("kakao", { id: 12345, kakao_account: { profile: { nickname: "나" } } })).toEqual({
+      sub: "12345",
+      email: null,
+      name: "나",
+    });
+    expect(parseProfile("kakao", { id: 1, kakao_account: { email: "k@k.com", is_email_verified: false } })?.email).toBeNull();
+    expect(parseProfile("kakao", {})).toBeNull();
+  });
+});
+
+describe("accountLabel", () => {
+  it("연결 전은 게스트, 연결 후는 공급자와 이메일", () => {
+    expect(accountLabel([], null)).toBe("게스트");
+    expect(accountLabel([{ provider: "kakao" }], "me@x.com")).toBe("카카오 · me@x.com");
+    expect(accountLabel([{ provider: "kakao" }, { provider: "google" }], null)).toBe("카카오·구글 연결됨");
+  });
+});

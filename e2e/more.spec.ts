@@ -320,31 +320,86 @@ test("19c. 복귀 재조정 요약으로 넘기기: 밀린 레슨에 요약 꼬�
   await expect(page.getByRole("region", { name: "전체 잔디" })).toContainText("6주 과정");
 });
 
-test("20. 레슨 완료 화면 계정 연결: 한 번 연결하면 다음 완료에는 안 나온다", async ({ page, context }, info) => {
+/** 개발용 가짜 공급자 화면에서 번호를 넣고 동의한다 */
+async function fakeConsent(page: Page, sub: string, email = `${sub}@example.com`) {
+  await expect(page.getByRole("heading", { name: /가짜 .+ 로그인/ })).toBeVisible();
+  await page.getByLabel("사용자 번호").fill(sub);
+  await page.getByLabel("이메일").fill(email);
+  await page.getByRole("button", { name: "동의하고 계속하기" }).click();
+}
+
+test("20. 소셜 계정 연결: 실패하면 다시, 연결하면 로그아웃 뒤 같은 계정으로 기록이 돌아온다", async ({ page, context }, info) => {
   await onboard(page, "영어 회화");
   await finishShortFromHome(page);
-  const card = page.getByTestId("link-account");
-  await expect(card).toBeVisible();
-  await page.getByTestId("link-email").click();
-  // 잘못된 주소는 막힌다
-  await page.getByTestId("link-email-input").fill("not-an-email");
-  await page.getByTestId("link-submit").click();
-  await expect(page.getByTestId("link-done")).toHaveCount(0);
-  const email = `guest-${info.project.name}@example.com`;
-  await page.getByTestId("link-email-input").fill(email);
-  await page.getByTestId("link-submit").click();
+  const done = page.url();
+  await expect(page.getByTestId("link-account")).toBeVisible();
+
+  // 공급자 오류(가짜 공급자는 fail로 시작하는 번호에서 토큰 교환을 실패시킨다)
+  await page.getByTestId("link-kakao").click();
+  await fakeConsent(page, "fail-1");
+  await expect(page).toHaveURL(/link=failed/);
+  await expect(page.getByTestId("link-error")).toContainText("연결하지 못했어요");
+
+  // 취소
+  await page.getByTestId("link-kakao").click();
+  await page.getByRole("link", { name: "취소" }).click();
+  await expect(page.getByTestId("link-error")).toContainText("취소");
+
+  // 이미 데모 지우에게 붙은 카카오 계정은 다른 기록에 연결할 수 없다
+  await page.getByTestId("link-kakao").click();
+  await page.getByRole("button", { name: "데모 지우로 계속하기" }).click();
+  await expect(page.getByTestId("link-error")).toContainText("이미 다른 기록");
+
+  const sub = `e2e-${info.project.name}`;
+  const email = `${sub}@example.com`;
+  await page.getByTestId("link-google").click();
+  await fakeConsent(page, sub);
+  await expect(page).toHaveURL(new RegExp(new URL(done).pathname));
   await expect(page.getByTestId("link-done")).toContainText("계정을 연결했어요");
+  await expect(page.getByTestId("link-account")).toHaveCount(0);
   await shot(page, info, "more-link-account");
 
   await page.goto("/profile");
-  await expect(page.getByRole("link", { name: /계정/ })).toContainText(email);
+  await expect(page.getByRole("link", { name: /계정/ })).toContainText(`구글 · ${email}`);
 
-  // 다음 학습일에 다시 완료한다
+  // 로그아웃 뒤 같은 구글 계정으로 들어오면 같은 기록(연속 1일)이 보인다
+  await page.goto("/settings");
+  await page.getByRole("button", { name: "로그아웃" }).click();
+  await expect(page).toHaveURL(/\/$/);
+  await page.getByTestId("have-account").click();
+  await page.getByTestId("login-google").click();
+  await fakeConsent(page, sub);
+  await expect(page).toHaveURL(/\/home/);
+  expect(await streak(page)).toBe(1);
+
+  // 다음 학습일에 다시 완료해도 연결 카드는 나오지 않는다
   const next = nthStudyDayAfter(seedToday(), 1);
   await context.addCookies([{ name: "j6_now", value: next, domain: "localhost", path: "/" }]);
   await finishShortFromHome(page);
   await expect(page.getByRole("region", { name: "오늘 배운 한 줄" })).toBeVisible();
   await expect(page.getByTestId("link-account")).toHaveCount(0);
+});
+
+test("20b. 이미 계정이 있어요: 연결된 계정은 들어가고, 없는 계정과 위조한 콜백은 막는다", async ({ page }, info) => {
+  await page.goto("/");
+  await page.getByTestId("have-account").click();
+  await page.getByTestId("login-kakao").click();
+  await fakeConsent(page, `nobody-${info.project.name}`);
+  await expect(page).toHaveURL(/login=none/);
+  await expect(page.getByTestId("login-error")).toContainText("연결된 기록이 없어요");
+
+  // state 쿠키 없이 콜백을 바로 열면 로그인되지 않는다
+  await page.goto("/api/auth/kakao/callback?code=x&state=forged-state-value");
+  await expect(page).toHaveURL(/login=failed/);
+  await page.goto("/home");
+  await expect(page).toHaveURL(/\/$|\/start/);
+
+  await page.goto("/");
+  await page.getByTestId("have-account").click();
+  await page.getByTestId("login-kakao").click();
+  await page.getByRole("button", { name: "데모 지우로 계속하기" }).click();
+  await expect(page).toHaveURL(/\/home/);
+  await expect(page.getByText("재무제표").first()).toBeVisible();
 });
 
 test("21. 학습일 하루를 비우면 다음 날 선생님 알림이 한 번 생긴다", async ({ page }) => {

@@ -149,10 +149,24 @@
   border: 1.5px solid var(--line);
   color: var(--ink);
 }
-.provider[data-kind="apple"] {
-  background: var(--ink);
-  color: var(--bg);
+.provider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
+/* 카카오 로그인 버튼 안내의 노란 바탕과 검은 글자 */
+.provider[data-kind="kakao"] {
+  background: #fee500;
+  color: rgba(0, 0, 0, 0.85);
   border: none;
+}
+.error {
+  margin: 0;
+  font-size: 13px;
+  line-height: 19px;
+  font-weight: 700;
+  color: var(--warn);
 }
 .footnote {
   margin: 4px 0 0 0;

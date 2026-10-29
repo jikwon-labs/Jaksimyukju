@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import { useFormStatus } from "react-dom";
-import { linkAccountAction, wrapUpAction } from "@/app/actions/lesson";
+import { wrapUpAction } from "@/app/actions/lesson";
 import { Switch } from "@/components/ui";
 import { ONE_LINER_MAX } from "@/lib/domain/lesson";
+import { PROVIDER_LABEL, type ProviderId } from "@/lib/domain/oauth";
 import s from "./complete.module.css";
 
 const FORM = "wrapup";
@@ -23,72 +24,34 @@ function Buttons() {
   );
 }
 
-function LinkCard() {
-  const [open, setOpen] = useState(false);
-  const [email, setEmail] = useState("");
-  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
-  const [pending, start] = useTransition();
+const LINK_MESSAGE: Record<string, string> = {
+  taken: "이 계정은 이미 다른 기록에 연결돼 있어요. 다른 계정을 골라 주세요.",
+  other: "이미 같은 곳의 다른 계정이 연결돼 있어요.",
+  cancel: "연결을 취소했어요. 언제든 다시 할 수 있어요.",
+  failed: "연결하지 못했어요. 잠시 뒤 다시 해 주세요.",
+};
 
-  if (msg?.ok) {
-    return (
-      <div role="status" className={s.linked} data-testid="link-done">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-          <path d="M5 12.5l4.5 4.5L19 7.5" />
-        </svg>
-        {msg.text}
-      </div>
-    );
-  }
-
-  function submit(e: React.FormEvent) {
-    e.preventDefault();
-    start(async () => {
-      const r = await linkAccountAction(email);
-      setMsg({ ok: r.ok, text: r.message });
-    });
-  }
-
+function LinkCard({ lessonId, providers, result }: { lessonId: string; providers: ProviderId[]; result: string | null }) {
+  const error = result ? LINK_MESSAGE[result] : undefined;
+  const next = encodeURIComponent(`/lesson/${lessonId}/complete`);
   return (
     <section aria-label="계정 연결" className={s.linkCard} data-testid="link-account">
       <h2>오늘 채운 잔디를 지키려면</h2>
       <p>계정을 연결하면 휴대폰을 바꾸거나 앱을 지워도 기록과 그룹이 남아요. 10초면 끝나요.</p>
-      <div className={s.linkBtns}>
-        <button type="button" className={s.apple} onClick={() => setOpen(true)} aria-expanded={open}>
-          Apple
-        </button>
-        <button type="button" className={s.outline} onClick={() => setOpen(true)} aria-expanded={open}>
-          Google
-        </button>
-        <button type="button" className={s.outline} onClick={() => setOpen(true)} aria-expanded={open} data-testid="link-email">
-          이메일
-        </button>
-      </div>
-      {open && (
-        <form className={s.emailRow} onSubmit={submit}>
-          <label htmlFor="link-email-input" className={s.srOnly}>
-            이메일 주소
-          </label>
-          <input
-            id="link-email-input"
-            type="email"
-            inputMode="email"
-            autoComplete="email"
-            placeholder="이메일 주소"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className={s.emailInput}
-            data-testid="link-email-input"
-            required
-          />
-          <button type="submit" className={s.emailBtn} disabled={pending} data-testid="link-submit">
-            {pending ? "연결 중" : "연결"}
-          </button>
-        </form>
+      {providers.length > 0 ? (
+        <div className={s.linkBtns}>
+          {providers.map((p) => (
+            <a key={p} href={`/api/auth/${p}/start?mode=link&next=${next}`} className={s.provider} data-kind={p} data-testid={`link-${p}`}>
+              {PROVIDER_LABEL[p]}로 연결
+            </a>
+          ))}
+        </div>
+      ) : (
+        <p className={s.foot}>계정 연결은 곧 열려요.</p>
       )}
-      {open && <p className={s.foot}>지금은 이메일로 연결해요. Apple·Google 연결은 곧 열려요.</p>}
-      {msg && !msg.ok && (
-        <p role="alert" className={s.error}>
-          {msg.text}
+      {error && (
+        <p role="alert" className={s.error} data-testid="link-error">
+          {error}
         </p>
       )}
       <p className={s.foot}>연결하면 이용약관과 개인정보 처리방침에 동의하게 돼요.</p>
@@ -96,15 +59,30 @@ function LinkCard() {
   );
 }
 
+function Linked() {
+  return (
+    <div role="status" className={s.linked} data-testid="link-done">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="M5 12.5l4.5 4.5L19 7.5" />
+      </svg>
+      계정을 연결했어요. 기록이 안전하게 저장돼요.
+    </div>
+  );
+}
+
 export function CompleteActions({
   lessonId,
   oneLiner,
   needLink,
+  providers,
+  linkResult,
   groupInitials,
 }: {
   lessonId: string;
   oneLiner: string;
   needLink: boolean;
+  providers: ProviderId[];
+  linkResult: string | null;
   groupInitials: string[];
 }) {
   const [share, setShare] = useState(true);
@@ -130,7 +108,11 @@ export function CompleteActions({
         />
       </section>
 
-      {needLink && <LinkCard />}
+      {needLink ? (
+        <LinkCard lessonId={lessonId} providers={providers} result={linkResult} />
+      ) : (
+        (linkResult === "linked" || linkResult === "already") && <Linked />
+      )}
 
       {groupInitials.length > 0 && (
         <div className={s.switchCard}>

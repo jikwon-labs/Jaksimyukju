@@ -1,8 +1,9 @@
 import "server-only";
-// 쿠키 기반 게스트 세션. 나중에 Supabase Auth로 바꿀 때 이 파일만 고친다.
+// 세션(무작위 토큰 쿠키)과 소셜 계정 연결. 처음에는 게스트로 시작하고, 첫 레슨 뒤 카카오·구글 계정을 붙인다.
 import { randomBytes } from "node:crypto";
 import { cookies } from "next/headers";
-import type { User } from "@prisma/client";
+import { Prisma, type User } from "@prisma/client";
+import type { ProviderId, SocialProfile } from "./domain/oauth";
 import { prisma } from "./prisma";
 import { TEACHER_COOKIE } from "./theme";
 
@@ -50,11 +51,43 @@ export async function createGuest(data: { teacher: string }): Promise<User> {
   return user;
 }
 
+export type LinkResult = "linked" | "already" | "taken" | "other";
+
 /**
- * 계정 연결(모의). 지금은 이메일만 적어 두고, 연결 전 기록은 같은 user 행에 그대로 남는다.
- * Supabase Auth로 바꿀 때: auth user를 만들고 이 users.id와 연결한다.
+ * 지금 사용자(게스트)에 소셜 계정을 붙인다. 기록은 같은 user 행에 그대로 남는다.
+ * - already: 이미 이 사용자에 붙어 있음
+ * - taken: 그 소셜 계정이 다른 사용자 기록에 붙어 있음
+ * - other: 이 사용자에 같은 공급자의 다른 계정이 이미 붙어 있음
  */
-export async function linkAccount(userId: string, email: string): Promise<User> {
-  return prisma.user.update({ where: { id: userId }, data: { email, linkedAt: new Date() } });
+export async function linkSocial(userId: string, provider: ProviderId, profile: SocialProfile): Promise<LinkResult> {
+  const found = await prisma.account.findUnique({
+    where: { provider_providerUserId: { provider, providerUserId: profile.sub } },
+  });
+  if (found) return found.userId === userId ? "already" : "taken";
+  const mine = await prisma.account.findFirst({ where: { userId, provider } });
+  if (mine) return "other";
+  try {
+    await prisma.$transaction(async (tx) => {
+      await tx.account.create({ data: { provider, providerUserId: profile.sub, userId, email: profile.email } });
+      const user = await tx.user.findUniqueOrThrow({ where: { id: userId } });
+      await tx.user.update({
+        where: { id: userId },
+        data: { linkedAt: user.linkedAt ?? new Date(), email: user.email ?? profile.email },
+      });
+    });
+  } catch (e) {
+    // 같은 계정으로 동시에 두 번 연결하면 유일 제약에 걸린다
+    if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") return "taken";
+    throw e;
+  }
+  return "linked";
 }
 
+/** 소셜 계정에 붙은 사용자. 없으면 null */
+export async function findSocialUser(provider: ProviderId, sub: string): Promise<User | null> {
+  const acc = await prisma.account.findUnique({
+    where: { provider_providerUserId: { provider, providerUserId: sub } },
+    include: { user: true },
+  });
+  return acc?.user ?? null;
+}

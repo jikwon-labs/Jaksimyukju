@@ -36,6 +36,7 @@ model User {
   notifications Notification[]
   retros        Retro[]
   sessions      Session[]
+  accounts      Account[]
   reports       Report[]
 
   @@map("users")
@@ -264,4 +265,19 @@ model Report {
 
   @@index([lessonId])
   @@map("reports")
+}
+
+/// 소셜 계정(카카오·구글). 한 소셜 계정은 한 사용자에만 붙는다
+model Account {
+  id             String   @id @default(cuid())
+  provider       String // kakao | google
+  providerUserId String
+  userId         String
+  email          String?
+  createdAt      DateTime @default(now())
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerUserId])
+  @@index([userId])
+  @@map("accounts")
 }

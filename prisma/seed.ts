@@ -5,7 +5,7 @@ import { mockCurriculum, mockLibrarian } from "../lib/ai/mock";
 import { FINANCE_GOAL, FINANCE_TOPIC } from "../lib/ai/finance";
 import { addDays, dayKeyAt, diffDays, mondayOf, type DayKey, weekday } from "../lib/domain/dates";
 import { writeCourse } from "../lib/server/write-course";
-import { DEMO_INVITE } from "../lib/constants";
+import { DEMO_ACCOUNT_SUB, DEMO_EMAIL, DEMO_INVITE } from "../lib/constants";
 
 const prisma = new PrismaClient();
 const STUDY = [1, 2, 3, 4, 5];
@@ -14,6 +14,7 @@ const STUDY = [1, 2, 3, 4, 5];
 async function wipe() {
   // 자식 테이블부터
   await prisma.session.deleteMany();
+  await prisma.account.deleteMany();
   await prisma.report.deleteMany();
   await prisma.notification.deleteMany();
   await prisma.retro.deleteMany();
@@ -89,7 +90,13 @@ async function main() {
   const start = addDays(mondayOf(today), -7); // 지난주 월요일 시작 -> 오늘은 2주차
   const yesterday = addDays(today, -1);
 
-  const me = await prisma.user.create({ data: { id: "demo-me", name: "지우", teacher: "온", minutesPerDay: 10 } });
+  const me = await prisma.user.create({
+    data: { id: "demo-me", name: "지우", teacher: "온", minutesPerDay: 10, email: DEMO_EMAIL, linkedAt: new Date() },
+  });
+  // 개발용 가짜 카카오 계정. "이미 계정이 있어요"에서 이 번호로 들어오면 지우로 로그인된다
+  await prisma.account.create({
+    data: { provider: "kakao", providerUserId: DEMO_ACCOUNT_SUB, userId: me.id, email: DEMO_EMAIL },
+  });
   const minji = await prisma.user.create({ data: { id: "demo-minji", name: "민지", teacher: "결" } });
   const seoyeon = await prisma.user.create({ data: { id: "demo-seoyeon", name: "서연", teacher: "새" } });
   const junho = await prisma.user.create({ data: { id: "demo-junho", name: "준호", teacher: "온" } });

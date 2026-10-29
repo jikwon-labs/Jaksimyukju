@@ -10,6 +10,7 @@ import { prisma } from "@/lib/prisma";
 import { loadState, teacherOf } from "@/lib/server/course";
 import { getGroupView } from "@/lib/server/group";
 import { getOwnLesson } from "@/lib/server/lesson";
+import { availableProviders } from "@/lib/server/oauth";
 import { CompleteActions } from "./complete.client";
 import s from "./complete.module.css";
 
@@ -17,8 +18,15 @@ export const metadata = { title: "레슨 완료 · 작심육주" };
 
 const CONFETTI = ["#5B8CFF", "#FF6B5E", "#4CC38A", "#FFD25E"];
 
-export default async function CompletePage({ params }: { params: Promise<{ id: string }> }) {
+export default async function CompletePage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ link?: string }>;
+}) {
   const { id } = await params;
+  const { link } = await searchParams;
   const user = await getSessionUser();
   if (!user) redirect("/");
   const lesson = await getOwnLesson(user, id);
@@ -145,6 +153,8 @@ export default async function CompletePage({ params }: { params: Promise<{ id: s
           lessonId={lesson.id}
           oneLiner={lesson.oneLiner ?? ""}
           needLink={!user.linkedAt}
+          providers={availableProviders()}
+          linkResult={link ?? null}
           groupInitials={others.map((m) => m.initial)}
         />
       </div>

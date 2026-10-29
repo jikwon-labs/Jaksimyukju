@@ -173,7 +173,7 @@
 }
 .stats {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
 }
 .tile {
@@ -246,65 +246,13 @@
 }
 .linkBtns {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 6px;
-}
-.apple,
-.outline,
-.emailBtn {
-  height: 44px;
-  border-radius: 12px;
-  font-family: inherit;
-  font-size: 13px;
-  font-weight: 700;
-  cursor: pointer;
-}
-.apple {
-  border: none;
-  background: var(--ink);
-  color: var(--bg);
-}
-.outline {
-  border: 1.5px solid var(--line);
-  background: transparent;
-  color: var(--ink);
-}
-.emailRow {
-  display: flex;
-  gap: 6px;
-}
-.emailInput {
-  flex: 1;
-  min-width: 0;
-  height: 44px;
-  box-sizing: border-box;
-  padding: 0 14px;
-  border-radius: 12px;
-  border: 1.5px solid var(--line);
-  background: var(--bg);
-  color: var(--ink);
-  font-family: inherit;
-  font-size: 14px;
-  outline-color: var(--a-text);
-}
-.emailBtn {
-  padding: 0 16px;
-  border: none;
-  background: var(--a-btn-bg);
-  color: var(--a-btn-ink);
 }
 .error {
   font-size: 12px;
   color: var(--warn);
   font-weight: 700;
-}
-.srOnly {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip: rect(0 0 0 0);
-  white-space: nowrap;
 }
 .linked {
   display: flex;
@@ -355,9 +303,6 @@
   font-weight: 700;
 }
 .close:focus-visible,
-.apple:focus-visible,
-.outline:focus-visible,
-.emailBtn:focus-visible,
 .next:focus-visible,
 .home:focus-visible {
   outline: 3px solid var(--a-text);
@@ -404,4 +349,27 @@
   .up {
     animation: none;
   }
+}
+.provider {
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+  border: 1.5px solid var(--line);
+  background: transparent;
+  color: var(--ink);
+}
+/* 카카오 로그인 버튼 안내의 노란 바탕과 검은 글자 */
+.provider[data-kind="kakao"] {
+  border: none;
+  background: #fee500;
+  color: rgba(0, 0, 0, 0.85);
+}
+.provider:focus-visible {
+  outline: 3px solid var(--a-text);
+  outline-offset: 2px;
 }

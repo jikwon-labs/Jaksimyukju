@@ -13,6 +13,12 @@ test("시작 화면 접근성", async ({ page }) => {
   await expectNoA11yViolations(page);
 });
 
+test("로그인 화면 접근성(오류 문구 포함)", async ({ page }) => {
+  await page.goto("/?login=none");
+  await page.getByTestId("login-kakao").waitFor();
+  await expectNoA11yViolations(page);
+});
+
 for (const route of ROUTES) {
   test(`접근성 ${route}`, async ({ page }) => {
     await loginDemo(page, route);

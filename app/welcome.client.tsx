@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { Teacher } from "@/components/teacher/Teacher";
 import type { TeacherName } from "@/lib/design/types";
-import { continueAsDemo } from "./actions/start";
+import { PROVIDER_LABEL, type ProviderId } from "@/lib/domain/oauth";
 import s from "./welcome.module.css";
 
 const POINTS = [
@@ -13,20 +13,26 @@ const POINTS = [
   "쉬는 날엔 동료가 콕 찔러 줘요",
 ];
 
-const PROVIDERS = [
-  { label: "Apple로 계속하기", kind: "apple" },
-  { label: "Google로 계속하기", kind: "plain" },
-  { label: "이메일로 계속하기", kind: "plain" },
-] as const;
+const LOGIN_MESSAGE: Record<string, string> = {
+  none: "이 계정에 연결된 기록이 없어요. 처음이라면 뒤로 가서 시작하기를 눌러 주세요.",
+  cancel: "로그인을 취소했어요.",
+  failed: "로그인하지 못했어요. 잠시 뒤 다시 해 주세요.",
+};
 
 export function Welcome({
   teacher,
   invite,
+  providers,
+  loginResult,
 }: {
   teacher: TeacherName;
   invite: { inviter: string; group: string } | null;
+  providers: ProviderId[];
+  loginResult: string | null;
 }) {
-  const [step, setStep] = useState<"intro" | "login">("intro");
+  // 로그인에서 돌아온 경우(?login=사유)에는 로그인 단계를 바로 보여 준다
+  const [step, setStep] = useState<"intro" | "login">(loginResult ? "login" : "intro");
+  const error = loginResult ? LOGIN_MESSAGE[loginResult] : undefined;
 
   if (step === "login") {
     return (
@@ -45,14 +51,21 @@ export function Welcome({
           </h1>
           <p className={s.loginText}>전에 쓰던 휴대폰의 잔디, 선생님, 그룹을 그대로 불러와요.</p>
         </div>
-        <form action={continueAsDemo} className={s.providers}>
-          {PROVIDERS.map((p) => (
-            <button key={p.label} type="submit" className={s.provider} data-kind={p.kind} data-testid="continue-account">
-              {p.label}
-            </button>
+        {error && (
+          <p role="alert" className={s.error} data-testid="login-error">
+            {error}
+          </p>
+        )}
+        <div className={s.providers}>
+          {providers.map((p) => (
+            <a key={p} href={`/api/auth/${p}/start?mode=login`} className={s.provider} data-kind={p} data-testid={`login-${p}`}>
+              {PROVIDER_LABEL[p]}로 계속하기
+            </a>
           ))}
-        </form>
-        <p className={s.footnote}>처음이라면 뒤로 가서 시작하기를 눌러 주세요.</p>
+        </div>
+        <p className={s.footnote}>
+          {providers.length > 0 ? "처음이라면 뒤로 가서 시작하기를 눌러 주세요." : "계정 로그인은 곧 열려요. 처음이라면 시작하기를 눌러 주세요."}
+        </p>
       </main>
     );
   }

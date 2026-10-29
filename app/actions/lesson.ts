@@ -2,9 +2,9 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { getSessionUser, linkAccount } from "@/lib/auth";
+import { getSessionUser } from "@/lib/auth";
 import { getHour, getNow, getToday } from "@/lib/clock";
-import { cleanOneLiner, type CompleteMode, isEmail } from "@/lib/domain/lesson";
+import { cleanOneLiner, type CompleteMode } from "@/lib/domain/lesson";
 import { prisma } from "@/lib/prisma";
 import { syncCourseStatus } from "@/lib/server/course";
 import { completeLesson, notifyGroupDone } from "@/lib/server/lesson";
@@ -46,15 +46,4 @@ export async function wrapUpAction(formData: FormData): Promise<void> {
     revalidateLoop(lesson.id);
   }
   redirect(to);
-}
-
-/** 계정 연결(모의): 이메일만 적어 둔다. 지금까지 기록은 같은 사용자에 그대로 남는다 */
-export async function linkAccountAction(email: string): Promise<{ ok: boolean; message: string }> {
-  const user = await getSessionUser();
-  if (!user) return { ok: false, message: "다시 들어와 주세요" };
-  if (!isEmail(email)) return { ok: false, message: "이메일 주소를 확인해 주세요" };
-  await linkAccount(user.id, email.trim());
-  revalidatePath("/profile");
-  revalidatePath("/settings");
-  return { ok: true, message: "계정을 연결했어요. 기록이 안전하게 저장돼요." };
 }
