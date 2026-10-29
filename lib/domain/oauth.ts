@@ -156,3 +156,18 @@ export function accountLabel(accounts: { provider: string }[], email: string | n
   if (names.length === 0) return "게스트";
   return email ? `${names.join("·")} · ${email}` : `${names.join("·")} 연결됨`;
 }
+
+/** 계정 연결 결과(?link=) 안내 문구. linked·already는 성공 */
+export const LINK_ERROR_MESSAGE: Record<string, string> = {
+  taken: "이 계정은 이미 다른 기록에 연결돼 있어요. 다른 계정을 골라 주세요.",
+  other: "이미 같은 곳의 다른 계정이 연결돼 있어요.",
+  cancel: "연결을 취소했어요. 언제든 다시 할 수 있어요.",
+  failed: "연결하지 못했어요. 잠시 뒤 다시 해 주세요.",
+};
+
+export function linkSucceeded(result: string | null | undefined): boolean {
+  return result === "linked" || result === "already";
+}
+
+/** 게스트 기록을 잃는다는 경고. 연결 전에 로그아웃하거나 다른 계정으로 들어갈 때 */
+export const GUEST_LOSS_WARNING = "계정을 연결하지 않은 기록은 로그아웃하면 다시 열 수 없어요.";

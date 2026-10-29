@@ -463,3 +463,43 @@ test("25. 초대 링크는 7일 동안만 열린다", async ({ page, context }) 
   await page.goto("/");
   await expect(page.getByTestId("inviter")).toHaveCount(0);
 });
+
+test("26. 연결 안 한 게스트는 로그아웃 전에 한 번 더 묻고, 설정에서 계정을 연결할 수 있다", async ({ page }, info) => {
+  await onboard(page, "글쓰기");
+  await page.goto("/settings");
+  await expect(page.getByTestId("account-label")).toHaveText("게스트");
+  await page.getByRole("button", { name: "로그아웃" }).click();
+  await expect(page.getByTestId("logout-confirm")).toContainText("다시 열 수 없어요");
+  await page.getByRole("button", { name: "취소" }).click();
+  await expect(page.getByTestId("logout-confirm")).toHaveCount(0);
+
+  await page.getByRole("link", { name: "구글로 연결" }).click();
+  await fakeConsent(page, `settings-${info.project.name}`);
+  await expect(page).toHaveURL(/\/settings\?link=linked/);
+  await expect(page.getByTestId("link-done")).toBeVisible();
+  await expect(page.getByTestId("account-label")).toContainText("구글");
+  await expect(page.getByRole("link", { name: "구글로 연결" })).toHaveCount(0);
+  // 연결한 뒤에는 묻지 않고 바로 로그아웃된다
+  await page.getByRole("button", { name: "로그아웃" }).click();
+  await expect(page).toHaveURL(/\/$/);
+});
+
+test("26b. 연결 안 한 게스트가 그래도 로그아웃하면 첫 화면으로 간다", async ({ page }) => {
+  await onboard(page, "글쓰기");
+  await page.goto("/settings");
+  await page.getByRole("button", { name: "로그아웃" }).click();
+  await page.getByRole("button", { name: "그래도 로그아웃" }).click();
+  await expect(page).toHaveURL(/\/$/);
+  await page.goto("/home");
+  await expect(page).not.toHaveURL(/\/home/);
+});
+
+test("26c. 기록이 있는 게스트가 다른 계정으로 들어가려 하면 먼저 경고한다", async ({ page }) => {
+  execSync("pnpm exec tsx e2e/stop-course.ts demo-junho", { stdio: "pipe" });
+  await loginDemo(page, "/", undefined, "demo-junho");
+  await page.getByTestId("have-account").click();
+  await expect(page.getByTestId("guest-warning")).toBeVisible();
+  await expect(page.getByTestId("login-kakao")).toBeHidden();
+  await page.getByRole("button", { name: /알겠어요/ }).click();
+  await expect(page.getByTestId("login-kakao")).toBeVisible();
+});

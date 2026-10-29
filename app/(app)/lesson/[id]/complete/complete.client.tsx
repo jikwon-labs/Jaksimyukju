@@ -5,7 +5,7 @@ import { useFormStatus } from "react-dom";
 import { wrapUpAction } from "@/app/actions/lesson";
 import { Switch } from "@/components/ui";
 import { ONE_LINER_MAX } from "@/lib/domain/lesson";
-import { PROVIDER_LABEL, type ProviderId } from "@/lib/domain/oauth";
+import { LINK_ERROR_MESSAGE, linkSucceeded, PROVIDER_LABEL, type ProviderId } from "@/lib/domain/oauth";
 import s from "./complete.module.css";
 
 const FORM = "wrapup";
@@ -24,15 +24,8 @@ function Buttons() {
   );
 }
 
-const LINK_MESSAGE: Record<string, string> = {
-  taken: "이 계정은 이미 다른 기록에 연결돼 있어요. 다른 계정을 골라 주세요.",
-  other: "이미 같은 곳의 다른 계정이 연결돼 있어요.",
-  cancel: "연결을 취소했어요. 언제든 다시 할 수 있어요.",
-  failed: "연결하지 못했어요. 잠시 뒤 다시 해 주세요.",
-};
-
 function LinkCard({ lessonId, providers, result }: { lessonId: string; providers: ProviderId[]; result: string | null }) {
-  const error = result ? LINK_MESSAGE[result] : undefined;
+  const error = result ? LINK_ERROR_MESSAGE[result] : undefined;
   const next = encodeURIComponent(`/lesson/${lessonId}/complete`);
   return (
     <section aria-label="계정 연결" className={s.linkCard} data-testid="link-account">
@@ -111,7 +104,7 @@ export function CompleteActions({
       {needLink ? (
         <LinkCard lessonId={lessonId} providers={providers} result={linkResult} />
       ) : (
-        (linkResult === "linked" || linkResult === "already") && <Linked />
+        linkSucceeded(linkResult) && <Linked />
       )}
 
       {groupInitials.length > 0 && (

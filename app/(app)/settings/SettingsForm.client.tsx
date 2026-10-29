@@ -7,6 +7,7 @@ import { ThemeControl } from "@/components/ThemeControl";
 import { Switch } from "@/components/ui";
 import type { TeacherName } from "@/lib/design/types";
 import { WEEKDAY_KO } from "@/lib/domain/dates";
+import { GUEST_LOSS_WARNING, LINK_ERROR_MESSAGE, linkSucceeded, PROVIDER_LABEL, type ProviderId } from "@/lib/domain/oauth";
 import { MINUTE_OPTIONS, shiftTime, timeLabel, toggleStudyDay } from "@/lib/domain/prefs";
 import type { ThemeMode } from "@/lib/theme";
 import s from "./settings.module.css";
@@ -24,6 +25,86 @@ interface Prefs {
 
 const WEEK = [1, 2, 3, 4, 5, 6, 0];
 
+interface Account {
+  linked: boolean;
+  label: string;
+  providers: ProviderId[];
+  result: string | null;
+}
+
+function ProviderLinks({ providers }: { providers: ProviderId[] }) {
+  if (providers.length === 0) return <p className={s.note}>계정 연결은 곧 열려요.</p>;
+  return (
+    <div className={s.providers}>
+      {providers.map((p) => (
+        <a key={p} href={`/api/auth/${p}/start?mode=link&next=%2Fsettings`} className={s.provider} data-kind={p}>
+          {PROVIDER_LABEL[p]}로 연결
+        </a>
+      ))}
+    </div>
+  );
+}
+
+/** 계정 줄과 로그아웃. 연결 전이면 로그아웃 전에 기록을 잃는다고 한 번 더 묻는다 */
+function AccountSection({ account }: { account: Account }) {
+  const [confirm, setConfirm] = useState(false);
+  const error = account.result ? LINK_ERROR_MESSAGE[account.result] : undefined;
+  return (
+    <section aria-label="계정" className={s.section}>
+      <h2 className={s.label}>계정</h2>
+      <div className={`${s.card} ${s.pad}`}>
+        <div className={s.accountRow}>
+          <span className={s.rowLabel}>계정</span>
+          <span className={s.rowValue} data-testid="account-label">
+            {account.label}
+          </span>
+        </div>
+        {linkSucceeded(account.result) && (
+          <p role="status" className={s.good} data-testid="link-done">
+            계정을 연결했어요. 기록이 안전하게 저장돼요.
+          </p>
+        )}
+        {error && (
+          <p role="alert" className={s.warn} data-testid="link-error">
+            {error}
+          </p>
+        )}
+        {!account.linked && (
+          <>
+            <p className={s.note}>{GUEST_LOSS_WARNING} 휴대폰을 바꿔도 이어 하려면 연결해 두세요.</p>
+            <ProviderLinks providers={account.providers} />
+          </>
+        )}
+        {confirm ? (
+          <div role="alert" className={s.confirm} data-testid="logout-confirm">
+            <p>지금 로그아웃하면 이 과정과 잔디를 다시 열 수 없어요. 위에서 계정을 먼저 연결해 주세요.</p>
+            <div className={s.confirmBtns}>
+              <button type="button" className={s.ghost} onClick={() => setConfirm(false)}>
+                취소
+              </button>
+              <form action={logoutAction}>
+                <button type="submit" className={s.danger}>
+                  그래도 로그아웃
+                </button>
+              </form>
+            </div>
+          </div>
+        ) : account.linked ? (
+          <form action={logoutAction}>
+            <button type="submit" className={s.logout}>
+              로그아웃
+            </button>
+          </form>
+        ) : (
+          <button type="button" className={s.logout} onClick={() => setConfirm(true)}>
+            로그아웃
+          </button>
+        )}
+      </div>
+    </section>
+  );
+}
+
 function Chevron() {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden className={s.chev}>
@@ -37,11 +118,13 @@ export function SettingsForm({
   teacher,
   restLeft,
   duration,
+  account,
 }: {
   initial: Prefs;
   teacher: TeacherName;
   restLeft: number;
   duration: string;
+  account: Account;
 }) {
   const [p, setP] = useState<Prefs>(initial);
   const [saved, setSaved] = useState("");
@@ -160,8 +243,8 @@ export function SettingsForm({
         </div>
       </section>
 
-      <section aria-label="과정과 계정" className={s.section}>
-        <h2 className={s.label}>과정과 계정</h2>
+      <section aria-label="과정" className={s.section}>
+        <h2 className={s.label}>과정</h2>
         <div className={s.card}>
           {rows.map((r) => (
             <Link key={r.label} href={r.href} className={s.row} data-testid={r.testid}>
@@ -170,14 +253,10 @@ export function SettingsForm({
               <Chevron />
             </Link>
           ))}
-          <form action={logoutAction}>
-            <button type="submit" className={s.row}>
-              <span className={s.rowLabel}>로그아웃</span>
-              <Chevron />
-            </button>
-          </form>
         </div>
       </section>
+
+      <AccountSection account={account} />
     </>
   );
 }

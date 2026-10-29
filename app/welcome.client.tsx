@@ -24,15 +24,19 @@ export function Welcome({
   invite,
   providers,
   loginResult,
+  guestAtRisk,
 }: {
   teacher: TeacherName;
   invite: { inviter: string; group: string } | null;
   providers: ProviderId[];
   loginResult: string | null;
+  guestAtRisk: boolean;
 }) {
   // 로그인에서 돌아온 경우(?login=사유)에는 로그인 단계를 바로 보여 준다
   const [step, setStep] = useState<"intro" | "login">(loginResult ? "login" : "intro");
   const error = loginResult ? LOGIN_MESSAGE[loginResult] : undefined;
+  const [accepted, setAccepted] = useState(false);
+  const showProviders = !guestAtRisk || accepted;
 
   if (step === "login") {
     return (
@@ -56,7 +60,17 @@ export function Welcome({
             {error}
           </p>
         )}
-        <div className={s.providers}>
+        {!showProviders && (
+          <div role="alert" className={s.warnBox} data-testid="guest-warning">
+            <p>
+              이 휴대폰에 계정을 연결하지 않은 기록이 있어요. 다른 계정으로 들어가면 그 기록은 다시 열 수 없어요.
+            </p>
+            <button type="button" className={s.warnBtn} onClick={() => setAccepted(true)}>
+              알겠어요, 다른 계정으로 들어갈게요
+            </button>
+          </div>
+        )}
+        <div className={s.providers} hidden={!showProviders}>
           {providers.map((p) => (
             <a key={p} href={`/api/auth/${p}/start?mode=login`} className={s.provider} data-kind={p} data-testid={`login-${p}`}>
               {PROVIDER_LABEL[p]}로 계속하기

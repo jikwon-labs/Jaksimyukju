@@ -170,3 +170,90 @@
   outline: 3px solid var(--a-text);
   outline-offset: 2px;
 }
+.accountRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 24px;
+  font-size: 15px;
+  font-weight: 600;
+}
+.providers {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.provider,
+.logout,
+.ghost,
+.danger {
+  min-height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+  border: 1.5px solid var(--line);
+  background: transparent;
+  color: var(--ink);
+}
+/* 카카오 로그인 버튼 안내의 노란 바탕과 검은 글자 */
+.provider[data-kind="kakao"] {
+  border: none;
+  background: #fee500;
+  color: rgba(0, 0, 0, 0.85);
+}
+.logout {
+  width: 100%;
+}
+.confirm {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 14px;
+  background: var(--warn-bg);
+  color: var(--ink);
+  font-size: 13px;
+  line-height: 19px;
+}
+.confirm p {
+  margin: 0;
+}
+.confirmBtns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.confirmBtns form,
+.confirmBtns .danger {
+  width: 100%;
+}
+.danger {
+  border: none;
+  background: var(--warn);
+  color: var(--bg);
+}
+.good {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--good);
+}
+.warn {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--warn);
+}
+.provider:focus-visible,
+.logout:focus-visible,
+.ghost:focus-visible,
+.danger:focus-visible {
+  outline: 3px solid var(--a-text);
+  outline-offset: 2px;
+}

@@ -182,3 +182,35 @@
   outline: 3px solid var(--a-text);
   outline-offset: 2px;
 }
+.warnBox {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  border-radius: 16px;
+  background: var(--warn-bg);
+  color: var(--ink);
+  font-size: 14px;
+  line-height: 21px;
+}
+.warnBox p {
+  margin: 0;
+}
+.warnBtn {
+  min-height: 44px;
+  border-radius: 12px;
+  border: 1.5px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.warnBtn:focus-visible {
+  outline: 3px solid var(--a-text);
+  outline-offset: 2px;
+}
+.providers[hidden] {
+  display: none;
+}
