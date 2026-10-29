@@ -40,23 +40,25 @@ export function Schedule() {
             <h2 id="days-h">학습 요일</h2>
             <span className={s.note}>고르지 않은 날은 쉬어도 연속이 이어져요</span>
           </div>
-          <div className={s.grid} style={{ gridTemplateColumns: "repeat(7, 1fr)" }}>
-            {DAY_LABELS.map((label, i) => {
-              const d = DAY_NUMBERS[i];
-              return (
-                <button
-                  key={label}
-                  type="button"
-                  aria-pressed={studyDays.includes(d)}
-                  aria-label={`${label}요일`}
-                  className={s.opt}
-                  onClick={() => writeDraft({ studyDays: toggleDay(studyDays, d) })}
-                  data-testid={`day-${d}`}
-                >
-                  {label}
-                </button>
-              );
-            })}
+          <div className={s.daysWrap}>
+            <div className={`${s.grid} ${s.days}`}>
+              {DAY_LABELS.map((label, i) => {
+                const d = DAY_NUMBERS[i];
+                return (
+                  <button
+                    key={label}
+                    type="button"
+                    aria-pressed={studyDays.includes(d)}
+                    aria-label={`${label}요일`}
+                    className={s.opt}
+                    onClick={() => writeDraft({ studyDays: toggleDay(studyDays, d) })}
+                    data-testid={`day-${d}`}
+                  >
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </section>
 

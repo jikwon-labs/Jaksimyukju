@@ -49,6 +49,15 @@
   grid-template-columns: repeat(7, 1fr);
   gap: 6px;
 }
+/* 한 줄에 7개를 44px 이상으로 못 두면 4개씩 두 줄로 */
+.block:has(> .days) {
+  container-type: inline-size;
+}
+@container (max-width: 343px) {
+  .days {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
 .day {
   height: 44px;
   border-radius: 12px;

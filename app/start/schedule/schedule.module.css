@@ -52,6 +52,18 @@
   display: grid;
   gap: 6px;
 }
+/* 학습 요일: 한 줄에 7개를 44px 이상으로 못 두면 4개씩 두 줄로 */
+.daysWrap {
+  container-type: inline-size;
+}
+.days {
+  grid-template-columns: repeat(7, 1fr);
+}
+@container (max-width: 343px) {
+  .days {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
 .opt {
   height: 48px;
   border-radius: 14px;

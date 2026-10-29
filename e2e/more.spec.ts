@@ -528,3 +528,15 @@ test("27. 스케줄러: 학습 시각이 지나면 학습 시간 알림을 하�
   await tick(d2, "21:10"); // 같은 날 학습 시각에는 남는다
   await expectStudy(2);
 });
+
+test("28. 시작 흐름의 첫 화면(서버 렌더)부터 고른 선생님 얼굴과 색이 나온다", async ({ page }) => {
+  // 자바스크립트가 돌기 전 HTML을 본다. 쿠키에는 결 선생님을 골라 둔 상태
+  for (const route of ["/start/topic", "/start/teacher", "/start/preview"]) {
+    const res = await page.request.get(route, { headers: { cookie: `j6_teacher=${encodeURIComponent("결")}` } });
+    const html = await res.text();
+    expect(html.includes('data-teacher="결"'), `${route} html 강조색`).toBe(true);
+    // 화면의 첫 선생님(대화 상대나 무대의 큰 얼굴)이 결이어야 한다. 고르기 화면 카드에는 셋이 다 나온다
+    const first = html.match(/data-teacher-face="([^"-]+)-/)?.[1];
+    expect(first, `${route} 첫 얼굴`).toBe("결");
+  }
+});

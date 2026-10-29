@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { Teacher } from "@/components/teacher/Teacher";
 import type { TeacherName } from "@/lib/design/types";
 import type { OnboardingSummary } from "@/lib/server/onboarding";
-import { draftTeacher, readDraft, useDraft, type Draft } from "../draft";
+import { draftTeacher, readDraft, useDraft, useTeacherFallback, type Draft } from "../draft";
 import st from "../start.module.css";
 import s from "./preview.module.css";
 import { WeekList } from "./WeekList.client";
@@ -60,7 +60,7 @@ async function post(d: Draft): Promise<Result> {
 export function Preview() {
   const router = useRouter();
   const draft = useDraft();
-  const who = draftTeacher(draft);
+  const who = draftTeacher(draft, useTeacherFallback());
   const [phase, setPhase] = useState(0);
   const [result, setResult] = useState<Result | null>(null);
   const [attempt, setAttempt] = useState(0);

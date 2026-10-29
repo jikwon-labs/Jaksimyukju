@@ -1,6 +1,6 @@
 "use client";
 // 시작 흐름 초안. 계정을 만들기 전이라 브라우저 sessionStorage에만 둔다.
-import { useSyncExternalStore } from "react";
+import { createContext, useContext, useSyncExternalStore } from "react";
 import { isTeacher } from "@/lib/design/tokens";
 import type { TeacherName } from "@/lib/design/types";
 import { TEACHER_COOKIE } from "@/lib/theme";
@@ -88,9 +88,19 @@ export function useDraft(): Draft {
   return useSyncExternalStore(subscribe, readDraft, () => EMPTY_DRAFT);
 }
 
-/** 고른 선생님. 고르기 전에는 추천, 추천도 없으면 온 */
-export function draftTeacher(d: Draft): TeacherName {
-  return d.teacher ?? d.reco ?? "온";
+/** 고른 선생님. 고르기 전에는 추천, 추천도 없으면 fallback(쿠키에 둔 선생님, 기본 온) */
+export function draftTeacher(d: Draft, fallback: TeacherName = "온"): TeacherName {
+  return d.teacher ?? d.reco ?? fallback;
+}
+
+/**
+ * 서버 렌더와 첫 하이드레이션에는 초안(sessionStorage)이 없다. 그때도 html의 강조색(쿠키)과 같은
+ * 선생님을 그리도록 시작 흐름 레이아웃이 쿠키 값을 넣어 준다.
+ */
+export const TeacherFallbackContext = createContext<TeacherName>("온");
+
+export function useTeacherFallback(): TeacherName {
+  return useContext(TeacherFallbackContext);
 }
 
 /** 강조색을 바로 바꾼다(html data-teacher + 쿠키) */

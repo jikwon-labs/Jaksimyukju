@@ -5,7 +5,7 @@ import { useEffect } from "react";
 import { Teacher } from "@/components/teacher/Teacher";
 import { TEACHER_NAMES } from "@/lib/design/tokens";
 import type { TeacherName } from "@/lib/design/types";
-import { applyTeacher, draftTeacher, useDraft, writeDraft } from "../draft";
+import { applyTeacher, draftTeacher, useDraft, useTeacherFallback, writeDraft } from "../draft";
 import { StepHeader } from "../StepHeader";
 import st from "../start.module.css";
 import s from "./teacher.module.css";
@@ -18,7 +18,7 @@ const INFO: Record<TeacherName, { title: string; desc: string; label: string }> 
 
 export function TeacherPick() {
   const draft = useDraft();
-  const picked = draftTeacher(draft);
+  const picked = draftTeacher(draft, useTeacherFallback());
   const reco = draft.reco ?? "온";
 
   // 저장된 선택(또는 추천)을 강조색에 반영한다

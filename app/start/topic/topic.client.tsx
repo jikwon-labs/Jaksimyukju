@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { Teacher } from "@/components/teacher/Teacher";
 import type { TeacherName } from "@/lib/design/types";
-import { draftTeacher, useDraft, writeDraft } from "../draft";
+import { draftTeacher, useDraft, useTeacherFallback, writeDraft } from "../draft";
 import { goalChips, LEVELS, TOPIC_CHIPS } from "../logic";
 import { StepHeader } from "../StepHeader";
 import st from "../start.module.css";
@@ -39,7 +39,7 @@ export function Topic({ next }: { next?: { topic: string; level: string } }) {
     if (next) writeDraft({ topic: next.topic, goal: "", level: next.level });
   }, [next]);
 
-  const who = draftTeacher(draft);
+  const who = draftTeacher(draft, useTeacherFallback());
   const ans = [draft.topic, draft.goal, draft.level];
   const step = !draft.topic ? 0 : !draft.goal ? 1 : !draft.level ? 2 : 3;
   const typing = step < 2;
