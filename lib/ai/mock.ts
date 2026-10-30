@@ -56,18 +56,18 @@ function levelSkip(level: string): number {
 
 function genericLesson(topic: string, title: string, minutes: number, ref: number): LessonBody {
   return {
-    core: `${title}: 오늘은 ${topic}에서 이것 하나만 가져가요.`,
+    core: `오늘은 ${topic}의 "${title}" 하나만 가져가요.`,
     sections: [
       {
-        heading: `1. ${title}의 뜻`,
-        text: `${iga(title)} 무엇인지 한 문장으로 말할 수 있으면 오늘의 절반은 끝난다. 먼저 정의를 읽고, 내 말로 바꿔 적어 본다.`,
-        example: `${eul(topic)} 처음 배우는 동료에게 30초 안에 설명한다고 생각하고 말해 본다.`,
+        heading: "1. 한 문장으로 말하기",
+        text: `오늘 내용을 한 문장으로 말할 수 있으면 절반은 끝난 거예요. 먼저 정의를 읽고, 내 말로 바꿔 적어 봐요.`,
+        example: `${eul(topic)} 처음 배우는 동료에게 30초 안에 설명한다고 생각하고 말해 봐요.`,
         ref,
       },
       {
         heading: `2. 실제로 쓰이는 곳`,
-        text: `배운 것은 바로 써 볼 때 남는다. 오늘 분량(약 ${minutes}분)의 마지막 몇 분은 작은 예제로 손을 움직여 본다.`,
-        example: `내 업무나 일상에서 ${iga(title)} 보이는 장면 하나를 찾아 적는다.`,
+        text: `배운 건 바로 써 볼 때 남아요. 오늘 분량(약 ${minutes}분)의 마지막 몇 분은 작은 예제로 손을 움직여 봐요.`,
+        example: `내 업무나 일상에서 ${iga(topic)} 쓰이는 장면 하나를 찾아 적어 봐요.`,
         ref: (ref + 1) % 3,
       },
     ],

@@ -167,11 +167,12 @@
   align-items: center;
 }
 .streak {
-  flex: 1;
+  /* 잔디가 길어도 연속 기록 글자가 한 글자씩 세로로 서지 않게 최소 폭을 둔다 */
+  flex: 1 0 96px;
   display: flex;
   flex-direction: column;
   gap: 2px;
-  min-width: 0;
+  min-width: 96px;
 }
 .streakNum {
   font-family: var(--font-title), "Jua", sans-serif;

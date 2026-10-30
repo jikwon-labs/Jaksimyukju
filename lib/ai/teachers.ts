@@ -68,3 +68,11 @@ export const LINES: Record<
     milestonePass: "이제 이 이야기가 한 장에 다 보여요!",
   },
 };
+
+/** 새 선생님의 레슨 첫 마디는 재무제표 예시(붕어빵 외상)라서 다른 주제에는 주제를 넣은 문장을 쓴다 */
+export function lessonIntro(who: TeacherName, topic: string): string {
+  if (who === "새" && !topic.replace(/\s/g, "").includes("재무제표")) {
+    return `${topic}에서 오늘 처음 보는 걸 하나 주워 볼 거예요. 뭐가 나올까요?`;
+  }
+  return LINES[who].intro;
+}

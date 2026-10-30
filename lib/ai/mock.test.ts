@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { mockCurriculum, mockMilestone, mockTutor } from "./mock";
+import { mockCurriculum, mockMilestone, mockProvider, mockTutor } from "./mock";
+import { LINES, lessonIntro } from "./teachers";
 
 const base = {
   topic: "재무제표 읽기",
@@ -85,5 +86,24 @@ describe("mock 튜터: 확인 뒤 자유 질문", () => {
     expect(r.done).toBe(true);
     expect(r.content).toContain("감가상각은 왜 현금이 안 나가요?");
     expect(r.content.trim().endsWith("?")).toBe(true);
+  });
+});
+
+describe("다른 주제의 레슨 문구", () => {
+  it("재무제표 예시가 섞이지 않고, 제목을 두 번 잇지 않는다", async () => {
+    const plan = await mockProvider.generateCurriculum({
+      topic: "Node.js",
+      goal: "결과물 하나",
+      level: "처음이에요",
+      studyDays: [1, 2, 3, 4, 5],
+      minutes: 30,
+      weeks: 2,
+      teacher: "새",
+    });
+    const body = plan.weeks[0].lessons[0].body;
+    expect(body.core).toBe(`오늘은 Node.js의 "${plan.weeks[0].lessons[0].title}" 하나만 가져가요.`);
+    expect(JSON.stringify(body)).not.toMatch(/장부|붕어빵|재무/);
+    expect(lessonIntro("새", "Node.js")).not.toMatch(/붕어빵/);
+    expect(lessonIntro("새", "재무제표 읽기")).toBe(LINES.새.intro);
   });
 });

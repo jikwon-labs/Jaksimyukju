@@ -1,7 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/auth";
 import { getToday } from "@/lib/clock";
-import { LINES } from "@/lib/ai/teachers";
+import { lessonIntro } from "@/lib/ai/teachers";
 import type { LessonPayload } from "@/components/lesson/LessonContent";
 import { lessonBody, loadState, teacherOf } from "@/lib/server/course";
 import { getOwnLesson } from "@/lib/server/lesson";
@@ -34,7 +34,7 @@ export default async function LessonPage({
     title: lesson.title,
     meta: `${lesson.course.topic} · ${lesson.week.index}주차${step?.day ? ` ${step.day}요일` : ""}`,
     who,
-    intro: LINES[who].intro,
+    intro: lessonIntro(who, lesson.course.topic),
     minutes: lesson.minutes,
     extraMinutes: lesson.extraMinutes,
     status: lesson.status,

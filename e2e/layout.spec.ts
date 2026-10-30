@@ -59,3 +59,50 @@ test.describe("터치 기기 입력칸 글자 16px", () => {
     });
   }
 });
+
+// 12주 과정은 잔디가 길다. 좁은 폰에서도 잔디가 카드 밖으로 나가지 않고, 연속 기록 글자가 세로로 서지 않는다
+for (const width of [320, 402]) {
+  test(`12주 과정 홈 잔디 ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 800 });
+    await page.goto("/");
+    await page.getByTestId("start").click();
+    for (let i = 0; i < 3; i++) await page.getByTestId("personality-option").first().click();
+    await page.getByTestId("personality-next").click();
+    await page.getByTestId("teacher-next").click();
+    await page.getByTestId("topic-input").fill("Node.js");
+    await page.getByTestId("send").click();
+    await page.getByTestId("topic-input").fill("혼자 결과물 하나 만들기");
+    await page.getByTestId("send").click();
+    await page.getByTestId("level-option").first().click();
+    // 주제 정리 화면(아래 버튼 두 개)도 가로로 넘치지 않는다
+    await expect(page.getByTestId("topic-next")).toBeVisible();
+    const topicOver = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+    expect(topicOver, "주제 화면 가로 넘침").toBeLessThanOrEqual(0);
+    await page.getByTestId("topic-next").click();
+    await page.getByTestId("weeks-12").click();
+    await page.getByTestId("schedule-next").click();
+    await page.getByTestId("preview-start").click();
+    await page.waitForURL(/\/home/);
+    await page.goto("/home");
+    const r = await page.evaluate(() => {
+      const card = document.querySelector('[aria-label="학습 잔디"]')!.getBoundingClientRect();
+      const grass = document.querySelector('[data-testid="grass"]')!.getBoundingClientRect();
+      const streak = document.querySelector('[data-testid="streak"]')!.parentElement!.getBoundingClientRect();
+      const de = document.documentElement;
+      return { over: de.scrollWidth - de.clientWidth, cardRight: card.right, grassLeft: grass.left, grassRight: grass.right, cardLeft: card.left, streakW: streak.width, cols: document.querySelectorAll('[data-testid="grass"] > span').length / 7 };
+    });
+    expect(r.cols).toBeGreaterThanOrEqual(12);
+    expect(r.over).toBeLessThanOrEqual(0);
+    expect(r.grassLeft).toBeGreaterThanOrEqual(r.cardLeft);
+    expect(r.grassRight).toBeLessThanOrEqual(r.cardRight);
+    expect(r.streakW).toBeGreaterThanOrEqual(96);
+  });
+}
+
+test("콕 찌르기 안내 말풍선은 잠시 뒤 사라진다", async ({ page }) => {
+  await loginDemo(page, "/group");
+  const nudge = page.getByTestId("nudge-준호");
+  await nudge.getByRole("button").click();
+  await expect(nudge.getByRole("status")).toContainText("콕 찔렀어요");
+  await expect(nudge.getByText("콕 찔렀어요")).toBeHidden({ timeout: 8000 });
+});
