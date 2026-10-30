@@ -33,3 +33,14 @@ h3,
 p {
   margin: 0;
 }
+
+/* iOS Safari는 글자가 16px보다 작은 입력칸에 초점이 가면 화면을 확대한다.
+   목업 크기(14~15px)는 마우스 화면에만 두고, 터치 기기에서는 입력칸 글자를 16px로 올린다.
+   화면마다 CSS Module 클래스가 글자 크기를 정하므로 important로 덮는다 */
+@media (pointer: coarse) {
+  input:not([type="checkbox"], [type="radio"], [type="range"], [type="hidden"]),
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
+}

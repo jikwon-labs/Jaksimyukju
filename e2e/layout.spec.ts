@@ -43,3 +43,19 @@ for (const [route, sel] of [
     expect(over).toBeLessThanOrEqual(0);
   });
 }
+
+// iOS Safari는 글자가 16px보다 작은 입력칸에 초점이 가면 화면을 확대한다. 터치 기기에서는 16px 이상이어야 한다
+test.describe("터치 기기 입력칸 글자 16px", () => {
+  test.use({ hasTouch: true, isMobile: true });
+  for (const route of ["/start/topic", "/milestone/2", "/retro"]) {
+    test(`입력칸 16px ${route}`, async ({ page }) => {
+      if (route.startsWith("/start")) await page.goto(route);
+      else await loginDemo(page, route);
+      const sizes = await page
+        .locator('input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]), textarea, select')
+        .evaluateAll((els) => els.map((e) => parseFloat(getComputedStyle(e).fontSize)));
+      expect(sizes.length, route).toBeGreaterThan(0);
+      for (const s of sizes) expect(s, route).toBeGreaterThanOrEqual(16);
+    });
+  }
+});
