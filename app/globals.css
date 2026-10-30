@@ -13,6 +13,8 @@ body {
   color: var(--ink);
   font-family: var(--font-body), "Noto Sans KR", system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
+  /* iOS Safari가 누른 자리에 회색 상자를 그린다. 누른 뒤 화면이 바뀌면 상자가 엉뚱한 자리에 남아서 끈다 */
+  -webkit-tap-highlight-color: transparent;
   /* 한국어는 단어 중간에서 줄을 바꾸지 않는다 */
   word-break: keep-all;
   overflow-wrap: anywhere;

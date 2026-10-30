@@ -88,10 +88,10 @@ export function WeekList({ initial }: { initial: Week[] }) {
               type="button"
               className={s.editBtn}
               onClick={() => open(i)}
-              aria-label={`${i + 1}주차 고치기`}
+              aria-label={`${i + 1}주차 수정하기`}
               data-testid={`week-edit-${i + 1}`}
             >
-              고치기
+              수정하기
             </button>
           </div>
         ),
