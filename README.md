@@ -85,3 +85,15 @@ Expo 앱이 웹 화면(3100 포트)을 그대로 띄운다. 자료 원문처럼 
 3. 실제 기기나 안드로이드 에뮬레이터는 `EXPO_PUBLIC_WEB_URL=http://<맥의 IP>:3100`을 주고 시작한다
 
 앱의 웹뷰는 Safari와 쿠키를 나누지 않아서 처음에는 새 게스트로 시작한다.
+
+### 실제 아이폰에 설치(빌드는 아직 하지 않음)
+
+`mobile/eas.json`의 `preview`가 사내 배포(internal) 빌드다. 앱은 `EXPO_PUBLIC_WEB_URL`(맥의 IP와 3100 포트)을 연다.
+
+1. 맥과 폰을 같은 와이파이에 두고 맥 IP를 확인한다: `ipconfig getifaddr en0`. 다르면 `eas.json`의 주소를 바꾼다
+2. 웹 서버를 그 IP로도 열리게 켠다: `DEV_ORIGINS=<맥 IP> pnpm dev`
+3. `cd mobile && npx eas-cli login`(빌드할 Expo 계정 확인: `npx eas-cli whoami`)
+4. 폰 등록: `npx eas-cli device:create`가 주는 링크를 폰에서 열어 프로필을 설치한다
+5. 빌드: `npx eas-cli build -p ios --profile preview`(Apple 개발자 계정 로그인을 묻는다). 끝나면 나오는 링크를 폰에서 열어 설치한다
+
+번들 ID는 `com.jaksim6.app`으로 두었다. Apple에서 이미 쓰는 ID면 `app.json`에서 바꾼다.
