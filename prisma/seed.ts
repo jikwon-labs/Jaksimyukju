@@ -103,8 +103,12 @@ async function main() {
 
   const input = { topic: FINANCE_TOPIC, goal: FINANCE_GOAL, level: "처음이에요", studyDays: STUDY, minutes: 10, weeks: 6, teacher: "온" as const };
   const myCourse = await writeCourse(prisma, mockLibrarian, me.id, input, mockCurriculum(input), start);
-  // 어제가 학습일이면 5분 버전으로 한 날로 둔다(잔디 연한 칸)
-  await progress(myCourse.id, start, today, { short: STUDY.includes(weekday(yesterday)) ? [yesterday] : [] });
+  // 어제가 학습일이면 5분 버전으로 한 날로 둔다(잔디 연한 칸).
+  // 주말에 돌리면 2주차를 다 끝낸 상태가 되므로 이번 주 화·목을 하루씩 빠진 날로 둔다.
+  // 그러면 오늘 칸은 2주차 마지막 레슨이고, 이틀 연속 빠진 날이 없어 복귀 화면도 뜨지 않는다
+  const weekend = !STUDY.includes(weekday(today));
+  const skip = weekend ? [addDays(mondayOf(today), 1), addDays(mondayOf(today), 3)] : [];
+  await progress(myCourse.id, start, today, { skip, short: STUDY.includes(weekday(yesterday)) ? [yesterday] : [] });
 
   const others: [typeof minji, string, string, { skip?: DayKey[] }][] = [
     [minji, "영어 회화", "회의에서 영어로 의견 말하기", {}],

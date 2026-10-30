@@ -116,7 +116,7 @@ export interface AiProvider {
   roommate(input: RetroInput): Promise<RetroCard>;
 }
 
-/** Librarian: 지금은 mock으로 3개를 돌려준다 */
+/** Librarian: 레슨마다 자료를 3개까지 고른다(lib/ai/librarian.ts) */
 export interface Librarian {
   search(topic: string, lessonTitle: string, level: string): Promise<ResourceItem[]>;
 }

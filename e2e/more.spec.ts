@@ -534,6 +534,8 @@ test("27. 스케줄러: 학습 시각이 지나면 학습 시간 알림을 하�
   await expectStudy(1);
   await tick(d2, "21:10"); // 같은 날 학습 시각에는 남는다
   await expectStudy(2);
+  // 남긴 알림은 푸시(mock 발송기)로도 보냈다
+  expect(execSync("pnpm exec tsx e2e/count-pushed.ts demo-me '약속한 학습 시간'", { encoding: "utf8" }).trim()).toBe("2");
 });
 
 test("28. 시작 흐름의 첫 화면(서버 렌더)부터 고른 선생님 얼굴과 색이 나온다", async ({ page }) => {

@@ -127,11 +127,14 @@ test("5. 커리큘럼 지도 칸 → 퀴즈 → 마일스톤", async ({ page }, 
   await loginDemo(page, "/curriculum");
   await shot(page, info, "10-curriculum");
   // 오늘 칸을 누르면 설명 카드가 열린다
-  await page.locator('[data-testid^="map-node-"][data-state="today"]').first().click();
+  // 오늘 칸은 요일에 따라 레슨이거나(월~목) 퀴즈(금요일, 주말에 돌린 시드)다
+  const todayNode = page.locator('[data-testid^="map-node-"][data-state="today"]').first();
+  const todayKind = await todayNode.getAttribute("data-kind");
+  await todayNode.click();
   await expect(page.getByTestId("popover")).toBeVisible();
-  await expect(page.getByTestId("popover-cta")).toHaveText("학습 시작");
+  await expect(page.getByTestId("popover-cta")).toHaveText(todayKind === "quiz" ? "퀴즈 풀기" : "학습 시작");
   // 같은 칸을 다시 누르면 닫힌다. 그다음 같은 주의 퀴즈 칸 -> 설명 카드의 퀴즈 풀기
-  await page.locator('[data-testid^="map-node-"][data-state="today"]').first().click();
+  await todayNode.click();
   await expect(page.getByTestId("popover")).toHaveCount(0);
   const quizNode = page.locator('[data-testid^="map-node-2-"][data-kind="quiz"]');
   await quizNode.scrollIntoViewIfNeeded();

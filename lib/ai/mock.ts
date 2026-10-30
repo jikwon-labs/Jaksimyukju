@@ -1,4 +1,5 @@
 // 결정적 모의 응답. 같은 입력이면 항상 같은 결과를 돌려준다.
+import { createLibrarian, type LinkCheck, type WebSearch } from "./librarian";
 import { LINES } from "./teachers";
 import {
   CASHFLOW_LESSON,
@@ -224,10 +225,19 @@ export function mockRoommate(input: RetroInput): RetroCard {
 
 const KINDS: ResourceItem["kind"][] = ["영상", "글", "책"];
 
-export const mockLibrarian: Librarian = {
-  async search(topic, lessonTitle) {
+/** 검색 mock: 진짜 검색처럼 열리지 않는 링크와 중복도 섞어 돌려준다 */
+export const mockWebSearch: WebSearch = {
+  async search({ topic, lessonTitle }) {
     const q = encodeURIComponent(topic);
-    return [
+    const found: ResourceItem[] = [
+      {
+        title: `${lessonTitle} 정리 노트`,
+        url: `https://notes.example.invalid/${q}`,
+        kind: KINDS[1],
+        minutes: 5,
+        reason: "검색에는 나왔지만 열리지 않는 링크예요.",
+        summary: ["열리지 않아서 걸러져야 해요."],
+      },
       {
         title: `${lessonTitle} 한눈에 보기`,
         url: `https://ko.wikipedia.org/wiki/${encodeURIComponent(topic.replace(/\s*읽기$/, ""))}`,
@@ -253,8 +263,14 @@ export const mockLibrarian: Librarian = {
         summary: ["입문서에서 오늘 레슨과 맞닿은 장을 골랐어요.", "예제가 많아 손으로 따라 하기 좋아요.", "다음 주 내용의 예고편 역할도 해요."],
       },
     ];
+    return [...found, found[1]];
   },
 };
+
+/** 링크 확인 mock: 네트워크에 나가지 않고 .invalid 주소만 닫힌 것으로 본다 */
+export const mockLinkCheck: LinkCheck = async (url) => !new URL(url).hostname.endsWith(".invalid");
+
+export const mockLibrarian: Librarian = createLibrarian(mockWebSearch, mockLinkCheck);
 
 export const mockProvider: AiProvider = {
   name: "mock",

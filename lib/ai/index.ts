@@ -10,7 +10,7 @@ export function getAi(): AiProvider {
   return mockProvider;
 }
 
-/** 자료 검색은 이번 범위에서 mock만 둔다 */
+/** 자료 검색: 웹 검색 API를 아직 고르지 않아서 mock 검색과 mock 링크 확인으로 같은 흐름을 돈다 */
 export function getLibrarian(): Librarian {
   return mockLibrarian;
 }
