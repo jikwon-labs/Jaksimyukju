@@ -549,3 +549,28 @@ test("28. 시작 흐름의 첫 화면(서버 렌더)부터 고른 선생님 얼�
     expect(first, `${route} 첫 얼굴`).toBe("결");
   }
 });
+
+test("29. 자료 원문 열기: 웹은 새 탭 링크, 앱 껍데기 안에서는 인앱 브라우저로 넘긴다", async ({ page }) => {
+  await loginDemo(page, "/home");
+  await page.getByRole("link", { name: "학습 시작" }).click();
+  await page.getByTestId("resource-row").first().click();
+  await expect(page).toHaveURL(/\/resource\//);
+  const open = page.getByTestId("resource-open");
+  await expect(open).toHaveAttribute("target", "_blank");
+  await expect(open).toHaveAttribute("href", /^https:\/\//);
+  const href = await open.getAttribute("href");
+
+  // 앱 껍데기(react-native-webview)가 넣어 주는 연결 통로를 흉내 낸다
+  await page.evaluate(() => {
+    const w = window as unknown as { ReactNativeWebView: { postMessage(m: string): void }; __sent: string[] };
+    w.__sent = [];
+    w.ReactNativeWebView = { postMessage: (m) => w.__sent.push(m) };
+  });
+  const popups: unknown[] = [];
+  page.context().on("page", (p) => popups.push(p));
+  await open.click();
+  const sent = await page.evaluate(() => (window as unknown as { __sent: string[] }).__sent);
+  expect(sent.map((m) => JSON.parse(m))).toEqual([{ type: "open-external", url: href }]);
+  expect(popups).toHaveLength(0);
+  await expect(page).toHaveURL(/\/resource\//);
+});
