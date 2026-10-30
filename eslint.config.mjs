@@ -14,6 +14,8 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
     "playwright-report/**",
     "test-results/**",
+    // 앱 껍데기는 따로 타입 검사한다(mobile/에서 npx tsc --noEmit)
+    "mobile/**",
   ]),
 ]);
 

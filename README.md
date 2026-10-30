@@ -75,3 +75,13 @@ pnpm dev        # http://localhost:3100
 
 - `prisma/schema.prisma`의 `provider = "postgresql"`, `url = env("DATABASE_URL")`로 바꾸고 `prisma migrate`로 옮긴다. SQLite 전용 기능은 쓰지 않았다(Json 칸은 Postgres jsonb).
 - `lib/auth.ts`의 `getSessionUser`, `signIn`, `linkAccount`만 Supabase Auth로 바꾼다.
+
+## 앱 껍데기(mobile/)
+
+Expo 앱이 웹 화면(3100 포트)을 그대로 띄운다. 자료 원문처럼 바깥 링크는 인앱 브라우저로 연다.
+
+1. 웹 서버를 먼저 켠다: `pnpm dev`
+2. `cd mobile && npm install && npx expo start --ios` (iOS 시뮬레이터에 Expo Go를 설치하고 연다)
+3. 실제 기기나 안드로이드 에뮬레이터는 `EXPO_PUBLIC_WEB_URL=http://<맥의 IP>:3100`을 주고 시작한다
+
+앱의 웹뷰는 Safari와 쿠키를 나누지 않아서 처음에는 새 게스트로 시작한다.
