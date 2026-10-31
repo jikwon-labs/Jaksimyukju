@@ -86,14 +86,21 @@ Expo 앱이 웹 화면(3100 포트)을 그대로 띄운다. 자료 원문처럼 
 
 앱의 웹뷰는 Safari와 쿠키를 나누지 않아서 처음에는 새 게스트로 시작한다.
 
-### 실제 아이폰에 설치(빌드는 아직 하지 않음)
+### 실제 아이폰에 설치
 
-`mobile/eas.json`의 `preview`가 사내 배포(internal) 빌드다. 앱은 `EXPO_PUBLIC_WEB_URL`(맥의 IP와 3100 포트)을 연다.
+평소에는 quedot-commerce-app처럼 맥에서 직접 빌드해 케이블로 연결한 폰에 깐다. Expo 서버를 거치지 않아 빌드 횟수를 쓰지 않는다. 앱은 `EXPO_PUBLIC_WEB_URL`(맥의 IP와 3100 포트)을 연다.
 
-1. 맥과 폰을 같은 와이파이에 두고 맥 IP를 확인한다: `ipconfig getifaddr en0`. 다르면 `eas.json`의 주소를 바꾼다
-2. 웹 서버를 그 IP로도 열리게 켠다: `DEV_ORIGINS=<맥 IP> pnpm dev`
-3. `cd mobile && npx eas-cli login`(빌드할 Expo 계정 확인: `npx eas-cli whoami`)
-4. 폰 등록: `npx eas-cli device:create`가 주는 링크를 폰에서 열어 프로필을 설치한다
-5. 빌드: `npx eas-cli build -p ios --profile preview`(Apple 개발자 계정 로그인을 묻는다). 끝나면 나오는 링크를 폰에서 열어 설치한다
+1. 맥과 폰을 같은 와이파이에 두고 맥 IP를 확인한다: `ipconfig getifaddr en0`
+2. `mobile/.env.example`을 `mobile/.env.local`로 복사하고 `EXPO_PUBLIC_WEB_URL=http://<맥 IP>:3100`을 넣는다
+3. 웹 서버를 그 IP로도 열리게 켠다: `DEV_ORIGINS=<맥 IP> pnpm dev`
+4. 폰을 케이블로 연결하고(개발자 모드 켜기) 설치한다: `cd mobile && npm run ios:release -- --device`
+   - Release 빌드라 Metro 서버 없이 열린다. 앱 껍데기 코드를 고치며 바로 보려면 `npm run ios -- --device`
+   - 서명은 `app.json`의 `ios.appleTeamId`(개인 팀)로 한다. `mobile/ios/`는 빌드 때 생기는 폴더라 커밋하지 않는다
+
+EAS 서버 빌드(`mobile/eas.json`의 `preview`, 사내 배포)도 설정돼 있다. 케이블 없이 링크로 설치해야 할 때만 쓴다. 빌드 횟수를 쓴다.
+
+1. `cd mobile && npx eas-cli whoami`로 계정(wlrnjs)을 확인한다
+2. 새 폰이면 등록한다: `npx eas-cli device:create`
+3. `npx eas-cli build -p ios --profile preview`. 끝나면 나오는 링크를 폰에서 열어 설치한다
 
 번들 ID는 `com.jaksim6.app`으로 두었다. Apple에서 이미 쓰는 ID면 `app.json`에서 바꾼다.

@@ -11,7 +11,8 @@
       "bundleIdentifier": "com.jaksim6.app",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
-      }
+      },
+      "appleTeamId": "K6599UJ4KM"
     },
     "android": {
       "adaptiveIcon": {
