@@ -69,30 +69,36 @@ appId: com.jaksim6.app
 - extendedWaitUntil:
     visible: "보정은 사진의 느낌을 바꾸는 작업이에요."
     timeout: 15000
-- tapOn: "내 생각을 적어 보세요"
+# 보낸 뒤에도 키보드가 떠 있어 바로 이어서 쓴다
+- assertVisible: "보내기"
+- takeScreenshot: shots/05-tutor-after-send
 - inputText: "여행 사진의 밝기를 먼저 맞추면 돼요."
 - tapOn: "보내기"
 - extendedWaitUntil:
     visible: "레슨 완료하고 잔디 채우기"
     timeout: 20000
-- hideKeyboard
-- takeScreenshot: shots/05-tutor-done
+# 대화를 누르면 키보드가 내려간다
+- tapOn: "보정은 사진의 느낌을 바꾸는 작업이에요."
+- assertNotVisible: "123"
+- takeScreenshot: shots/06-tutor-done
 
 # 대화를 아래로 끌어 맨 위까지 밀어도 선생님 줄과 입력칸은 제자리
 - swipe:
     start: 50%, 30%
     end: 50%, 75%
     duration: 500
-- takeScreenshot: shots/06-tutor-scrolled
+- takeScreenshot: shots/07-tutor-scrolled
 - assertVisible: "온 선생님"
 - assertVisible: "더 궁금한 게 있으면 물어보세요"
 
 # 레슨 완료
-- scrollUntilVisible:
-    element: "레슨 완료하고 잔디 채우기"
-    direction: DOWN
+# 기본 스크롤은 화면 아래(입력칸)에서 시작해 키보드를 띄우므로, 대화 영역 안에서 위로 민다
+- swipe:
+    start: 50%, 55%
+    end: 50%, 20%
+    duration: 500
 - tapOn: "레슨 완료하고 잔디 채우기"
 - extendedWaitUntil:
     visible: "오늘 칸을 채웠어요"
     timeout: 15000
-- takeScreenshot: shots/07-complete
+- takeScreenshot: shots/08-complete

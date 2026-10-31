@@ -48,6 +48,7 @@ export function TutorChat({
   const started = useRef(false);
   const listRef = useRef<HTMLDivElement>(null);
   const screenRef = useRef<HTMLElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const online = useOnline();
 
   /** 서버에 한 턴을 요청한다. 실패해도 내 말은 화면과 서버에 남는다 */
@@ -98,6 +99,8 @@ export function TutorChat({
     setThinking(true);
     setMessages((m) => [...m, { id: `${TMP}${Date.now()}`, role: "user", content: text, understanding: null }]);
     void post(text);
+    // 메신저처럼 보낸 뒤에도 키보드를 띄워 둔다(엔터로 보낸 경우에도 초점을 지킨다)
+    inputRef.current?.focus();
   }
 
   function retry() {
@@ -109,6 +112,12 @@ export function TutorChat({
     if (last && last.role === "user" && last.id.startsWith(TMP)) {
       void post(last.content);
     } else void post();
+  }
+
+  /** 메신저처럼 대화 영역을 누르면 키보드를 내린다. 안의 버튼·링크는 그대로 눌린다 */
+  function closeKeyboard(e: React.MouseEvent) {
+    if ((e.target as HTMLElement).closest("a, button, input, textarea")) return;
+    inputRef.current?.blur();
   }
 
   const lastAi = [...messages].reverse().find((m) => m.role === "ai");
@@ -138,7 +147,7 @@ export function TutorChat({
         </span>
       </header>
 
-      <div className={s.list} ref={listRef} aria-live="polite" data-testid="tutor-list">
+      <div className={s.list} ref={listRef} aria-live="polite" onClick={closeKeyboard} data-testid="tutor-list">
         <span className={s.topic}>{title}</span>
         {messages.map((m) => (
           <div key={m.id} className={s.row} data-from={m.role}>
@@ -189,6 +198,7 @@ export function TutorChat({
           선생님에게 답하기
         </label>
         <input
+          ref={inputRef}
           id="tutor-input"
           className={s.input}
           placeholder={done ? "더 궁금한 게 있으면 물어보세요" : "내 생각을 적어 보세요"}
@@ -203,6 +213,9 @@ export function TutorChat({
           aria-label="보내기"
           className={s.send}
           disabled={thinking || !draft.trim()}
+          // 버튼이 초점을 가져가면 입력칸이 흐려져 iOS 키보드가 내려간다
+          onPointerDown={(e) => e.preventDefault()}
+          onMouseDown={(e) => e.preventDefault()}
           data-testid="tutor-send"
         >
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">

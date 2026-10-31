@@ -188,3 +188,34 @@ for (const height of [647, 549]) {
     });
   });
 }
+
+test("튜터 채팅: 보내기를 눌러도 입력칸 초점이 남아 키보드가 내려가지 않는다", async ({ page }) => {
+  await loginDemo(page, "/home");
+  await page.getByRole("link", { name: "학습 시작" }).click();
+  await page.getByTestId("lesson-cta").click();
+  // 같은 레슨을 앞 테스트도 쓰므로 대화 수는 세지 않고, 보낸 뒤 하나 늘어나는지만 본다
+  await expect(page.getByTestId("tutor-ai").first()).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByTestId("tutor-send")).toBeDisabled();
+  const before = await page.getByTestId("tutor-ai").count();
+  const input = page.getByTestId("tutor-input");
+  await input.click();
+  await input.fill("초점 확인용 답이에요.");
+  await page.getByTestId("tutor-send").click();
+  await expect(page.getByTestId("tutor-user").filter({ hasText: "초점 확인용 답이에요." })).toBeVisible();
+  await expect(input).toBeFocused();
+  // 답을 받은 뒤에도 그대로 이어서 쓸 수 있다
+  await expect(page.getByTestId("tutor-ai")).toHaveCount(before + 1, { timeout: 15_000 });
+  await expect(input).toBeFocused();
+});
+
+test("튜터 채팅: 대화 영역을 누르면 키보드를 내린다(입력칸 초점을 푼다)", async ({ page }) => {
+  await loginDemo(page, "/home");
+  await page.getByRole("link", { name: "학습 시작" }).click();
+  await page.getByTestId("lesson-cta").click();
+  await expect(page.getByTestId("tutor-ai").first()).toBeVisible({ timeout: 15_000 });
+  const input = page.getByTestId("tutor-input");
+  await input.click();
+  await expect(input).toBeFocused();
+  await page.getByTestId("tutor-ai").first().click();
+  await expect(input).not.toBeFocused();
+});
