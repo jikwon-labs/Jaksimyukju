@@ -25,6 +25,12 @@
     },
     "plugins": [
       "expo-web-browser"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "e8327abe-8974-4dc9-8417-5bc8b69391ae"
+      }
+    },
+    "owner": "wlrnjs"
   }
 }
