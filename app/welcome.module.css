@@ -227,3 +227,20 @@
     height: 92px;
   }
 }
+/* 더 낮은 화면(SE의 Safari: 주소창을 빼면 549px)에서는 간격과 글자를 한 번 더 줄인다 */
+@media (max-height: 600px) {
+  .intro {
+    padding: 12px 24px 16px 24px;
+    gap: 8px;
+  }
+  .hero {
+    gap: 10px;
+  }
+  .points {
+    gap: 6px;
+  }
+  .wordmark {
+    font-size: 40px;
+    line-height: 46px;
+  }
+}

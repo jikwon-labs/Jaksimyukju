@@ -172,16 +172,19 @@ test.describe("튜터 채팅은 입력칸이 바닥에 붙고 대화만 스크�
   });
 });
 
-test.describe("작은 폰(SE, 앱 안 375x647)에서 첫 화면은 세로로 넘치지 않는다", () => {
-  test.use({ viewport: { width: 375, height: 647 } });
+// SE: 앱 안에서는 647px, Safari에서는 주소창을 빼고 549px
+for (const height of [647, 549]) {
+  test.describe(`작은 폰(SE, 375x${height})에서 첫 화면은 세로로 넘치지 않는다`, () => {
+    test.use({ viewport: { width: 375, height } });
 
-  test("소개와 로그인 단계", async ({ page }) => {
-    const over = () => page.evaluate(() => document.documentElement.scrollHeight - document.documentElement.clientHeight);
-    await page.goto("/");
-    await page.waitForLoadState("networkidle");
-    expect(await over()).toBeLessThanOrEqual(0);
-    await page.getByRole("button", { name: "이미 계정이 있어요" }).click();
-    await expect(page.getByRole("button", { name: "뒤로" })).toBeVisible();
-    expect(await over()).toBeLessThanOrEqual(0);
+    test("소개와 로그인 단계", async ({ page }) => {
+      const over = () => page.evaluate(() => document.documentElement.scrollHeight - document.documentElement.clientHeight);
+      await page.goto("/");
+      await page.waitForLoadState("networkidle");
+      expect(await over()).toBeLessThanOrEqual(0);
+      await page.getByRole("button", { name: "이미 계정이 있어요" }).click();
+      await expect(page.getByRole("button", { name: "뒤로" })).toBeVisible();
+      expect(await over()).toBeLessThanOrEqual(0);
+    });
   });
-});
+}
