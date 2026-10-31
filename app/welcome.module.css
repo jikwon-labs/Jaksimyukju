@@ -214,3 +214,16 @@
 .providers[hidden] {
   display: none;
 }
+
+/* 키가 작은 폰(SE: 앱 안에서 647px)에서는 위 여백과 캐릭터 자리를 줄여 한 화면에 들어오게 한다 */
+@media (max-height: 700px) {
+  .intro {
+    padding-top: 24px;
+  }
+  .hero {
+    gap: 14px;
+  }
+  .trio {
+    height: 92px;
+  }
+}
