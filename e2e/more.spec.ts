@@ -574,3 +574,12 @@ test("29. 자료 원문 열기: 웹은 새 탭 링크, 앱 껍데기 안에서�
   expect(popups).toHaveLength(0);
   await expect(page).toHaveURL(/\/resource\//);
 });
+
+test("30. 데모 로그인은 들어온 주소 그대로 돌려보낸다(폰에서 맥 IP로 열어도 localhost로 가지 않는다)", async ({ request }) => {
+  const res = await request.get("http://127.0.0.1:3100/api/dev/login?as=demo-me&to=/home&now=", { maxRedirects: 0 });
+  expect(res.status()).toBe(307);
+  expect(res.headers()["location"]).toBe("/home");
+  // 앱 밖 주소로는 보내지 않는다
+  const evil = await request.get("http://127.0.0.1:3100/api/dev/login?as=demo-me&to=//evil.example", { maxRedirects: 0 });
+  expect(evil.headers()["location"]).toBe("/home");
+});
