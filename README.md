@@ -104,3 +104,11 @@ EAS 서버 빌드(`mobile/eas.json`의 `preview`, 사내 배포)도 설정돼 �
 3. `npx eas-cli build -p ios --profile preview`. 끝나면 나오는 링크를 폰에서 열어 설치한다
 
 번들 ID는 `com.jaksim6.app`으로 두었다. Apple에서 이미 쓰는 ID면 `app.json`에서 바꾼다.
+
+### 앱 E2E(Maestro)
+
+`mobile/.maestro/`에 앱을 직접 눌러 보는 흐름이 있다(처음 켜기부터 첫 레슨 완료까지, 튜터 키보드와 대화 스크롤 포함). Maestro는 실제 아이폰을 지원하지 않아 시뮬레이터에서 돌린다.
+
+1. 웹 서버를 켜고(`DEV_ORIGINS=<맥 IP> pnpm dev`) 데이터를 처음으로 돌린다: `pnpm db:reset`
+2. 시뮬레이터에 Release 빌드를 깐다: `cd mobile && npm run ios:release -- --device "<시뮬레이터 이름>"`
+3. `maestro test .maestro` (화면 캡처는 `~/.maestro/tests/<시각>/` 아래에 남는다)

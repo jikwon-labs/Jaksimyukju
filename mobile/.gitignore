@@ -39,3 +39,7 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# Maestro 화면 캡처
+/shots
+/.maestro/shots

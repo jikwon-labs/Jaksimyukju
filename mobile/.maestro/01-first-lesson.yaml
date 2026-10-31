@@ -1,0 +1,98 @@
+# 처음 켜서 시작 흐름을 거쳐 첫 레슨의 튜터 채팅까지. 튜터에서는 키보드와 대화 스크롤도 본다
+# 실행 전: 웹 서버(DEV_ORIGINS=<맥 IP> pnpm dev)와 pnpm db:reset, 시뮬레이터에 Release 빌드
+appId: com.jaksim6.app
+---
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible: "시작하기"
+    timeout: 30000
+- takeScreenshot: shots/01-welcome
+- tapOn: "시작하기"
+
+# 성향 질문 세 개
+- tapOn: "괜찮아요, 오늘은 5분만 해요"
+- tapOn: "칭찬을 많이 해 주는 선생님"
+- tapOn: "지쳐서"
+- tapOn: "선생님 만나러 가기"
+- scrollUntilVisible:
+    element: "온 선생님과 시작하기"
+    direction: DOWN
+- tapOn: "온 선생님과 시작하기"
+
+# 주제: 입력칸을 눌러 키보드로 쓴다
+- tapOn: "예: 재무제표 읽기"
+- inputText: "사진 보정"
+- takeScreenshot: shots/02-topic-keyboard
+- tapOn: "보내기"
+- tapOn: "예: 회사 숫자를 혼자 읽기"
+- inputText: "여행 사진 10장 보정하기"
+- tapOn: "보내기"
+- tapOn: "처음이에요.*"
+- scrollUntilVisible:
+    element: "학습 시간 정하기"
+    direction: DOWN
+- tapOn: "학습 시간 정하기"
+- scrollUntilVisible:
+    element: "커리큘럼 만들기"
+    direction: DOWN
+- tapOn: "커리큘럼 만들기"
+- scrollUntilVisible:
+    element: "이대로 시작하기"
+    direction: DOWN
+    timeout: 30000
+- tapOn: "이대로 시작하기"
+
+# 홈에서 첫 레슨
+- extendedWaitUntil:
+    visible: "학습 잔디"
+    timeout: 15000
+- takeScreenshot: shots/03-home
+- scrollUntilVisible:
+    element: "학습 시작"
+    direction: DOWN
+- tapOn: "학습 시작"
+- scrollUntilVisible:
+    element: "온 선생님과 확인하기"
+    direction: DOWN
+- tapOn: "온 선생님과 확인하기"
+
+# 튜터: 키보드가 올라와도 선생님 줄과 입력칸이 보인다
+- extendedWaitUntil:
+    visible: "내 생각을 적어 보세요"
+    timeout: 15000
+- tapOn: "내 생각을 적어 보세요"
+- inputText: "보정은 사진의 느낌을 바꾸는 작업이에요."
+- takeScreenshot: shots/04-tutor-keyboard
+- assertVisible: "온 선생님"
+- tapOn: "보내기"
+- extendedWaitUntil:
+    visible: "보정은 사진의 느낌을 바꾸는 작업이에요."
+    timeout: 15000
+- tapOn: "내 생각을 적어 보세요"
+- inputText: "여행 사진의 밝기를 먼저 맞추면 돼요."
+- tapOn: "보내기"
+- extendedWaitUntil:
+    visible: "레슨 완료하고 잔디 채우기"
+    timeout: 20000
+- hideKeyboard
+- takeScreenshot: shots/05-tutor-done
+
+# 대화를 아래로 끌어 맨 위까지 밀어도 선생님 줄과 입력칸은 제자리
+- swipe:
+    start: 50%, 30%
+    end: 50%, 75%
+    duration: 500
+- takeScreenshot: shots/06-tutor-scrolled
+- assertVisible: "온 선생님"
+- assertVisible: "더 궁금한 게 있으면 물어보세요"
+
+# 레슨 완료
+- scrollUntilVisible:
+    element: "레슨 완료하고 잔디 채우기"
+    direction: DOWN
+- tapOn: "레슨 완료하고 잔디 채우기"
+- extendedWaitUntil:
+    visible: "오늘 칸을 채웠어요"
+    timeout: 15000
+- takeScreenshot: shots/07-complete
