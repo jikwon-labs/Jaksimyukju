@@ -1,5 +1,15 @@
+/* 페이지가 아니라 화면 자체를 보이는 영역에 붙여 둔다. 대화 목록만 스크롤되고 머리와 입력칸은 움직이지 않는다.
+   --vv-height, --vv-top은 키보드에 맞춰 스크립트가 넣는다(components/lesson/keyboard.ts) */
 .screen {
-  height: 100dvh;
+  position: fixed;
+  top: var(--vv-top, 0px);
+  left: 0;
+  right: 0;
+  width: 100%;
+  max-width: 430px;
+  min-width: 320px;
+  margin: 0 auto;
+  height: var(--vv-height, 100dvh);
   display: flex;
   flex-direction: column;
   background: var(--bg);
@@ -69,6 +79,8 @@
 .list {
   flex: 1;
   overflow-y: auto;
+  /* 대화 끝에 닿아도 스크롤이 페이지로 넘어가지 않는다 */
+  overscroll-behavior: contain;
   padding: 16px 20px;
   display: flex;
   flex-direction: column;
@@ -173,6 +185,10 @@
   padding: 10px 16px 28px 16px;
   border-top: 1px solid var(--line);
   background: var(--bg);
+}
+/* 키보드가 떠 있으면 홈 표시줄 자리가 필요 없어서 바닥 여백을 줄인다 */
+.screen[data-keyboard="open"] .composer {
+  padding-bottom: 10px;
 }
 .srOnly {
   position: absolute;

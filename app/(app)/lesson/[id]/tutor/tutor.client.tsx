@@ -8,6 +8,7 @@ import { Teacher } from "@/components/teacher/Teacher";
 import { AI_FAIL_BODY } from "@/components/lesson/copy";
 import { BackIcon, OfflineBar, StateBlock } from "@/components/lesson/StateBlock";
 import { useOnline } from "@/components/lesson/offline";
+import { useFitToKeyboard } from "@/components/lesson/keyboard";
 import type { TutorMessageView, TutorResponse } from "@/components/lesson/tutor-types";
 import type { TeacherName } from "@/lib/design/types";
 import { tutorStatus, understandingChip } from "@/lib/domain/lesson";
@@ -46,6 +47,7 @@ export function TutorChat({
   const [draft, setDraft] = useState("");
   const started = useRef(false);
   const listRef = useRef<HTMLDivElement>(null);
+  const screenRef = useRef<HTMLElement>(null);
   const online = useOnline();
 
   /** 서버에 한 턴을 요청한다. 실패해도 내 말은 화면과 서버에 남는다 */
@@ -78,10 +80,14 @@ export function TutorChat({
     firstTurn();
   }, []);
 
-  useEffect(() => {
+  function toBottom() {
     const el = listRef.current;
     if (el) el.scrollTop = el.scrollHeight;
-  }, [messages, thinking, failed, done]);
+  }
+
+  useEffect(toBottom, [messages, thinking, failed, done]);
+  // 키보드가 올라와 보이는 영역이 줄면 마지막 말이 가려지지 않게 다시 맨 아래로
+  useFitToKeyboard(screenRef, toBottom);
 
   function send(e: React.FormEvent) {
     e.preventDefault();
@@ -114,9 +120,9 @@ export function TutorChat({
   const lastUser = [...messages].reverse().find((m) => m.role === "user");
 
   return (
-    <main className={s.screen}>
+    <main className={s.screen} ref={screenRef}>
       {!online && <OfflineBar />}
-      <header className={s.header}>
+      <header className={s.header} data-testid="tutor-header">
         <Link href={`/lesson/${lessonId}`} aria-label="레슨으로 돌아가기" className={s.back}>
           <BackIcon />
         </Link>
@@ -132,7 +138,7 @@ export function TutorChat({
         </span>
       </header>
 
-      <div className={s.list} ref={listRef} aria-live="polite">
+      <div className={s.list} ref={listRef} aria-live="polite" data-testid="tutor-list">
         <span className={s.topic}>{title}</span>
         {messages.map((m) => (
           <div key={m.id} className={s.row} data-from={m.role}>
@@ -178,7 +184,7 @@ export function TutorChat({
         )}
       </div>
 
-      <form className={s.composer} onSubmit={send}>
+      <form className={s.composer} onSubmit={send} data-testid="tutor-composer">
         <label htmlFor="tutor-input" className={s.srOnly}>
           선생님에게 답하기
         </label>

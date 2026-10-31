@@ -106,3 +106,68 @@ test("콕 찌르기 안내 말풍선은 잠시 뒤 사라진다", async ({ page 
   await expect(nudge.getByRole("status")).toContainText("콕 찔렀어요");
   await expect(nudge.getByText("콕 찔렀어요")).toBeHidden({ timeout: 8000 });
 });
+
+test.describe("튜터 채팅은 입력칸이 바닥에 붙고 대화만 스크롤된다", () => {
+  test.use({ viewport: { width: 393, height: 640 } });
+
+  // 키보드가 올라온 상황을 흉내 내려고 visualViewport를 바꿔 끼운다(iOS는 키보드를 띄워도 창 높이를 줄이지 않고 이 값만 바꾼다)
+  test.beforeEach(async ({ page }) => {
+    await page.addInitScript(() => {
+      const vv = Object.assign(new EventTarget(), { height: window.innerHeight, offsetTop: 0 });
+      Object.defineProperty(window, "visualViewport", { configurable: true, get: () => vv });
+      Object.assign(window, { __vv: vv });
+    });
+  });
+
+  test("대화를 스크롤해도 머리와 입력칸은 제자리, 키보드가 올라오면 보이는 영역에 맞춘다", async ({ page }) => {
+    await loginDemo(page, "/home");
+    await page.getByRole("link", { name: "학습 시작" }).click();
+    await page.getByTestId("lesson-cta").click();
+    await expect(page).toHaveURL(/\/tutor/);
+    await expect(page.getByTestId("tutor-ai")).toHaveCount(1, { timeout: 15_000 });
+    for (const a of ["첫 번째 답이에요. 길게 적어서 말풍선을 키워 봐요.", "두 번째 답이에요. 이것도 길게 적어 봐요.", "세 번째 답이에요."]) {
+      await page.getByTestId("tutor-input").fill(a);
+      await page.getByTestId("tutor-send").click();
+      await expect(page.getByTestId("tutor-send")).toBeDisabled();
+      await expect(page.getByTestId("tutor-user").filter({ hasText: a })).toBeVisible();
+      await expect(page.locator('[role="status"][aria-label="선생님이 생각하는 중"]')).toHaveCount(0, { timeout: 15_000 });
+    }
+
+    const list = page.getByTestId("tutor-list");
+    const composer = page.getByTestId("tutor-composer");
+    const header = page.getByTestId("tutor-header");
+
+    const doc = await page.evaluate(() => ({
+      over: document.documentElement.scrollHeight - document.documentElement.clientHeight,
+      overscroll: getComputedStyle(document.documentElement).overscrollBehaviorY,
+    }));
+    // 페이지 자체는 스크롤되지 않고, 끝에서 더 밀어도 페이지가 튕기지 않는다
+    expect(doc.over).toBeLessThanOrEqual(0);
+    expect(doc.overscroll).toBe("none");
+    expect(await list.evaluate((el) => getComputedStyle(el).overscrollBehaviorY)).toBe("contain");
+    expect(await list.evaluate((el) => el.scrollHeight > el.clientHeight)).toBe(true);
+
+    const before = { c: await composer.boundingBox(), h: await header.boundingBox() };
+    expect(before.c!.y + before.c!.height).toBeCloseTo(640, 0);
+    const box = await list.boundingBox();
+    await page.mouse.move(box!.x + box!.width / 2, box!.y + box!.height / 2);
+    await page.mouse.wheel(0, -2000);
+    await expect.poll(() => list.evaluate((el) => el.scrollTop)).toBe(0);
+    expect(await composer.boundingBox()).toEqual(before.c);
+    expect(await header.boundingBox()).toEqual(before.h);
+
+    // 키보드가 올라와 보이는 높이가 340px이 되고, iOS가 페이지를 120px 밀어 올린 상황
+    await page.evaluate(() => {
+      const vv = (window as unknown as { __vv: EventTarget & { height: number; offsetTop: number } }).__vv;
+      vv.height = 340;
+      vv.offsetTop = 120;
+      vv.dispatchEvent(new Event("resize"));
+    });
+    await expect.poll(async () => (await header.boundingBox())!.y).toBeCloseTo(120, 0);
+    const kb = await composer.boundingBox();
+    expect(kb!.y + kb!.height).toBeCloseTo(460, 0);
+    // 키보드가 떠 있을 때는 바닥 여백을 줄이고, 마지막 말이 보이게 맨 아래로 내린다
+    expect(await composer.evaluate((el) => getComputedStyle(el).paddingBottom)).toBe("10px");
+    expect(await list.evaluate((el) => el.scrollHeight - el.clientHeight - el.scrollTop)).toBeLessThanOrEqual(1);
+  });
+});

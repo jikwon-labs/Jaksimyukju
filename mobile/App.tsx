@@ -58,6 +58,8 @@ export default function App() {
             allowsBackForwardNavigationGestures
             setSupportMultipleWindows={false}
             sharedCookiesEnabled
+            // 키보드 위의 위·아래 화살표와 "완료" 줄은 웹 폼용이라 앱에서는 숨긴다
+            hideKeyboardAccessoryView
           />
         )}
       </SafeAreaView>
