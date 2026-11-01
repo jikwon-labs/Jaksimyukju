@@ -97,12 +97,17 @@ export function TutorChat({
     const text = draft.trim();
     if (!text || thinking) return;
     setDraft("");
-    setFailed(false);
-    setThinking(true);
-    setMessages((m) => [...m, { id: `${TMP}${Date.now()}`, role: "user", content: text, understanding: null }]);
-    void post(text);
+    say(text);
     // 메신저처럼 보낸 뒤에도 키보드를 띄워 둔다(엔터로 보낸 경우에도 초점을 지킨다)
     inputRef.current?.focus();
+  }
+
+  /** 내 말을 화면에 먼저 올리고 서버에 보낸다. 보기를 누른 것도 같은 길로 간다 */
+  function say(text: string) {
+    setFailed(false);
+    setThinking(true);
+    setMessages((m) => [...m, { id: `${TMP}${Date.now()}`, role: "user", content: text, understanding: null, choices: [] }]);
+    void post(text);
   }
 
   function retry() {
@@ -129,6 +134,9 @@ export function TutorChat({
   const status = tutorStatus({ thinking, done, aiTurns });
   const face = thinking ? "think" : draft.trim() ? "listen" : "base";
   const lastUser = [...messages].reverse().find((m) => m.role === "user");
+  const last = messages[messages.length - 1];
+  // 마지막 말이 객관식 질문이고 아직 고르지 않았을 때만 보기를 띄운다
+  const choices = !done && !thinking && !failed && last?.role === "ai" ? last.choices : [];
 
   return (
     <main className={s.screen} ref={screenRef}>
@@ -161,6 +169,18 @@ export function TutorChat({
             ))}
           </div>
         ))}
+        {choices.length > 0 && (
+          <div role="group" aria-label="보기 고르기" className={s.choices} data-testid="tutor-choices">
+            {choices.map((c, i) => (
+              <button key={i} type="button" className={s.choice} onClick={() => say(c)} data-testid="tutor-choice">
+                <span className={s.choiceNo} aria-hidden="true">
+                  {i + 1}
+                </span>
+                {c}
+              </button>
+            ))}
+          </div>
+        )}
         {thinking && (
           <div role="status" aria-label="선생님이 생각하는 중" className={s.typing}>
             <span className={s.dot} />
@@ -206,7 +226,7 @@ export function TutorChat({
           ref={inputRef}
           id="tutor-input"
           className={s.input}
-          placeholder={done ? "더 궁금한 게 있으면 물어보세요" : "내 생각을 적어 보세요"}
+          placeholder={done ? "더 궁금한 게 있으면 물어보세요" : choices.length > 0 ? "보기를 고르거나 직접 적어 보세요" : "내 생각을 적어 보세요"}
           autoComplete="off"
           value={draft}
           onChange={(e) => setDraft(e.target.value)}

@@ -158,6 +158,7 @@ model TutorMessage {
   role          String // user | ai
   content       String
   understanding String? // 이해 | 부분 | 미흡
+  choices       Json? // string[] 3개. 첫 확인 질문(객관식)에만 있다
   createdAt     DateTime @default(now())
   lesson        Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
 

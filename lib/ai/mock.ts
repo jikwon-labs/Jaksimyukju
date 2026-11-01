@@ -150,22 +150,29 @@ const FREE_REPLY: Record<TutorInput["teacher"], (q: string) => string> = {
   새: (q) => `오, "${q}"! 그거 탐험해 볼 만해요. 내 일에서 비슷한 장면을 하나 찾으면 답이 보일 거예요. 어떤 장면이 떠올라요?`,
 };
 
+/** 재무제표 데모 레슨의 첫 객관식 보기. 정답은 FINANCE_ANSWER번째 */
+const FINANCE_CHOICES = ["아니요, 이익이 나면 현금도 늘어요", "네, 외상으로 팔면 돈이 늦게 들어와요", "이익과 현금은 같은 숫자예요"];
+const FINANCE_ANSWER = 1;
+
 export function mockTutor(input: TutorInput): TutorReply {
   const L = LINES[input.teacher];
   if (input.free) {
     const last = [...input.history].reverse().find((h) => h.role === "user")?.content.trim() ?? "";
     const q = last.length > 24 ? `${last.slice(0, 24)}...` : last;
-    return { content: FREE_REPLY[input.teacher](q), understanding: "이해", done: true };
+    return { content: FREE_REPLY[input.teacher](q), understanding: "이해", done: true, choices: [] };
   }
   const finance = input.lessonTitle === "현금흐름표는 왜 손익계산서와 다를까";
   const userTurns = input.history.filter((h) => h.role === "user");
   const first = finance
     ? L.tutorFirst
     : {
-        온: `천천히 해도 돼요. "${input.lessonTitle}"에서 가장 기억에 남는 걸 내 말로 설명해 볼래요?`,
-        결: `질문 하나 합니다. "${input.lessonTitle}"의 핵심을 한 문장으로 말해 보세요.`,
-        새: `이상한 질문 하나! "${input.lessonTitle}"을 요리에 비유하면 뭘까요?`,
+        온: `천천히 해도 돼요. "${input.lessonTitle}"에서 가장 중요한 건 뭐였을까요? 하나 골라 볼래요?`,
+        결: `질문 하나 합니다. "${input.lessonTitle}"의 핵심은 무엇입니까? 하나 고르세요.`,
+        새: `퀴즈 하나! "${input.lessonTitle}"에서 제일 중요한 건 뭐였을까요?`,
       }[input.teacher];
+  const choices = finance
+    ? FINANCE_CHOICES
+    : ["처음부터 모든 걸 외우는 것", input.core.trim() || "레슨의 핵심 한 줄을 이해하는 것", "도구 설정부터 끝내는 것"];
   const follow = finance
     ? L.tutorFollow
     : {
@@ -173,7 +180,15 @@ export function mockTutor(input: TutorInput): TutorReply {
         결: "하나는 됐습니다. 그럼 내 업무에 쓰는 장면 하나를 바로 대 보세요.",
         새: "오, 재밌는 생각이에요. 그럼 그게 내 하루 어디에 숨어 있을까요?",
       }[input.teacher];
-  if (userTurns.length === 0) return { content: first, understanding: "부분", done: false };
+  if (userTurns.length === 0) return { content: first, understanding: "부분", done: false, choices };
+  if (userTurns.length === 1) {
+    // 첫 답은 보기를 고른 것. 정답이 아니면 정답을 짚어 주고 열린 질문으로 넘어간다
+    const asked = input.history.find((h) => h.role === "ai")?.choices ?? choices;
+    const right = asked[finance ? FINANCE_ANSWER : 1];
+    const picked = userTurns[0].content.trim();
+    const fix = picked === right || !asked.includes(picked) ? "" : `정답은 "${right}"예요.\n\n`;
+    return { content: `${fix}${follow}`, understanding: "부분", done: false, choices: [] };
+  }
   const lastAnswer = userTurns[userTurns.length - 1].content.trim();
   if (lastAnswer.length < 6) {
     const retry = {
@@ -181,10 +196,9 @@ export function mockTutor(input: TutorInput): TutorReply {
       결: "너무 짧습니다. 이유를 한 문장으로 붙이세요.",
       새: "음, 조금만 더 들려줘요! 예시 하나면 충분해요.",
     }[input.teacher];
-    return { content: retry, understanding: "미흡", done: false };
+    return { content: retry, understanding: "미흡", done: false, choices: [] };
   }
-  if (userTurns.length === 1) return { content: follow, understanding: "부분", done: false };
-  return { content: L.tutorWrap, understanding: "이해", done: true };
+  return { content: L.tutorWrap, understanding: "이해", done: true, choices: [] };
 }
 
 export function mockMilestone(input: MilestoneInput): MilestoneFeedback {

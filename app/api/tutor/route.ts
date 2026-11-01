@@ -5,7 +5,7 @@ import { devToolsEnabled } from "@/lib/clock";
 import { AiError, getAi, type TutorTurn } from "@/lib/ai";
 import { prisma } from "@/lib/prisma";
 import { lessonBody, teacherOf } from "@/lib/server/course";
-import { toMessageView as view, type TutorResponse } from "@/components/lesson/tutor-types";
+import { toChoices, toMessageView as view, type TutorResponse } from "@/components/lesson/tutor-types";
 
 const AI_FAIL_COOKIE = "j6_ai_fail";
 
@@ -47,7 +47,11 @@ export async function POST(req: NextRequest) {
   try {
     // 개발·E2E 전용: j6_ai_fail=1 쿠키로 튜터 실패 화면을 볼 수 있다
     if (devToolsEnabled() && req.cookies.get(AI_FAIL_COOKIE)?.value === "1") throw new AiError("forced", "network");
-    const turns: TutorTurn[] = history.map((m) => ({ role: m.role === "user" ? "user" : "ai", content: m.content }));
+    const turns: TutorTurn[] = history.map((m) => ({
+      role: m.role === "user" ? "user" : "ai",
+      content: m.content,
+      choices: toChoices(m.choices),
+    }));
     const r = await getAi().tutorReply({
       teacher: teacherOf(user),
       lessonTitle: lesson.title,
@@ -55,12 +59,14 @@ export async function POST(req: NextRequest) {
       history: turns,
       free,
     });
+    // 보기는 확인의 첫 질문(아직 내 답이 없을 때)에서 3개일 때만 쓴다. 그 밖에는 채팅으로 답한다
+    const choices = !free && !history.some((m) => m.role === "user") && r.choices.length === 3 ? r.choices : undefined;
     // AI가 답을 쓰는 사이 다른 요청(새로고침, 두 번째 탭)이 먼저 답을 저장했으면 이 답은 버린다
     const saved = await prisma.$transaction(async (tx) => {
       const now = await tx.tutorMessage.count({ where: { lessonId } });
       if (now !== history.length) return false;
       await tx.tutorMessage.create({
-        data: { lessonId, role: "ai", content: r.content, understanding: r.understanding },
+        data: { lessonId, role: "ai", content: r.content, understanding: r.understanding, choices },
       });
       if (r.done && !free) await tx.lesson.update({ where: { id: lessonId }, data: { tutorChecked: true } });
       return true;

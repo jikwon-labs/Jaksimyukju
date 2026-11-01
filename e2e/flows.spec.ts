@@ -53,11 +53,17 @@ test("1. 처음 시작부터 첫 레슨 완료: 잔디 한 칸, 연속 1", async
   await expect(page.getByTestId("lesson-title")).toBeVisible();
   await page.getByTestId("lesson-cta").click();
   await expect(page).toHaveURL(/\/tutor/);
-  for (const answer of ["보정은 사진의 느낌을 바꾸는 작업이에요.", "여행 사진의 밝기를 먼저 맞추면 돼요."]) {
-    await page.getByTestId("tutor-input").fill(answer);
-    await page.getByTestId("tutor-send").click();
-    await expect(page.getByTestId("tutor-input")).toHaveValue("");
-  }
+  // 첫 질문은 보기 3개 중 하나를 고르고, 다음 질문은 채팅으로 답한다
+  const choices = page.getByTestId("tutor-choice");
+  await expect(choices).toHaveCount(3, { timeout: 15_000 });
+  const picked = (await choices.nth(1).innerText()).replace(/^\d+\s*/, "");
+  await choices.nth(1).click();
+  await expect(page.getByTestId("tutor-user").filter({ hasText: picked })).toBeVisible();
+  await expect(page.getByTestId("tutor-choices")).toHaveCount(0);
+  await expect(page.getByTestId("tutor-ai")).toHaveCount(2, { timeout: 15_000 });
+  await page.getByTestId("tutor-input").fill("여행 사진의 밝기를 먼저 맞추면 돼요.");
+  await page.getByTestId("tutor-send").click();
+  await expect(page.getByTestId("tutor-input")).toHaveValue("");
   await expect(page.getByTestId("tutor-complete")).toBeVisible({ timeout: 15_000 });
   // F6: 확인이 끝난 뒤에도 아무 때나 물을 수 있다. 튜터는 답 대신 되묻는다
   await page.getByTestId("tutor-input").fill("보정할 때 색온도는 왜 먼저 봐요?");

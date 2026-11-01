@@ -42,18 +42,30 @@ describe("mock 커리큘럼", () => {
 
 describe("mock 튜터", () => {
   const input = { teacher: "결" as const, lessonTitle: "현금흐름표는 왜 손익계산서와 다를까", core: "", history: [] };
-  it("첫 질문 → 되묻기 → 마무리", () => {
+  it("객관식 첫 질문 → 열린 질문 → 마무리", () => {
     const q1 = mockTutor(input);
     expect(q1.content).toContain("이익을 냈는데 현금이 줄 수 있습니까");
-    const h1 = [{ role: "ai" as const, content: q1.content }, { role: "user" as const, content: "외상으로 팔면 돈은 나중에 들어와서요." }];
+    expect(q1.choices).toHaveLength(3);
+    const h1 = [{ role: "ai" as const, content: q1.content, choices: q1.choices }, { role: "user" as const, content: q1.choices[1] }];
     const q2 = mockTutor({ ...input, history: h1 });
     expect(q2.done).toBe(false);
     expect(q2.understanding).toBe("부분");
+    expect(q2.choices).toEqual([]);
+    expect(q2.content).not.toContain("정답은");
     const q3 = mockTutor({ ...input, history: [...h1, { role: "ai", content: q2.content }, { role: "user", content: "감가상각처럼 돈이 안 나가는 비용이 크면요." }] });
     expect(q3).toMatchObject({ done: true, understanding: "이해" });
   });
-  it("너무 짧은 답은 미흡으로 다시 묻는다", () => {
-    const r = mockTutor({ ...input, history: [{ role: "ai", content: "q" }, { role: "user", content: "몰라" }] });
+  it("틀린 보기를 고르면 정답을 짚고 열린 질문으로 넘어간다", () => {
+    const q1 = mockTutor(input);
+    const r = mockTutor({ ...input, history: [{ role: "ai", content: q1.content, choices: q1.choices }, { role: "user", content: q1.choices[0] }] });
+    expect(r.content).toContain(`정답은 "${q1.choices[1]}"`);
+    expect(r).toMatchObject({ done: false, choices: [] });
+  });
+  it("열린 질문에 너무 짧게 답하면 미흡으로 다시 묻는다", () => {
+    const r = mockTutor({
+      ...input,
+      history: [{ role: "ai", content: "q" }, { role: "user", content: "보기" }, { role: "ai", content: "q2" }, { role: "user", content: "몰라" }],
+    });
     expect(r.understanding).toBe("미흡");
   });
 });

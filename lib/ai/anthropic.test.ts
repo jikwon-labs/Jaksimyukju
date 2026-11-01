@@ -160,6 +160,13 @@ describe("튜터 대화 순서", () => {
     ]);
     expect(m.map((x) => x.role)).toEqual(["user", "assistant", "user"]);
   });
+  it("객관식 질문은 보기를 붙여 보낸다", () => {
+    const m = tutorMessages([
+      { role: "ai", content: "핵심은?", choices: ["가", "나", "다"] },
+      { role: "user", content: "나" },
+    ]);
+    expect(m[1].content).toBe("핵심은?\n\n보기: 1) 가 / 2) 나 / 3) 다");
+  });
   it("user로 시작하면 그대로 둔다", () => {
     expect(tutorMessages([{ role: "user", content: "질문" }])).toEqual([{ role: "user", content: "질문" }]);
   });

@@ -54,6 +54,8 @@ export type Understanding = "이해" | "부분" | "미흡";
 export interface TutorTurn {
   role: "user" | "ai";
   content: string;
+  /** 선생님이 객관식으로 물었을 때의 보기 */
+  choices?: string[];
 }
 
 export interface TutorInput {
@@ -69,6 +71,8 @@ export interface TutorReply {
   content: string;
   understanding: Understanding;
   done: boolean;
+  /** 첫 질문(객관식)이면 보기 3개, 아니면 빈 배열 */
+  choices: string[];
 }
 
 export interface MilestoneInput {
