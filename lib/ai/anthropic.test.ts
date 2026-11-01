@@ -44,24 +44,88 @@ function stub(reply: ClaudeReply | Error) {
   return { calls, ai: createAnthropicProvider("test-key", transport) };
 }
 
+/** 커리큘럼 계획을 뼈대 답과 주차 답으로 나눈다(실제 호출 순서: 뼈대 1번, 주차마다 1번) */
+function splitPlan(plan: ReturnType<typeof mockCurriculum>) {
+  const outline = {
+    goal: plan.goal,
+    excludes: plan.excludes,
+    weeks: plan.weeks.map((w) => ({
+      title: w.title,
+      milestone: w.milestone,
+      criteria: w.criteria,
+      lessons: w.lessons.map((l) => ({ title: l.title, core: l.body.core })),
+    })),
+  };
+  return { outline: textReply(outline), week: (i: number) => textReply({ lessons: plan.weeks[i].lessons, quiz: plan.weeks[i].quiz }) };
+}
+
+function isWeekCall(params: MessageCreateParamsNonStreaming) {
+  return JSON.stringify(params.messages).includes("이번 주:");
+}
+
+function weekIndex(params: MessageCreateParamsNonStreaming) {
+  return Number(/이번 주: (\d+)주차/.exec(JSON.stringify(params.messages))?.[1]) - 1;
+}
+
+/** 뼈대 답은 차례로(재시도 확인용), 주차 답은 요청한 주차에 맞춰 돌려준다 */
+function curriculumStub(outlines: ClaudeReply[], week: (i: number) => ClaudeReply | Error) {
+  const calls: MessageCreateParamsNonStreaming[] = [];
+  const opts: { stream: boolean; timeout: number }[] = [];
+  let n = 0;
+  const transport: ClaudeTransport = {
+    async send(params, o) {
+      calls.push(params);
+      opts.push(o);
+      if (!isWeekCall(params)) return outlines[Math.min(n++, outlines.length - 1)];
+      const r = week(weekIndex(params));
+      if (r instanceof Error) throw r;
+      return r;
+    },
+  };
+  return { calls, opts, outlineCalls: () => n, ai: createAnthropicProvider("test-key", transport) };
+}
+
 describe("Claude 모델과 요청 모양", () => {
   it("모델: 무거운 일은 Sonnet 5.5, 가벼운 일은 Haiku 5.5", () => {
     expect(HEAVY_MODEL).toBe("claude-sonnet-5-5");
     expect(LIGHT_MODEL).toBe("claude-haiku-5-5");
   });
-  it("커리큘럼은 Sonnet 스트리밍, 넉넉한 max_tokens, 서버 fallback", async () => {
-    const { calls, ai } = stub(textReply(mockCurriculum(base)));
+  it("커리큘럼: 뼈대는 Haiku 한 번, 주차 본문은 Sonnet으로 주마다 한 번, 모두 스트리밍", async () => {
+    const plan = mockCurriculum(base);
+    const parts = splitPlan(plan);
+    const { calls, opts, ai } = curriculumStub([parts.outline], parts.week);
+    const out = await ai.generateCurriculum(base);
+    expect(out).toEqual(Plan.parse(plan));
+    expect(calls).toHaveLength(1 + plan.weeks.length);
+    const [outline, ...weeks] = calls;
+    expect(outline.model).toBe(LIGHT_MODEL);
+    expect(outline).not.toHaveProperty("fallbacks");
+    for (const w of weeks) {
+      expect(w.model).toBe(HEAVY_MODEL);
+      expect(w.fallbacks).toBe("default");
+      expect(w.betas).toEqual(["server-side-fallback-2026-07-01"]);
+    }
+    for (const p of calls) {
+      expect(p.thinking).toEqual({ type: "adaptive" });
+      expect(p.output_config?.effort).toBe("low");
+      expect(p.output_config?.format?.type).toBe("json_schema");
+      expect(p).not.toHaveProperty("temperature");
+    }
+    expect(opts.every((o) => o.stream)).toBe(true);
+  });
+  it("주차 본문의 레슨 수가 뼈대와 다르면 그 주만 다시 만든다", async () => {
+    const plan = mockCurriculum(base);
+    const parts = splitPlan(plan);
+    const tries = new Map<number, number>();
+    const { ai } = curriculumStub([parts.outline], (i) => {
+      const n = (tries.get(i) ?? 0) + 1;
+      tries.set(i, n);
+      if (i === 0 && n === 1) return textReply({ lessons: plan.weeks[0].lessons.slice(1), quiz: plan.weeks[0].quiz });
+      return parts.week(i);
+    });
     await ai.generateCurriculum(base);
-    const { params, opts } = calls[0];
-    expect(params.model).toBe(HEAVY_MODEL);
-    expect(opts.stream).toBe(true);
-    expect(params.max_tokens).toBeGreaterThanOrEqual(32000);
-    expect(params.thinking).toEqual({ type: "adaptive" });
-    expect(params.output_config?.effort).toBe("medium");
-    expect(params.output_config?.format?.type).toBe("json_schema");
-    expect(params.fallbacks).toBe("default");
-    expect(params.betas).toEqual(["server-side-fallback-2026-07-01"]);
-    expect(params).not.toHaveProperty("temperature");
+    expect(tries.get(0)).toBe(2);
+    expect(tries.get(1)).toBe(1);
   });
   it("튜터와 회고는 Haiku, 낮은 effort, fallback 없음", async () => {
     const t = stub(textReply(mockTutor({ teacher: "온", lessonTitle: "x", core: "y", history: [] })));
@@ -183,34 +247,25 @@ describe("Claude 오류 처리", () => {
   });
 });
 
-describe("커리큘럼은 모양이 틀리면 한 번 다시 만든다", () => {
-  function seq(replies: (ClaudeReply | Error)[]) {
-    let n = 0;
-    const transport: ClaudeTransport = {
-      async send() {
-        const r = replies[Math.min(n++, replies.length - 1)];
-        if (r instanceof Error) throw r;
-        return r;
-      },
-    };
-    return { ai: createAnthropicProvider("test-key", transport), calls: () => n };
-  }
+describe("커리큘럼 뼈대는 모양이 틀리면 한 번 다시 만든다", () => {
+  const parts = splitPlan(mockCurriculum(base));
   const broken = textReply({ goal: "x", excludes: [], weeks: [] });
 
   it("첫 답이 틀리고 두 번째가 맞으면 두 번째 답을 쓴다", async () => {
-    const { ai, calls } = seq([broken, textReply(mockCurriculum(base))]);
+    const { ai, outlineCalls } = curriculumStub([broken, parts.outline], parts.week);
     const plan = await ai.generateCurriculum(base);
     expect(plan.weeks.length).toBeGreaterThan(0);
-    expect(calls()).toBe(2);
+    expect(outlineCalls()).toBe(2);
   });
   it("두 번 다 틀리면 실패하고 세 번째는 부르지 않는다", async () => {
-    const { ai, calls } = seq([broken, broken, textReply(mockCurriculum(base))]);
+    const { ai, outlineCalls } = curriculumStub([broken, broken, parts.outline], parts.week);
     await expect(ai.generateCurriculum(base)).rejects.toMatchObject({ reason: "parse" });
-    expect(calls()).toBe(2);
+    expect(outlineCalls()).toBe(2);
   });
   it("거절이나 연결 실패는 다시 부르지 않는다", async () => {
-    const refused = seq([textReply("", "refusal"), textReply(mockCurriculum(base))]);
+    const refused = curriculumStub([textReply("", "refusal"), parts.outline], parts.week);
     await expect(refused.ai.generateCurriculum(base)).rejects.toMatchObject({ reason: "refusal" });
-    expect(refused.calls()).toBe(1);
+    expect(refused.outlineCalls()).toBe(1);
   });
 });
+

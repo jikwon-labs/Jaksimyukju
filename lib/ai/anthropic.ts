@@ -6,7 +6,7 @@ import { z } from "zod";
 import { lessonsPerWeek } from "@/lib/domain/course";
 import { WEEKDAY_KO } from "@/lib/domain/dates";
 import { systemPrompt } from "./teachers";
-import { AiError, type AiProvider, type TutorTurn } from "./types";
+import { AiError, type AiProvider, type CurriculumInput, type TutorTurn } from "./types";
 
 // 무거운 일(커리큘럼, 마일스톤 피드백)과 가벼운 일(튜터, 회고)을 나눈다
 export const HEAVY_MODEL = "claude-sonnet-5-5";
@@ -50,6 +50,23 @@ export const Plan = z.object({
     )
     .min(1),
 });
+// 커리큘럼은 두 번에 나눠 만든다: 뼈대(주차·마일스톤·레슨 제목) 한 번, 주차별 본문·퀴즈는 동시에
+export const Outline = z.object({
+  goal: z.string(),
+  excludes: z.array(z.string()),
+  weeks: z
+    .array(
+      z.object({
+        title: z.string(),
+        milestone: z.string(),
+        criteria: z.array(z.string()).min(1),
+        lessons: z.array(z.object({ title: z.string(), core: z.string() })).min(1),
+      }),
+    )
+    .min(1),
+});
+const PlanWeek = Plan.shape.weeks.element;
+export const WeekDetail = PlanWeek.pick({ lessons: true, quiz: true });
 export const Tutor = z.object({
   content: z.string().min(1),
   understanding: z.enum(["이해", "부분", "미흡"]),
@@ -161,42 +178,100 @@ async function retryOnParse<T>(fn: () => Promise<T>, label: string): Promise<T> 
   }
 }
 
+const ADVISOR = "Advisor. 목적지에서 거꾸로 커리큘럼을 짠다. 레슨 하나는 하루 분량을 넘지 않는다. 목적지에 필요 없는 것은 제외 목록에 둔다.";
+
+function learnerLines(input: CurriculumInput): string[] {
+  const days = input.studyDays.map((d) => WEEKDAY_KO[d]).join("");
+  return [
+    `주제: ${input.topic}`,
+    `목적지: ${input.goal}`,
+    `지금 수준: ${input.level}`,
+    `학습 요일: ${days} (주 ${input.studyDays.length}일), 하루 ${input.minutes}분`,
+  ];
+}
+
+/** 뼈대: 주차 제목, 마일스톤, 평가 기준, 레슨 제목과 핵심 한 줄. 짧고 빨라야 해서 Haiku가 만든다 */
+async function curriculumOutline(transport: ClaudeTransport, input: CurriculumInput) {
+  const perWeek = lessonsPerWeek(input.studyDays.length);
+  const res = await transport.send(
+    {
+      model: LIGHT_MODEL,
+      max_tokens: 16000,
+      thinking: { type: "adaptive" },
+      system: systemPrompt(input.teacher, ADVISOR),
+      messages: [
+        {
+          role: "user",
+          content: [
+            ...learnerLines(input),
+            `기간: ${input.weeks}주. 주마다 레슨 ${perWeek}개(제목과 핵심 한 줄), 마일스톤 1개와 평가 기준 3개.`,
+            "레슨 본문과 퀴즈는 아직 쓰지 않는다.",
+          ].join("\n"),
+        },
+      ],
+      output_config: { effort: "low", format: jsonFormat(Outline) },
+    },
+    { stream: true, timeout: 3 * 60_000 },
+  );
+  return readReply(Outline, res);
+}
+
+/** 한 주의 레슨 본문과 퀴즈. 레슨 수와 순서는 뼈대를 따른다 */
+async function curriculumWeek(transport: ClaudeTransport, input: CurriculumInput, outline: z.infer<typeof Outline>, i: number) {
+  const week = outline.weeks[i];
+  const res = await transport.send(
+    {
+      model: HEAVY_MODEL,
+      max_tokens: 16000,
+      thinking: { type: "adaptive" },
+      ...FALLBACK,
+      system: systemPrompt(input.teacher, ADVISOR),
+      messages: [
+        {
+          role: "user",
+          content: [
+            ...learnerLines(input),
+            `전체 과정: ${outline.weeks.map((w, n) => `${n + 1}주 ${w.title}`).join(" / ")}`,
+            `이번 주: ${i + 1}주차 "${week.title}", 마일스톤 "${week.milestone}"`,
+            `레슨(이 순서와 제목 그대로 ${week.lessons.length}개): ${week.lessons.map((l, n) => `${n + 1}. ${l.title} (핵심: ${l.core})`).join(" / ")}`,
+            "레슨 본문은 핵심 한 줄과 섹션 2개(소제목, 설명, 예시, 근거 자료 번호 0~2)로 쓴다.",
+            "이번 주 내용으로 퀴즈 3문제(4지선다, answer는 0~3)를 낸다.",
+          ].join("\n"),
+        },
+      ],
+      output_config: { effort: "low", format: jsonFormat(WeekDetail) },
+    },
+    { stream: true, timeout: 3 * 60_000 },
+  );
+  const detail = readReply(WeekDetail, res);
+  if (detail.lessons.length !== week.lessons.length) {
+    throw new AiError(`AI 응답 모양이 달라요 (${i + 1}주차 레슨 ${detail.lessons.length}개, 뼈대는 ${week.lessons.length}개)`, "parse");
+  }
+  return detail;
+}
+
 export function createAnthropicProvider(apiKey: string, transport: ClaudeTransport = sdkTransport(apiKey)): AiProvider {
+  // 커리큘럼 호출은 출력이 길어 가끔 모양이 어긋난다. 실패하면 온보딩 전체가 막히니 호출마다 한 번 다시 만든다
   const provider: AiProvider = {
     name: "anthropic",
     generateCurriculum: (input) =>
       guard(async () => {
-        const perWeek = lessonsPerWeek(input.studyDays.length);
-        const days = input.studyDays.map((d) => WEEKDAY_KO[d]).join("");
-        const res = await transport.send(
-          {
-            model: HEAVY_MODEL,
-            // 12주 과정은 출력이 길다. 생각 토큰도 여기에 들어간다
-            max_tokens: 64000,
-            thinking: { type: "adaptive" },
-            ...FALLBACK,
-            system: systemPrompt(
-              input.teacher,
-              "Advisor. 목적지에서 거꾸로 커리큘럼을 짠다. 레슨 하나는 하루 분량을 넘지 않는다. 목적지에 필요 없는 것은 제외 목록에 둔다.",
-            ),
-            messages: [
-              {
-                role: "user",
-                content: [
-                  `주제: ${input.topic}`,
-                  `목적지: ${input.goal}`,
-                  `지금 수준: ${input.level}`,
-                  `학습 요일: ${days} (주 ${input.studyDays.length}일), 하루 ${input.minutes}분`,
-                  `기간: ${input.weeks}주. 주마다 레슨 ${perWeek}개, 퀴즈 3문제(4지선다, answer는 0~3), 마일스톤 1개와 평가 기준 3개.`,
-                  "레슨 본문은 핵심 한 줄과 섹션 2개(소제목, 설명, 예시, 근거 자료 번호 0~2)로 쓴다.",
-                ].join("\n"),
-              },
-            ],
-            output_config: { effort: "medium", format: jsonFormat(Plan) },
-          },
-          { stream: true, timeout: 10 * 60_000 },
+        // 한 번에 다 만들면 출력이 길어 1분 가까이 걸린다. 뼈대를 먼저 받고 주차 본문은 동시에 받는다
+        const outline = await retryOnParse(() => curriculumOutline(transport, input), "커리큘럼 뼈대");
+        const details = await Promise.all(
+          outline.weeks.map((week, i) => retryOnParse(() => curriculumWeek(transport, input, outline, i), `${i + 1}주차 본문`)),
         );
-        return readReply(Plan, res);
+        return Plan.parse({
+          goal: outline.goal,
+          excludes: outline.excludes,
+          weeks: outline.weeks.map((w, i) => ({
+            title: w.title,
+            milestone: w.milestone,
+            criteria: w.criteria,
+            lessons: details[i].lessons,
+            quiz: details[i].quiz,
+          })),
+        });
       }),
     tutorReply: (input) =>
       guard(async () => {
@@ -267,7 +342,5 @@ export function createAnthropicProvider(apiKey: string, transport: ClaudeTranspo
         return readReply(Retro, res);
       }),
   };
-  // 커리큘럼은 출력이 길어 가끔 모양이 어긋난다. 실패하면 온보딩 전체가 막히니 한 번 다시 만든다
-  const once = provider.generateCurriculum;
-  return { ...provider, generateCurriculum: (input) => retryOnParse(() => once(input), "커리큘럼") };
+  return provider;
 }
