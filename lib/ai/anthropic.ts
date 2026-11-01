@@ -109,7 +109,14 @@ export function readReply<T>(schema: z.ZodType<T>, res: ClaudeReply): T {
     throw new AiError("AI 응답을 읽지 못했어요", "parse");
   }
   const out = schema.safeParse(json);
-  if (!out.success) throw new AiError("AI 응답 모양이 달라요", "parse");
+  if (!out.success) {
+    // 어느 칸이 어떻게 달랐는지 서버 로그에서 볼 수 있게 처음 몇 개만 붙인다(사용자 화면에는 나가지 않는다)
+    const where = out.error.issues
+      .slice(0, 5)
+      .map((i) => `${i.path.join(".") || "(root)"}: ${i.message}`)
+      .join("; ");
+    throw new AiError(`AI 응답 모양이 달라요 (${where})`, "parse");
+  }
   return out.data;
 }
 
