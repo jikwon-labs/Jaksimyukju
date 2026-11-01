@@ -134,6 +134,8 @@ export async function guard<T>(fn: () => Promise<T>): Promise<T> {
 }
 
 const OPENER = "레슨을 다 읽었어요. 확인 질문을 해 주세요.";
+// 화면은 content를 빈 줄마다 말풍선으로 나눈다(lib/domain/chat.ts)
+const BUBBLES = "content는 1~2문장짜리 짧은 덩어리 2~3개로 쓰고 덩어리 사이에 빈 줄을 넣는다. 질문은 마지막 덩어리에 따로 둔다.";
 
 /** 대화는 user로 시작해야 한다. 저장된 기록은 AI 첫 질문부터라 여는 말을 앞에 붙인다 */
 export function tutorMessages(history: TutorTurn[]): MessageCreateParamsNonStreaming["messages"] {
@@ -206,8 +208,8 @@ export function createAnthropicProvider(apiKey: string, transport: ClaudeTranspo
             system: systemPrompt(
               input.teacher,
               input.free
-                ? `Tutor. 레슨 "${input.lessonTitle}"(핵심: ${input.core}) 확인은 끝났고 사용자가 자유롭게 묻는다. 답을 바로 주지 않고 스스로 찾게 되묻는다. 한 번에 질문 하나. done=true, understanding="이해".`
-                : `Tutor. 레슨 "${input.lessonTitle}"(핵심: ${input.core})을 이해했는지 되묻는다. 답을 바로 주지 않고 한 번에 질문 하나만 한다. 두 번 제대로 답하면 마무리하고 done=true.`,
+                ? `Tutor. 레슨 "${input.lessonTitle}"(핵심: ${input.core}) 확인은 끝났고 사용자가 자유롭게 묻는다. 답을 바로 주지 않고 스스로 찾게 되묻는다. 한 번에 질문 하나. done=true, understanding="이해". ${BUBBLES}`
+                : `Tutor. 레슨 "${input.lessonTitle}"(핵심: ${input.core})을 이해했는지 되묻는다. 답을 바로 주지 않고 한 번에 질문 하나만 한다. 두 번 제대로 답하면 마무리하고 done=true. ${BUBBLES}`,
             ),
             messages: tutorMessages(input.history),
             // 대화는 빨라야 해서 생각을 짧게 한다

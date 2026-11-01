@@ -11,6 +11,7 @@ import { useOnline } from "@/components/lesson/offline";
 import { useFitToKeyboard } from "@/components/ui/keyboard";
 import type { TutorMessageView, TutorResponse } from "@/components/lesson/tutor-types";
 import type { TeacherName } from "@/lib/design/types";
+import { splitBubbles } from "@/lib/domain/chat";
 import { tutorStatus, understandingChip } from "@/lib/domain/lesson";
 import p from "@/components/lesson/parts.module.css";
 import s from "./tutor.module.css";
@@ -150,10 +151,13 @@ export function TutorChat({
       <div className={s.list} ref={listRef} aria-live="polite" onClick={closeKeyboard} data-testid="tutor-list">
         <span className={s.topic}>{title}</span>
         {messages.map((m) => (
-          <div key={m.id} className={s.row} data-from={m.role}>
-            <p className={s.bubble} data-from={m.role} data-testid={m.role === "ai" ? "tutor-ai" : "tutor-user"}>
-              {m.content}
-            </p>
+          // 선생님 답은 빈 줄마다 말풍선을 나눈다. 메시지 하나가 한 묶음이다
+          <div key={m.id} className={s.row} data-from={m.role} data-testid={m.role === "ai" ? "tutor-ai" : "tutor-user"}>
+            {(m.role === "ai" ? splitBubbles(m.content) : [m.content]).map((part, i) => (
+              <p key={i} className={s.bubble} data-from={m.role}>
+                {part}
+              </p>
+            ))}
           </div>
         ))}
         {thinking && (

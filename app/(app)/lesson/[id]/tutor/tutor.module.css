@@ -97,10 +97,12 @@
 }
 .row {
   display: flex;
-  justify-content: flex-start;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
 }
 .row[data-from="user"] {
-  justify-content: flex-end;
+  align-items: flex-end;
 }
 .bubble {
   max-width: 78%;
@@ -116,6 +118,10 @@
   background: var(--surface);
   color: var(--ink);
   border: var(--card-border);
+}
+/* 나뉜 말풍선은 첫 말풍선에만 꼬리 모서리를 둔다 */
+.bubble[data-from="ai"] + .bubble[data-from="ai"] {
+  border-radius: 18px;
 }
 .bubble[data-from="user"] {
   border-radius: 18px 4px 18px 18px;
