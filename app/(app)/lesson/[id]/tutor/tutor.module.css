@@ -186,7 +186,8 @@
 }
 .composer {
   display: flex;
-  align-items: center;
+  /* 입력칸이 여러 줄로 늘어나도 보내기 버튼은 아래에 붙는다 */
+  align-items: flex-end;
   gap: 8px;
   padding: 10px 16px 28px 16px;
   border-top: 1px solid var(--line);
@@ -207,9 +208,10 @@
 .input {
   flex: 1;
   min-width: 0;
-  height: 48px;
+  min-height: 48px;
   box-sizing: border-box;
-  padding: 0 16px;
+  padding: 12px 16px;
+  line-height: 21px;
   border-radius: 24px;
   border: 1.5px solid var(--line);
   background: var(--surface);

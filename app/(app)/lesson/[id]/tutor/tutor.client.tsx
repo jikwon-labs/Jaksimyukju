@@ -8,6 +8,7 @@ import { Teacher } from "@/components/teacher/Teacher";
 import { AI_FAIL_BODY } from "@/components/lesson/copy";
 import { BackIcon, OfflineBar, StateBlock } from "@/components/lesson/StateBlock";
 import { useOnline } from "@/components/lesson/offline";
+import { ChatInput } from "@/components/ui/ChatInput";
 import { useFitToKeyboard } from "@/components/ui/keyboard";
 import type { TutorMessageView, TutorResponse } from "@/components/lesson/tutor-types";
 import type { TeacherName } from "@/lib/design/types";
@@ -49,7 +50,7 @@ export function TutorChat({
   const started = useRef(false);
   const listRef = useRef<HTMLDivElement>(null);
   const screenRef = useRef<HTMLElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
   const online = useOnline();
 
   /** 서버에 한 턴을 요청한다. 실패해도 내 말은 화면과 서버에 남는다 */
@@ -201,7 +202,7 @@ export function TutorChat({
         <label htmlFor="tutor-input" className={s.srOnly}>
           선생님에게 답하기
         </label>
-        <input
+        <ChatInput
           ref={inputRef}
           id="tutor-input"
           className={s.input}

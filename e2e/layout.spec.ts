@@ -217,6 +217,41 @@ test("튜터 채팅: 보내기를 눌러도 입력칸 초점이 남아 키보드
   await expect(input).toBeFocused();
 });
 
+async function openTutor(page: Page) {
+  await loginDemo(page, "/home");
+  await page.getByRole("link", { name: "학습 시작" }).click();
+  await page.getByTestId("lesson-cta").click();
+  await expect(page.getByTestId("tutor-ai").first()).toBeVisible({ timeout: 15_000 });
+  return page.getByTestId("tutor-input");
+}
+
+test.describe("튜터 채팅: 마우스·키보드 화면", () => {
+  // 터치가 없으면 (pointer: fine)이 된다
+  test.use({ hasTouch: false });
+  test("Shift+Enter로 줄을 바꾸고 칸이 늘어나며, Enter로 보낸다", async ({ page }) => {
+    const input = await openTutor(page);
+    await input.click();
+    await input.pressSequentially("첫 줄이에요");
+    const oneLine = (await input.boundingBox())?.height ?? 0;
+    await input.press("Shift+Enter");
+    await input.pressSequentially("둘째 줄이에요");
+    await expect(input).toHaveValue("첫 줄이에요\n둘째 줄이에요");
+    expect((await input.boundingBox())?.height ?? 0).toBeGreaterThan(oneLine);
+    await input.press("Enter");
+    await expect(page.getByTestId("tutor-user").filter({ hasText: "둘째 줄이에요" })).toBeVisible();
+    await expect(input).toHaveValue("");
+  });
+});
+
+test("튜터 채팅: 터치 화면의 Enter(return)는 줄바꿈이고 보내기는 버튼으로 한다", async ({ page }) => {
+  const input = await openTutor(page);
+  await input.click();
+  await input.pressSequentially("첫 줄이에요");
+  await input.press("Enter");
+  await input.pressSequentially("둘째 줄이에요");
+  await expect(input).toHaveValue("첫 줄이에요\n둘째 줄이에요");
+});
+
 test("튜터 채팅: 대화 영역을 누르면 키보드를 내린다(입력칸 초점을 푼다)", async ({ page }) => {
   await loginDemo(page, "/home");
   await page.getByRole("link", { name: "학습 시작" }).click();

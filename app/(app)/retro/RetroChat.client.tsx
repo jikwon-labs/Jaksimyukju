@@ -9,6 +9,7 @@ import type { TeacherName } from "@/lib/design/types";
 import { RETRO_STEPS, retroPlan } from "@/lib/domain/retro";
 import type { RetroCard } from "@/lib/ai/types";
 import s from "./retro.module.css";
+import { ChatInput } from "@/components/ui/ChatInput";
 
 interface Msg {
   from: "ai" | "me";
@@ -45,7 +46,7 @@ export function RetroChat({
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const endRef = useRef<HTMLDivElement | null>(null);
   const screenRef = useRef<HTMLElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
   const step = answers.length;
 
   useEffect(() => () => {
@@ -189,7 +190,7 @@ export function RetroChat({
                 answer(draft);
               }}
             >
-              <input
+              <ChatInput
                 ref={inputRef}
                 className={s.input}
                 value={draft}
