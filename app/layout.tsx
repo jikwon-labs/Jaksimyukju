@@ -9,8 +9,9 @@ import "./globals.css";
 import "./motion.css";
 
 const jua = Jua({ weight: "400", subsets: ["latin"], variable: "--font-title", preload: false });
+// 가변 폰트(굵기 축 하나)로 받는다. 굵기마다 따로 받으면 한글 조각 @font-face가 굵기 수만큼 늘어
+// 모든 페이지의 첫 화면을 막는 CSS가 3배가 된다
 const noto = Noto_Sans_KR({
-  weight: ["400", "500", "700"],
   subsets: ["latin"],
   variable: "--font-body",
   preload: false,
