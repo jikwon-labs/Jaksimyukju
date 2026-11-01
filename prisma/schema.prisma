@@ -1,13 +1,15 @@
 // 작심육주 데이터 모델 (기획서 10장 + rest_days, notifications, retros)
-// SQLite 전용 기능은 쓰지 않는다. Supabase Postgres로 옮길 때는 provider와 url만 바꾼다.
+// 로컬은 docker-compose의 Postgres, 운영은 Supabase Postgres.
+// DATABASE_URL은 앱이 쓰는 주소(운영은 pooler 6543), DIRECT_URL은 마이그레이션이 쓰는 주소(운영은 5432).
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.db"
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model User {

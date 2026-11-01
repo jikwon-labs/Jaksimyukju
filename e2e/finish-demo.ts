@@ -1,6 +1,8 @@
 // E2E 전용: 데모 사용자의 과정을 모두 끝낸 상태로 만든다(레슨·퀴즈·마일스톤 통과, 완주)
 import { PrismaClient } from "@prisma/client";
+import { assertLocalDb } from "../prisma/guard";
 
+assertLocalDb();
 const prisma = new PrismaClient();
 
 async function main() {

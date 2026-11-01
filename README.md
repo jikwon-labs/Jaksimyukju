@@ -6,11 +6,13 @@
 
 ```bash
 pnpm i
-pnpm db:reset   # SQLite(prisma/dev.db) 스키마를 맞추고 시드를 다시 넣는다
+pnpm db:up      # 로컬 Postgres(docker-compose.yml, 127.0.0.1:5433)를 켠다. Docker가 켜져 있어야 한다
+pnpm db:reset   # 마이그레이션을 처음부터 다시 적용하고 시드를 넣는다
 pnpm dev        # http://localhost:3100
 ```
 
 - Node 24, pnpm 11 기준.
+- `.env`의 `DATABASE_URL`, `DIRECT_URL`은 로컬 Postgres 주소로 둔다(`.env.example` 참고).
 - AI 키는 선택이다. `.env.example`을 `.env.local`로 복사하고 `ANTHROPIC_API_KEY`를 넣으면 실제 Claude를 부른다. 비워 두면 결정적 모의 응답(mock)으로 동작한다.
 
 ## 먼저 눌러 볼 흐름
@@ -52,8 +54,11 @@ pnpm dev        # http://localhost:3100
 | `pnpm typecheck` | TypeScript 검사 |
 | `pnpm lint` | ESLint |
 | `pnpm test` | Vitest 단위 테스트 |
-| `pnpm e2e` | Playwright E2E(라이트·다크, 390x844) + axe 접근성. 3100에 서버가 없으면 `pnpm dev`를 띄운다. 테스트마다 시드를 다시 넣으므로 데모 데이터가 초기화된다. 화면 캡처는 `e2e/screenshots/` |
-| `pnpm db:reset` | 스키마 동기화 + 시드 |
+| `pnpm e2e` | Playwright E2E(라이트·다크, 390x844) + axe 접근성. 3100에 서버가 없으면 `pnpm dev`를 띄운다. 테스트마다 시드를 다시 넣으므로 데모 데이터가 초기화된다. 화면 캡처는 `e2e/screenshots/`. `.env`에 실제 키가 있으면 `J6_FORCE_MOCK=1 pnpm e2e`로 AI와 소셜 로그인을 가짜로 돌린다 |
+| `pnpm db:up` | 로컬 Postgres 켜기 |
+| `pnpm db:reset` | 마이그레이션 다시 적용 + 시드(로컬 DB에서만 돈다) |
+| `pnpm db:migrate` | 스키마를 바꾼 뒤 새 마이그레이션 만들기(로컬 DB에서만 돈다) |
+| `pnpm db:deploy` | 운영 DB에 마이그레이션 적용(아래 "운영 DB") |
 | `pnpm check:offline` | 서비스 워커 오프라인 확인. 운영 서버(`pnpm build && pnpm start`)를 3100에 띄운 뒤 실행 |
 
 ## 폴더
@@ -71,10 +76,12 @@ pnpm dev        # http://localhost:3100
 - 레슨을 열면 내용이 기기(localStorage)에 저장되고, 연결이 끊기면 같은 화면에 오프라인 배너가 뜬 채 계속 읽을 수 있다.
 - 운영 빌드에서는 서비스 워커(`public/sw.js`)가 한 번 연 레슨 화면을 저장해 두어, 오프라인에서 새로고침하거나 다른 화면을 열어도 마지막 레슨을 보여 준다. 개발 모드에서는 등록하지 않는다.
 
-## Supabase Postgres로 옮길 때
+## 운영 DB(Supabase)
 
-- `prisma/schema.prisma`의 `provider = "postgresql"`, `url = env("DATABASE_URL")`로 바꾸고 `prisma migrate`로 옮긴다. SQLite 전용 기능은 쓰지 않았다(Json 칸은 Postgres jsonb).
-- `lib/auth.ts`의 `getSessionUser`, `signIn`, `linkAccount`만 Supabase Auth로 바꾼다.
+- 로컬과 운영 모두 Postgres다. 스키마 변경은 `prisma/migrations/`의 마이그레이션으로만 옮긴다.
+- 테이블을 비우는 명령(시드, `db:reset`, `db:migrate`, E2E 보조 스크립트)은 `prisma/guard.ts`가 DB 주소를 보고 로컬이 아니면 멈춘다.
+- 로컬 `.env`에는 운영 주소를 `SUPABASE_DATABASE_URL`, `SUPABASE_DIRECT_URL`처럼 앱이 읽지 않는 이름으로만 둔다. Vercel에는 `DATABASE_URL`(pooler 6543, `?pgbouncer=true`)과 `DIRECT_URL`(5432)로 넣는다.
+- 운영에 마이그레이션 적용: `DATABASE_URL="$SUPABASE_DIRECT_URL" DIRECT_URL="$SUPABASE_DIRECT_URL" pnpm db:deploy` (셸에 값을 먼저 불러온 뒤).
 
 ## 앱 껍데기(mobile/)
 

@@ -33,7 +33,9 @@ const ENV: Record<ProviderId, { id: string; secret: string }> = {
 /** 쓸 수 있는 공급자. 키가 없고 운영 빌드면 null(버튼을 숨긴다) */
 export function getProvider(id: ProviderId, origin: string): Provider | null {
   const clientId = process.env[ENV[id].id];
-  if (clientId) {
+  // E2E는 J6_FORCE_MOCK=1로 키가 있어도 가짜 공급자를 쓴다(개발 모드일 때만)
+  const forceMock = process.env.J6_FORCE_MOCK === "1" && devToolsEnabled();
+  if (clientId && !forceMock) {
     return { ...REAL[id], mock: false, clientId, clientSecret: process.env[ENV[id].secret] || null };
   }
   if (!devToolsEnabled()) return null;

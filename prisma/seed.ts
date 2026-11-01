@@ -6,7 +6,9 @@ import { FINANCE_GOAL, FINANCE_TOPIC } from "../lib/ai/finance";
 import { addDays, dayKeyAt, diffDays, mondayOf, type DayKey, weekday } from "../lib/domain/dates";
 import { writeCourse } from "../lib/server/write-course";
 import { DEMO_ACCOUNT_SUB, DEMO_EMAIL, DEMO_INVITE } from "../lib/constants";
+import { assertLocalDb } from "./guard";
 
+assertLocalDb();
 const prisma = new PrismaClient();
 const STUDY = [1, 2, 3, 4, 5];
 

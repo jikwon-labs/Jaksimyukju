@@ -11,7 +11,10 @@
     "format": "prettier --write .",
     "test": "vitest run",
     "e2e": "playwright test",
-    "db:reset": "prisma generate && prisma db push --skip-generate && tsx prisma/seed.ts",
+    "db:up": "docker compose up -d --wait",
+    "db:reset": "tsx prisma/guard.ts && prisma migrate reset --force --skip-seed && tsx prisma/seed.ts",
+    "db:migrate": "tsx prisma/guard.ts && prisma migrate dev",
+    "db:deploy": "prisma migrate deploy",
     "postinstall": "prisma generate",
     "check:offline": "node scripts/check-offline.mjs",
     "cron:tick": "node scripts/cron-tick.mjs"

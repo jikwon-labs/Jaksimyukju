@@ -1,0 +1,16 @@
+# 로컬 개발·E2E용 Postgres. 운영 DB(Supabase)와 같은 엔진을 쓴다.
+# 켜기: docker compose up -d  /  끄기: docker compose down (데이터는 볼륨에 남는다)
+services:
+  db:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: jaksim6
+      POSTGRES_PASSWORD: jaksim6
+      POSTGRES_DB: jaksim6
+    ports:
+      - "127.0.0.1:5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:
