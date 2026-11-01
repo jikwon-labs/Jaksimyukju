@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { appOrigin, authorizeUrl, encodeFlow, isProviderId, newFlow, OAUTH_COOKIE, redirectUri } from "@/lib/domain/oauth";
+import { appOrigin, authorizeUrl, encodeFlow, isProviderId, newFlow, OAUTH_COOKIE, pathOf, redirectUri } from "@/lib/domain/oauth";
 import { getProvider } from "@/lib/server/oauth";
 
 const TEN_MINUTES = 60 * 10;
@@ -12,7 +12,9 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ prov
   if (!p) return new NextResponse("not found", { status: 404 });
   const mode = req.nextUrl.searchParams.get("mode") === "link" ? "link" : "login";
   const flow = newFlow(p.id, mode, req.nextUrl.searchParams.get("next") ?? "/home");
-  const res = NextResponse.redirect(authorizeUrl(p, flow, redirectUri(origin, p.id)));
+  const to = authorizeUrl(p, flow, redirectUri(origin, p.id));
+  // 가짜 공급자는 이 앱 안에 있다. 개발 서버의 origin은 localhost라서 폰에서도 열리게 경로만 돌려준다
+  const res = p.mock ? new NextResponse(null, { status: 307, headers: { Location: pathOf(to) } }) : NextResponse.redirect(to);
   res.cookies.set(OAUTH_COOKIE, encodeFlow(flow), {
     httpOnly: true,
     // 공급자에서 돌아오는 최상위 GET에는 lax 쿠키가 실린다

@@ -1,13 +1,16 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   accountLabel,
+  appOrigin,
   authorizeUrl,
+  callbackPath,
   challengeOf,
   decodeFlow,
   messageFor,
   encodeFlow,
   newFlow,
   parseProfile,
+  pathOf,
   type Provider,
   safeNext,
   sameState,
@@ -36,6 +39,55 @@ describe("safeNext", () => {
     expect(safeNext("/\t/evil.example", "/home")).toBe("/home");
     expect(safeNext("/\n/evil.example", "/home")).toBe("/home");
     expect(safeNext("/ /evil.example", "/home")).toBe("/home");
+  });
+});
+
+describe("appOrigin", () => {
+  afterEach(() => vi.unstubAllEnvs());
+
+  it("APP_URL이 있으면 그 주소를 쓴다(끝의 / 는 뗀다)", () => {
+    vi.stubEnv("APP_URL", "https://jaksim.example/");
+    expect(appOrigin("http://localhost:3100")).toBe("https://jaksim.example");
+  });
+
+  it("APP_URL이 비었거나 공백뿐이면 들어온 주소를 쓴다(.env.example을 그대로 복사한 경우)", () => {
+    vi.stubEnv("APP_URL", "");
+    expect(appOrigin("http://192.168.0.10:3100")).toBe("http://192.168.0.10:3100");
+    vi.stubEnv("APP_URL", "   ");
+    expect(appOrigin("http://192.168.0.10:3100")).toBe("http://192.168.0.10:3100");
+  });
+
+  it("APP_URL 앞뒤 공백은 떼고 쓴다", () => {
+    vi.stubEnv("APP_URL", " https://jaksim.example ");
+    expect(appOrigin("http://localhost:3100")).toBe("https://jaksim.example");
+  });
+});
+
+describe("callbackPath", () => {
+  const login = { mode: "login" as const, next: "/lesson/a" };
+  const link = { mode: "link" as const, next: "/lesson/a/complete?x=1" };
+
+  it("주소 앞부분 없이 앱 안 경로만 돌려준다", () => {
+    expect(callbackPath(login, "ok")).toBe("/lesson/a");
+    expect(callbackPath(login, "none")).toBe("/?login=none");
+    expect(callbackPath(null, "failed")).toBe("/?login=failed");
+    expect(callbackPath(link, "linked")).toBe("/lesson/a/complete?x=1&link=linked");
+  });
+
+  it("쿠키의 next가 앱 밖을 가리키면 홈으로 보낸다", () => {
+    expect(callbackPath({ mode: "login", next: "//evil.example" }, "ok")).toBe("/home");
+    expect(callbackPath({ mode: "login", next: "https://evil.example" }, "ok")).toBe("/home");
+    // "/./"는 URL 해석 뒤 "//evil.example"로 바뀐다
+    expect(callbackPath({ mode: "login", next: "/.//evil.example" }, "ok")).toBe("/home");
+    expect(callbackPath({ mode: "link", next: "/.//evil.example" }, "taken")).toBe("/home?link=taken");
+  });
+});
+
+describe("pathOf", () => {
+  it("주소에서 경로와 쿼리만 남긴다", () => {
+    expect(pathOf("http://localhost:3100/api/dev/oauth/authorize?provider=kakao&state=s")).toBe(
+      "/api/dev/oauth/authorize?provider=kakao&state=s",
+    );
   });
 });
 
