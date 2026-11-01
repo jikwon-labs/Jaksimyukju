@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { roommateAction, saveRetroAction } from "@/app/actions/retro";
 import { Switch } from "@/components/ui";
+import { useFitToKeyboard } from "@/components/ui/keyboard";
 import type { TeacherName } from "@/lib/design/types";
 import { RETRO_STEPS, retroPlan } from "@/lib/domain/retro";
 import type { RetroCard } from "@/lib/ai/types";
@@ -15,6 +16,7 @@ interface Msg {
 }
 
 export function RetroChat({
+  head,
   who,
   lines,
   chips,
@@ -22,6 +24,8 @@ export function RetroChat({
   milestone,
   planOpts,
 }: {
+  /** 위 머리(제목·이번 주 요약). 서버에서 그려 넘긴다 */
+  head: React.ReactNode;
   who: TeacherName;
   lines: string[];
   chips: string[][];
@@ -40,6 +44,8 @@ export function RetroChat({
   const [saving, startSave] = useTransition();
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const endRef = useRef<HTMLDivElement | null>(null);
+  const screenRef = useRef<HTMLElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const step = answers.length;
 
   useEffect(() => () => {
@@ -48,6 +54,14 @@ export function RetroChat({
   useEffect(() => {
     endRef.current?.scrollIntoView({ block: "end", behavior: "smooth" });
   }, [answers, typing, card]);
+  // 튜터 채팅과 같이 키보드가 올라와도 머리와 입력칸이 보이게 한다
+  useFitToKeyboard(screenRef, () => endRef.current?.scrollIntoView({ block: "end" }));
+
+  /** 대화 영역을 누르면 키보드를 내린다. 안의 버튼·링크는 그대로 눌린다 */
+  function closeKeyboard(e: React.MouseEvent) {
+    if ((e.target as HTMLElement).closest("a, button, input, textarea")) return;
+    inputRef.current?.blur();
+  }
 
   async function finish(all: string[]) {
     setFailed(false);
@@ -82,6 +96,8 @@ export function RetroChat({
   if (card) msgs.push({ from: "ai", text: card.bridge });
 
   const asking = step < RETRO_STEPS && !typing;
+  // 선생님이 답하는 동안에도 입력칸은 남겨 둬야 키보드가 내려가지 않는다
+  const composing = step < RETRO_STEPS;
   const finished = !!card;
 
   function save() {
@@ -98,8 +114,11 @@ export function RetroChat({
   }
 
   return (
-    <>
-      <div className={s.chat} aria-live="polite" data-testid="retro-chat">
+    <main className={s.page} ref={screenRef}>
+      <div className={s.head} data-testid="retro-head">
+        {head}
+      </div>
+      <div className={s.chat} aria-live="polite" onClick={closeKeyboard} data-testid="retro-chat">
         {msgs.map((m, i) => (
           <div key={i} className={s.row} data-from={m.from}>
             <p className={s.bubble} data-from={m.from}>
@@ -150,14 +169,19 @@ export function RetroChat({
         <div ref={endRef} />
       </div>
 
-      <div className={s.bottom}>
-        {asking && (
+      <div className={s.bottom} data-testid="retro-composer">
+        {composing && (
           <>
-            {chips[step]?.map((c) => (
-              <button key={c} type="button" className={s.chip} onClick={() => answer(c)}>
-                {c}
-              </button>
-            ))}
+            {/* 추천 답은 가로 한 줄로 두고 넘치면 옆으로 민다. 세로로 쌓으면 SE에서 키보드가 뜰 때 대화 자리가 없다 */}
+            {asking && (
+              <div className={s.chips}>
+                {chips[step]?.map((c) => (
+                  <button key={c} type="button" className={s.chip} onClick={() => answer(c)} data-testid="retro-chip">
+                    {c}
+                  </button>
+                ))}
+              </div>
+            )}
             <form
               className={s.inputRow}
               onSubmit={(e) => {
@@ -166,6 +190,7 @@ export function RetroChat({
               }}
             >
               <input
+                ref={inputRef}
                 className={s.input}
                 value={draft}
                 onChange={(e) => setDraft(e.target.value)}
@@ -174,7 +199,15 @@ export function RetroChat({
                 maxLength={200}
                 data-testid="retro-input"
               />
-              <button type="submit" className={s.send} disabled={!draft.trim()} data-testid="retro-send">
+              <button
+                type="submit"
+                className={s.send}
+                disabled={!asking || !draft.trim()}
+                // 버튼이 초점을 가져가면 입력칸이 흐려져 iOS 키보드가 내려간다
+                onPointerDown={(e) => e.preventDefault()}
+                onMouseDown={(e) => e.preventDefault()}
+                data-testid="retro-send"
+              >
                 보내기
               </button>
             </form>
@@ -189,6 +222,6 @@ export function RetroChat({
           {msg}
         </span>
       </div>
-    </>
+    </main>
   );
 }

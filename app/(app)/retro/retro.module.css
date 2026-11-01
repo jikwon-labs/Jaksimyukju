@@ -1,9 +1,27 @@
+/* 튜터 채팅과 같이 화면을 보이는 영역에 붙여 두고 대화만 스크롤한다(--vv-*는 components/ui/keyboard.ts가 넣는다) */
 .page {
-  min-height: 100dvh;
+  position: fixed;
+  top: var(--vv-top, 0px);
+  left: 0;
+  right: 0;
+  width: 100%;
+  max-width: 430px;
+  min-width: 320px;
+  margin: 0 auto;
+  height: var(--vv-height, 100dvh);
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
   gap: 12px;
-  padding: 20px 20px 0 20px;
+  padding: 0 20px;
+  background: var(--bg);
+}
+.head {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 20px;
 }
 .header {
   display: flex;
@@ -60,6 +78,9 @@
 }
 .chat {
   flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -172,8 +193,7 @@
   border-radius: 20px;
 }
 .bottom {
-  position: sticky;
-  bottom: 0;
+  flex: none;
   margin: 0 -20px;
   padding: 12px 20px 28px 20px;
   background: var(--bg);
@@ -182,8 +202,22 @@
   flex-direction: column;
   gap: 8px;
 }
+/* 키보드가 떠 있으면 홈 표시줄 자리가 필요 없다 */
+.page[data-keyboard="open"] .bottom {
+  padding-bottom: 10px;
+}
+.chips {
+  display: flex;
+  gap: 8px;
+  margin: 0 -20px;
+  padding: 0 20px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
 .chip {
-  min-height: 48px;
+  flex: none;
+  white-space: nowrap;
+  min-height: 44px;
   padding: 10px 16px;
   border-radius: 16px;
   border: 1.5px solid var(--a-text);

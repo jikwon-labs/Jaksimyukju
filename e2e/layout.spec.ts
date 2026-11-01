@@ -230,10 +230,13 @@ test("튜터 채팅: 대화 영역을 누르면 키보드를 내린다(입력칸
 });
 
 // 주제 입력도 튜터와 같이 키보드를 다룬다. SE(375x647, 앱 안)에서 키보드가 올라오면 보이는 높이가 약 380px이다
-// 회고 채팅은 머리와 칩이 커서 이 높이에 다 들어가지 않는다. 무엇을 줄일지 정한 뒤 여기에 더한다
+// 회고 채팅은 추천 답(칩)을 가로 한 줄로 두어 같은 높이에 들어가게 했다
 const SE_KEYBOARD = { height: 380, top: 100 };
 
-for (const c of [{ name: "주제 입력", open: (page: Page) => page.goto("/start/topic"), id: "topic", send: "send", answer: "재무제표 읽기" }]) {
+for (const c of [
+  { name: "주제 입력", open: (page: Page) => page.goto("/start/topic"), id: "topic", send: "send", answer: "재무제표 읽기" },
+  { name: "회고 채팅", open: (page: Page) => loginDemo(page, "/retro"), id: "retro", send: "retro-send", answer: "이번 주는 퇴근 뒤 10분이 잘 맞았어요." },
+]) {
   test.describe(`${c.name}: 키보드가 올라와도 머리와 입력칸이 보인다`, () => {
     test.use({ viewport: { width: 375, height: 647 } });
     test.beforeEach(({ page }) => fakeViewport(page));
@@ -289,3 +292,19 @@ for (const c of [{ name: "주제 입력", open: (page: Page) => page.goto("/star
     });
   });
 }
+
+test.describe("회고 채팅: 추천 답은 가로 한 줄", () => {
+  test.use({ viewport: { width: 375, height: 647 } });
+
+  test("칩이 모두 같은 줄에 있고, 넘치면 옆으로 민다", async ({ page }) => {
+    await loginDemo(page, "/retro");
+    const chips = page.getByTestId("retro-chip");
+    await expect(chips.first()).toBeVisible();
+    const tops = await chips.evaluateAll((els) => els.map((el) => Math.round(el.getBoundingClientRect().top)));
+    expect(tops.length).toBeGreaterThan(1);
+    expect(new Set(tops).size).toBe(1);
+    // 손가락으로 누르기 좋게 44px 이상
+    const h = await chips.first().evaluate((el) => el.getBoundingClientRect().height);
+    expect(h).toBeGreaterThanOrEqual(44);
+  });
+});

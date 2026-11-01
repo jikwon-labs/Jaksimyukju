@@ -36,8 +36,9 @@ export default async function RetroPage() {
   const lines = retroLines(who, weekNo, shortDay);
   const goalDay = WEEKDAY_KO[studyDays[studyDays.length - 1] ?? 5];
 
-  return (
-    <main className={s.page}>
+  // 머리(제목·이번 주 요약)는 여기서 그리고, 키보드에 맞추는 화면 틀은 RetroChat이 쥔다
+  const head = (
+    <>
       <header className={s.header}>
         <Link href="/home" aria-label="뒤로" className={s.back}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
@@ -71,20 +72,23 @@ export default async function RetroPage() {
           <span className={s.tileValue}>{minutes}분</span>
         </div>
       </section>
+    </>
+  );
 
-      <RetroChat
-        who={who}
-        lines={lines}
-        chips={[0, 1, 2].map((i) => retroChips(i, titles, user.minutesPerDay))}
-        nextWeek={weekNo + 1}
-        milestone={nextWeek ? `${goalDay}요일 마일스톤: ${nextWeek.milestoneTitle}` : "다음 주는 목적지까지 마무리"}
-        planOpts={{
-          days: studyDays.map((d) => WEEKDAY_KO[d]),
-          shortDay,
-          minutes: user.minutesPerDay,
-          daysLabel: studyDaysLabel(studyDays),
-        }}
-      />
-    </main>
+  return (
+    <RetroChat
+      head={head}
+      who={who}
+      lines={lines}
+      chips={[0, 1, 2].map((i) => retroChips(i, titles, user.minutesPerDay))}
+      nextWeek={weekNo + 1}
+      milestone={nextWeek ? `${goalDay}요일 마일스톤: ${nextWeek.milestoneTitle}` : "다음 주는 목적지까지 마무리"}
+      planOpts={{
+        days: studyDays.map((d) => WEEKDAY_KO[d]),
+        shortDay,
+        minutes: user.minutesPerDay,
+        daysLabel: studyDaysLabel(studyDays),
+      }}
+    />
   );
 }
