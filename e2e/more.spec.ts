@@ -584,6 +584,44 @@ test("30. 데모 로그인은 들어온 주소 그대로 돌려보낸다(폰에�
   expect(evil.headers()["location"]).toBe("/home");
 });
 
+test("30b. 소셜 로그인(가짜 공급자)도 들어온 주소 그대로 돌려보낸다(폰에서 맥 IP로 열어도 localhost로 가지 않는다)", async ({ request }) => {
+  const app = "http://127.0.0.1:3100";
+  const start = await request.get(`${app}/api/auth/kakao/start?mode=login&next=/home`, { maxRedirects: 0 });
+  expect(start.status()).toBe(307);
+  const authorize = start.headers()["location"];
+  expect(authorize).toMatch(/^\/api\/dev\/oauth\/authorize\?/);
+  // 공급자에 보내는 redirect_uri는 등록한 주소와 맞춰야 해서 앞부분까지 있는 주소다
+  const q = new URL(authorize, app).searchParams;
+  const redirectUri = q.get("redirect_uri") ?? "";
+  expect(redirectUri).toMatch(/^https?:\/\/[^/]+\/api\/auth\/kakao\/callback$/);
+
+  const page = await request.get(`${app}${authorize}`);
+  const cancel = /<a href="([^"]+)">취소<\/a>/.exec(await page.text())?.[1] ?? "";
+  expect(cancel).toMatch(/^\/api\/auth\/kakao\/callback\?/);
+
+  const consent = await request.post(`${app}/api/dev/oauth/authorize`, {
+    form: {
+      provider: "kakao",
+      redirect_uri: redirectUri,
+      state: q.get("state") ?? "",
+      code_challenge: q.get("code_challenge") ?? "",
+      demo: "1",
+    },
+    maxRedirects: 0,
+  });
+  expect(consent.status()).toBe(303);
+  const callback = consent.headers()["location"];
+  expect(callback).toMatch(/^\/api\/auth\/kakao\/callback\?/);
+
+  const done = await request.get(`${app}${callback}`, { maxRedirects: 0 });
+  expect(done.status()).toBe(307);
+  expect(done.headers()["location"]).toBe("/home");
+
+  // 위조한 콜백도 앱 안 경로로만 돌려보낸다
+  const forged = await request.get(`${app}/api/auth/kakao/callback?code=x&state=forged-state-value`, { maxRedirects: 0 });
+  expect(forged.headers()["location"]).toBe("/?login=failed");
+});
+
 test("31. 레슨을 마치면 평점과 후기를 남기고, 다시 열면 남긴 그대로 보인다", async ({ page }) => {
   await loginDemo(page, "/home");
   await page.getByRole("link", { name: "학습 시작" }).click();

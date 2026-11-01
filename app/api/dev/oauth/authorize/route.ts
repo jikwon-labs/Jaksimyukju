@@ -2,19 +2,19 @@ import { randomBytes } from "node:crypto";
 import { NextResponse, type NextRequest } from "next/server";
 import { devToolsEnabled } from "@/lib/clock";
 import { DEMO_ACCOUNT_SUB, DEMO_EMAIL } from "@/lib/constants";
-import { isProviderId, PROVIDER_LABEL, type ProviderId } from "@/lib/domain/oauth";
+import { appOrigin, isProviderId, pathOf, PROVIDER_LABEL, type ProviderId } from "@/lib/domain/oauth";
 import { pack } from "../shared";
 
 function esc(v: string): string {
   return v.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c] ?? c);
 }
 
-/** 돌아갈 주소는 이 앱의 콜백만 허용한다 */
+/** 돌아갈 주소는 이 앱의 콜백만 허용한다(시작 쪽과 같은 appOrigin으로 비교) */
 function callbackOf(req: NextRequest, raw: string | null, provider: ProviderId): URL | null {
   if (!raw) return null;
   try {
     const u = new URL(raw);
-    return u.origin === req.nextUrl.origin && u.pathname === `/api/auth/${provider}/callback` ? u : null;
+    return u.origin === appOrigin(req.nextUrl.origin) && u.pathname === `/api/auth/${provider}/callback` ? u : null;
   } catch {
     return null;
   }
@@ -61,7 +61,7 @@ ${hidden("provider", provider)}${hidden("redirect_uri", cb.toString())}${hidden(
 <button type="submit">동의하고 계속하기</button>
 <button type="submit" class="alt" name="demo" value="1">데모 지우로 계속하기</button>
 </form>
-<a href="${esc(cancel.toString())}">취소</a>
+<a href="${esc(pathOf(cancel))}">취소</a>
 </main></body></html>`;
   return new NextResponse(html, { headers: { "Content-Type": "text/html; charset=utf-8" } });
 }
@@ -85,5 +85,6 @@ export async function POST(req: NextRequest) {
   });
   cb.searchParams.set("code", code);
   cb.searchParams.set("state", str("state"));
-  return NextResponse.redirect(cb, 303);
+  // 콜백은 이 앱 안이라 경로만 돌려준다(개발 서버의 localhost 주소로 보내지 않게)
+  return new NextResponse(null, { status: 303, headers: { Location: pathOf(cb) } });
 }

@@ -30,9 +30,15 @@ export function isProviderId(v: string): v is ProviderId {
   return (PROVIDER_IDS as readonly string[]).includes(v);
 }
 
-/** 콜백 주소의 앞부분. 공급자 콘솔에 등록한 주소와 같아야 해서 APP_URL을 먼저 본다 */
+/** 콜백 주소의 앞부분. 공급자 콘솔에 등록한 주소와 같아야 해서 APP_URL을 먼저 본다(비었거나 공백뿐이면 들어온 주소) */
 export function appOrigin(requestOrigin: string): string {
-  return (process.env.APP_URL ?? requestOrigin).replace(/\/$/, "");
+  return (process.env.APP_URL?.trim() || requestOrigin).replace(/\/$/, "");
+}
+
+/** 주소에서 앞부분을 떼고 경로·쿼리만 남긴다. 개발 서버의 req.url은 localhost라서 브라우저로 보낼 때는 경로만 쓴다 */
+export function pathOf(url: string | URL): string {
+  const u = new URL(url);
+  return `${u.pathname}${u.search}${u.hash}`;
 }
 
 export function redirectUri(origin: string, id: ProviderId): string {
@@ -88,6 +94,22 @@ export function safeNext(next: string | null | undefined, fallback: string): str
   // URL 해석기는 탭·줄바꿈을 지운다("/\t/evil.com" -> "//evil.com"). 제어 문자와 공백은 아예 받지 않는다
   if (/[\u0000-\u0020\u007f]/.test(next)) return fallback;
   return next;
+}
+
+const PATH_BASE = "http://app.invalid";
+
+/** 콜백 뒤 돌아갈 앱 안 경로. 연결은 next에 ?link=결과, 로그인 실패는 첫 화면에 ?login=사유를 붙인다 */
+export function callbackPath(flow: Pick<OAuthFlow, "mode" | "next"> | null, result: string): string {
+  const build = (path: string): string | null => {
+    const u = new URL(path, PATH_BASE);
+    if (flow?.mode === "link") u.searchParams.set("link", result);
+    else if (result !== "ok") u.searchParams.set("login", result);
+    const out = `${u.pathname}${u.search}${u.hash}`;
+    // "/./"처럼 해석 뒤 "//"로 바뀌는 값까지, 다 만든 경로를 한 번 더 거른다(두 번째 방어선)
+    return u.origin === PATH_BASE && safeNext(out, "") === out ? out : null;
+  };
+  const want = flow?.mode === "link" ? flow.next : result === "ok" ? (flow?.next ?? "/home") : "/";
+  return build(safeNext(want, "/home")) ?? build("/home") ?? "/home";
 }
 
 /** 안내 문구 표에서 찾는다. ?link=constructor 같은 값이 Object.prototype을 꺼내지 않게 */
