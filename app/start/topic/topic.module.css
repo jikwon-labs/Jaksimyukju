@@ -1,7 +1,17 @@
+/* 튜터 채팅과 같이 화면을 보이는 영역에 붙여 두고 대화만 스크롤한다(--vv-*는 components/ui/keyboard.ts가 넣는다) */
 .root {
-  height: 100dvh;
+  position: fixed;
+  top: var(--vv-top, 0px);
+  left: 0;
+  right: 0;
+  width: 100%;
+  max-width: 430px;
+  min-width: 320px;
+  margin: 0 auto;
+  height: var(--vv-height, 100dvh);
   display: flex;
   flex-direction: column;
+  background: var(--bg);
 }
 .head {
   padding: 20px 20px 0 20px;
@@ -9,6 +19,7 @@
 .chat {
   flex: 1;
   overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 16px 20px;
   display: flex;
   flex-direction: column;
@@ -101,6 +112,11 @@
 }
 .composer {
   flex: none;
+  padding-bottom: 28px;
+}
+/* 키보드가 떠 있으면 홈 표시줄 자리가 필요 없다 */
+.root[data-keyboard="open"] .composer {
+  padding-bottom: 10px;
 }
 .chips {
   padding: 0 20px 8px 20px;
@@ -124,7 +140,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 16px 28px 16px;
+  padding: 8px 16px 0 16px;
   border-top: 1px solid var(--line);
 }
 .input {

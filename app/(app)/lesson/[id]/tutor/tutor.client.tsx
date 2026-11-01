@@ -8,7 +8,7 @@ import { Teacher } from "@/components/teacher/Teacher";
 import { AI_FAIL_BODY } from "@/components/lesson/copy";
 import { BackIcon, OfflineBar, StateBlock } from "@/components/lesson/StateBlock";
 import { useOnline } from "@/components/lesson/offline";
-import { useFitToKeyboard } from "@/components/lesson/keyboard";
+import { useFitToKeyboard } from "@/components/ui/keyboard";
 import type { TutorMessageView, TutorResponse } from "@/components/lesson/tutor-types";
 import type { TeacherName } from "@/lib/design/types";
 import { tutorStatus, understandingChip } from "@/lib/domain/lesson";

@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, type Page, test } from "@playwright/test";
 import { loginDemo, resetDb } from "./helpers";
 
 // 가장 좁은 폰(320px)에서 가로 스크롤이 생기지 않는지 본다
@@ -7,6 +7,27 @@ const ROUTES = ["/home", "/curriculum", "/group", "/profile", "/settings", "/not
 test.beforeAll(() => {
   resetDb();
 });
+
+// 키보드가 올라온 상황을 흉내 내려고 visualViewport를 바꿔 끼운다(iOS는 키보드를 띄워도 창 높이를 줄이지 않고 이 값만 바꾼다)
+function fakeViewport(page: Page) {
+  return page.addInitScript(() => {
+    const vv = Object.assign(new EventTarget(), { height: window.innerHeight, offsetTop: 0 });
+    Object.defineProperty(window, "visualViewport", { configurable: true, get: () => vv });
+    Object.assign(window, { __vv: vv });
+  });
+}
+
+function openKeyboard(page: Page, height: number, offsetTop: number) {
+  return page.evaluate(
+    ([h, top]) => {
+      const vv = (window as unknown as { __vv: EventTarget & { height: number; offsetTop: number } }).__vv;
+      vv.height = h;
+      vv.offsetTop = top;
+      vv.dispatchEvent(new Event("resize"));
+    },
+    [height, offsetTop],
+  );
+}
 
 test.use({ viewport: { width: 320, height: 640 } });
 
@@ -110,14 +131,7 @@ test("콕 찌르기 안내 말풍선은 잠시 뒤 사라진다", async ({ page 
 test.describe("튜터 채팅은 입력칸이 바닥에 붙고 대화만 스크롤된다", () => {
   test.use({ viewport: { width: 393, height: 640 } });
 
-  // 키보드가 올라온 상황을 흉내 내려고 visualViewport를 바꿔 끼운다(iOS는 키보드를 띄워도 창 높이를 줄이지 않고 이 값만 바꾼다)
-  test.beforeEach(async ({ page }) => {
-    await page.addInitScript(() => {
-      const vv = Object.assign(new EventTarget(), { height: window.innerHeight, offsetTop: 0 });
-      Object.defineProperty(window, "visualViewport", { configurable: true, get: () => vv });
-      Object.assign(window, { __vv: vv });
-    });
-  });
+  test.beforeEach(({ page }) => fakeViewport(page));
 
   test("대화를 스크롤해도 머리와 입력칸은 제자리, 키보드가 올라오면 보이는 영역에 맞춘다", async ({ page }) => {
     await loginDemo(page, "/home");
@@ -157,12 +171,7 @@ test.describe("튜터 채팅은 입력칸이 바닥에 붙고 대화만 스크�
     expect(await header.boundingBox()).toEqual(before.h);
 
     // 키보드가 올라와 보이는 높이가 340px이 되고, iOS가 페이지를 120px 밀어 올린 상황
-    await page.evaluate(() => {
-      const vv = (window as unknown as { __vv: EventTarget & { height: number; offsetTop: number } }).__vv;
-      vv.height = 340;
-      vv.offsetTop = 120;
-      vv.dispatchEvent(new Event("resize"));
-    });
+    await openKeyboard(page, 340, 120);
     await expect.poll(async () => (await header.boundingBox())!.y).toBeCloseTo(120, 0);
     const kb = await composer.boundingBox();
     expect(kb!.y + kb!.height).toBeCloseTo(460, 0);
@@ -219,3 +228,64 @@ test("튜터 채팅: 대화 영역을 누르면 키보드를 내린다(입력칸
   await page.getByTestId("tutor-ai").first().click();
   await expect(input).not.toBeFocused();
 });
+
+// 주제 입력도 튜터와 같이 키보드를 다룬다. SE(375x647, 앱 안)에서 키보드가 올라오면 보이는 높이가 약 380px이다
+// 회고 채팅은 머리와 칩이 커서 이 높이에 다 들어가지 않는다. 무엇을 줄일지 정한 뒤 여기에 더한다
+const SE_KEYBOARD = { height: 380, top: 100 };
+
+for (const c of [{ name: "주제 입력", open: (page: Page) => page.goto("/start/topic"), id: "topic", send: "send", answer: "재무제표 읽기" }]) {
+  test.describe(`${c.name}: 키보드가 올라와도 머리와 입력칸이 보인다`, () => {
+    test.use({ viewport: { width: 375, height: 647 } });
+    test.beforeEach(({ page }) => fakeViewport(page));
+
+    test(`${c.name}: 머리와 입력칸은 제자리, 키보드가 올라오면 보이는 영역에 맞춘다`, async ({ page }) => {
+      await c.open(page);
+      const head = page.getByTestId(`${c.id}-head`);
+      const chat = page.getByTestId(`${c.id}-chat`);
+      const composer = page.getByTestId(`${c.id}-composer`);
+      await expect(page.getByTestId(`${c.id}-input`)).toBeVisible();
+
+      const doc = await page.evaluate(() => ({
+        over: document.documentElement.scrollHeight - document.documentElement.clientHeight,
+        overscroll: getComputedStyle(document.documentElement).overscrollBehaviorY,
+      }));
+      expect(doc.over).toBeLessThanOrEqual(0);
+      expect(doc.overscroll).toBe("none");
+      expect(await chat.evaluate((el) => getComputedStyle(el).overscrollBehaviorY)).toBe("contain");
+      const c0 = (await composer.boundingBox())!;
+      expect(c0.y + c0.height).toBeCloseTo(647, 0);
+
+      await openKeyboard(page, SE_KEYBOARD.height, SE_KEYBOARD.top);
+      await expect.poll(async () => (await head.boundingBox())!.y).toBeCloseTo(SE_KEYBOARD.top, 0);
+      const kb = (await composer.boundingBox())!;
+      expect(kb.y + kb.height).toBeCloseTo(SE_KEYBOARD.top + SE_KEYBOARD.height, 0);
+      expect(await composer.evaluate((el) => getComputedStyle(el).paddingBottom)).toBe("10px");
+      // 사이에 낀 대화도 마지막 말풍선 한 줄은 보일 만큼 남는다
+      expect((await chat.boundingBox())!.height).toBeGreaterThanOrEqual(64);
+      expect(await chat.evaluate((el) => el.scrollHeight - el.clientHeight - el.scrollTop)).toBeLessThanOrEqual(1);
+    });
+
+    test(`${c.name}: 보내기를 눌러도 입력칸 초점이 남는다`, async ({ page }) => {
+      await c.open(page);
+      const input = page.getByTestId(`${c.id}-input`);
+      await input.click();
+      await input.fill(c.answer);
+      await page.getByTestId(c.send).click();
+      await expect(page.getByTestId(`${c.id}-chat`)).toContainText(c.answer);
+      await expect(input).toBeFocused();
+      // 선생님의 다음 질문이 나온 뒤에도 그대로 이어서 쓸 수 있다
+      await expect(page.getByTestId(`${c.id}-chat`).locator('[role="status"]')).toHaveCount(0);
+      await expect(input).toBeFocused();
+    });
+
+    test(`${c.name}: 대화 영역을 누르면 입력칸 초점을 푼다`, async ({ page }) => {
+      await c.open(page);
+      const input = page.getByTestId(`${c.id}-input`);
+      await input.click();
+      await expect(input).toBeFocused();
+      // iOS는 글자를 눌러도 초점이 저절로 풀리지 않는다. 그래서 mousedown 없이 click만 보낸다
+      await page.getByTestId(`${c.id}-chat`).locator("p").first().dispatchEvent("click");
+      await expect(input).not.toBeFocused();
+    });
+  });
+}

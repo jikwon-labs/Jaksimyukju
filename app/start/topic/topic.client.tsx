@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { Teacher } from "@/components/teacher/Teacher";
+import { useFitToKeyboard } from "@/components/ui/keyboard";
 import type { TeacherName } from "@/lib/design/types";
 import { draftTeacher, useDraft, useTeacherFallback, writeDraft } from "../draft";
 import { goalChips, LEVELS, TOPIC_CHIPS } from "../logic";
@@ -46,13 +47,25 @@ export function Topic({ next }: { next?: { topic: string; level: string } }) {
   const finished = step >= 3;
   const [text, setText] = useState("");
   const chatRef = useRef<HTMLDivElement>(null);
+  const screenRef = useRef<HTMLElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const q = QUESTIONS[who];
   const chips = step === 0 ? TOPIC_CHIPS : goalChips(draft.topic);
 
-  useEffect(() => {
+  function toBottom() {
     const el = chatRef.current;
     if (el) el.scrollTop = el.scrollHeight;
-  }, [step]);
+  }
+
+  useEffect(toBottom, [step]);
+  // 튜터 채팅과 같이 키보드가 올라와도 머리와 입력칸이 보이게 한다
+  useFitToKeyboard(screenRef, toBottom);
+
+  /** 대화 영역을 누르면 키보드를 내린다. 안의 버튼·링크는 그대로 눌린다 */
+  function closeKeyboard(e: React.MouseEvent) {
+    if ((e.target as HTMLElement).closest("a, button, input, textarea")) return;
+    inputRef.current?.blur();
+  }
 
   function push(v: string) {
     const t = v.trim();
@@ -70,11 +83,11 @@ export function Topic({ next }: { next?: { topic: string; level: string } }) {
   }
 
   return (
-    <main className={s.root}>
-      <div className={s.head}>
+    <main className={s.root} ref={screenRef}>
+      <div className={s.head} data-testid="topic-head">
         <StepHeader step={2} backHref="/start/teacher" backLabel="선생님 고르기로 돌아가기" />
       </div>
-      <div className={s.chat} ref={chatRef} aria-live="polite">
+      <div className={s.chat} ref={chatRef} aria-live="polite" onClick={closeKeyboard} data-testid="topic-chat">
         {rows.map((m, i) => (
           <div key={i} className={s.row} data-who={m.who}>
             {m.who === "ai" && <Teacher who={who} size={36} decorative />}
@@ -110,7 +123,7 @@ export function Topic({ next }: { next?: { topic: string; level: string } }) {
       </div>
 
       {typing && (
-        <div className={s.composer}>
+        <div className={s.composer} data-testid="topic-composer">
           <div className={s.chips}>
             {chips.map((c) => (
               <button key={c} type="button" className={s.chip} onClick={() => push(c)} data-testid="topic-chip">
@@ -129,6 +142,7 @@ export function Topic({ next }: { next?: { topic: string; level: string } }) {
               {step === 0 ? "배우고 싶은 주제" : "배우고 나서 하고 싶은 것"}
             </label>
             <input
+              ref={inputRef}
               id="topic-input"
               className={s.input}
               value={text}
@@ -138,7 +152,15 @@ export function Topic({ next }: { next?: { topic: string; level: string } }) {
               maxLength={step === 0 ? 60 : 120}
               data-testid="topic-input"
             />
-            <button type="submit" aria-label="보내기" className={s.send} data-testid="send">
+            <button
+              type="submit"
+              aria-label="보내기"
+              className={s.send}
+              // 버튼이 초점을 가져가면 입력칸이 흐려져 iOS 키보드가 내려간다
+              onPointerDown={(e) => e.preventDefault()}
+              onMouseDown={(e) => e.preventDefault()}
+              data-testid="send"
+            >
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <path d="M12 19V5" />
                 <path d="M6 11l6-6 6 6" />

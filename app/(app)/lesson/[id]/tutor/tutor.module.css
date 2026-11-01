@@ -1,5 +1,5 @@
 /* 페이지가 아니라 화면 자체를 보이는 영역에 붙여 둔다. 대화 목록만 스크롤되고 머리와 입력칸은 움직이지 않는다.
-   --vv-height, --vv-top은 키보드에 맞춰 스크립트가 넣는다(components/lesson/keyboard.ts) */
+   --vv-height, --vv-top은 키보드에 맞춰 스크립트가 넣는다(components/ui/keyboard.ts) */
 .screen {
   position: fixed;
   top: var(--vv-top, 0px);
