@@ -2,7 +2,7 @@
 // 카카오: 노란 바탕(#FEE500), 검은 말풍선 심볼, 85% 검은 글자. 구글: 흰 바탕과 회색 테두리, 네 색 G 로고(다크 모드는 어두운 바탕).
 // 크기와 모서리는 화면마다 다르게 쓰므로 className으로 받는다.
 import type { ReactNode } from "react";
-import type { ProviderId } from "@/lib/domain/oauth";
+import type { ProviderId } from "@/lib/domain/oauth-copy";
 import s from "./SocialButton.module.css";
 
 function KakaoSymbol() {

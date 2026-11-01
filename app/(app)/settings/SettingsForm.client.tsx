@@ -8,7 +8,7 @@ import { Switch } from "@/components/ui";
 import { SocialButton } from "@/components/ui/SocialButton";
 import type { TeacherName } from "@/lib/design/types";
 import { WEEKDAY_KO } from "@/lib/domain/dates";
-import { GUEST_LOSS_WARNING, LINK_ERROR_MESSAGE, linkSucceeded, messageFor, PROVIDER_LABEL, type ProviderId } from "@/lib/domain/oauth";
+import { GUEST_LOSS_WARNING, LINK_ERROR_MESSAGE, linkSucceeded, messageFor, PROVIDER_LABEL, type ProviderId } from "@/lib/domain/oauth-copy";
 import { MINUTE_OPTIONS, shiftTime, timeLabel, toggleStudyDay } from "@/lib/domain/prefs";
 import type { ThemeMode } from "@/lib/theme";
 import s from "./settings.module.css";

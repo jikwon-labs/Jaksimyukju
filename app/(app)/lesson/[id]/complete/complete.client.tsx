@@ -6,7 +6,7 @@ import { wrapUpAction } from "@/app/actions/lesson";
 import { Switch } from "@/components/ui";
 import { SocialButton } from "@/components/ui/SocialButton";
 import { ONE_LINER_MAX, RATING_MAX, REVIEW_MAX } from "@/lib/domain/lesson";
-import { LINK_ERROR_MESSAGE, linkSucceeded, messageFor, PROVIDER_LABEL, type ProviderId } from "@/lib/domain/oauth";
+import { LINK_ERROR_MESSAGE, linkSucceeded, messageFor, PROVIDER_LABEL, type ProviderId } from "@/lib/domain/oauth-copy";
 import s from "./complete.module.css";
 
 const FORM = "wrapup";

@@ -1,12 +1,11 @@
 // 소셜 로그인(OAuth 2.0 authorization code)의 순수 함수: state 쿠키, PKCE, 공급자 응답 해석
 import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
 import { z } from "zod";
+import { PROVIDER_IDS, PROVIDER_LABEL, type ProviderId } from "./oauth-copy";
 
-export const PROVIDER_IDS = ["kakao", "google"] as const;
-export type ProviderId = (typeof PROVIDER_IDS)[number];
+// 이름·안내 문구는 클라이언트도 쓰므로 oauth-copy.ts에 둔다. 서버 쪽은 지금처럼 여기서 가져가면 된다
+export { GUEST_LOSS_WARNING, LINK_ERROR_MESSAGE, linkSucceeded, messageFor, PROVIDER_IDS, PROVIDER_LABEL, type ProviderId } from "./oauth-copy";
 export type OAuthMode = "login" | "link";
-
-export const PROVIDER_LABEL: Record<ProviderId, string> = { kakao: "카카오", google: "Google" };
 
 export interface SocialProfile {
   sub: string;
@@ -112,11 +111,6 @@ export function callbackPath(flow: Pick<OAuthFlow, "mode" | "next"> | null, resu
   return build(safeNext(want, "/home")) ?? build("/home") ?? "/home";
 }
 
-/** 안내 문구 표에서 찾는다. ?link=constructor 같은 값이 Object.prototype을 꺼내지 않게 */
-export function messageFor(table: Record<string, string>, key: string | null | undefined): string | undefined {
-  return key && Object.hasOwn(table, key) ? table[key] : undefined;
-}
-
 export function challengeOf(verifier: string): string {
   return createHash("sha256").update(verifier).digest("base64url");
 }
@@ -178,25 +172,9 @@ export function parseProfile(id: ProviderId, raw: unknown): SocialProfile | null
   };
 }
 
-
 /** 내 정보의 계정 줄: "카카오 · me@example.com", 연결 전이면 "게스트" */
 export function accountLabel(accounts: { provider: string }[], email: string | null): string {
   const names = accounts.map((a) => (isProviderId(a.provider) ? PROVIDER_LABEL[a.provider] : null)).filter(Boolean);
   if (names.length === 0) return "게스트";
   return email ? `${names.join("·")} · ${email}` : `${names.join("·")} 연결됨`;
 }
-
-/** 계정 연결 결과(?link=) 안내 문구. linked·already는 성공 */
-export const LINK_ERROR_MESSAGE: Record<string, string> = {
-  taken: "이 계정은 이미 다른 기록에 연결돼 있어요. 다른 계정을 골라 주세요.",
-  other: "이미 같은 곳의 다른 계정이 연결돼 있어요.",
-  cancel: "연결을 취소했어요. 언제든 다시 할 수 있어요.",
-  failed: "연결하지 못했어요. 잠시 뒤 다시 해 주세요.",
-};
-
-export function linkSucceeded(result: string | null | undefined): boolean {
-  return result === "linked" || result === "already";
-}
-
-/** 게스트 기록을 잃는다는 경고. 연결 전에 로그아웃하거나 다른 계정으로 들어갈 때 */
-export const GUEST_LOSS_WARNING = "계정을 연결하지 않은 기록은 로그아웃하면 다시 열 수 없어요.";

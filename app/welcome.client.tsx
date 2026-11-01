@@ -5,7 +5,7 @@ import { useState } from "react";
 import { Teacher } from "@/components/teacher/Teacher";
 import { SocialButton } from "@/components/ui/SocialButton";
 import type { TeacherName } from "@/lib/design/types";
-import { messageFor, PROVIDER_LABEL, type ProviderId } from "@/lib/domain/oauth";
+import { messageFor, PROVIDER_LABEL, type ProviderId } from "@/lib/domain/oauth-copy";
 import s from "./welcome.module.css";
 
 const POINTS = [
