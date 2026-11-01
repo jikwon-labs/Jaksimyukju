@@ -48,8 +48,10 @@ jobs:
       - name: Test
         run: pnpm test
 
+      # pnpm build 는 Vercel 용으로 운영 DB 에 prisma migrate deploy 를 먼저 돌린다.
+      # CI 에선 DB 를 건드리지 않게 next build 만 한다(prisma generate 는 postinstall 에서 끝남).
       - name: Build
-        run: pnpm build
+        run: pnpm exec next build
 
   # 게이트 잡. 브랜치 보호 규칙에서 이 'ci' 체크 하나만 필수로 걸면 된다.
   ci:
