@@ -169,6 +169,6 @@ describe("accountLabel", () => {
   it("연결 전은 게스트, 연결 후는 공급자와 이메일", () => {
     expect(accountLabel([], null)).toBe("게스트");
     expect(accountLabel([{ provider: "kakao" }], "me@x.com")).toBe("카카오 · me@x.com");
-    expect(accountLabel([{ provider: "kakao" }, { provider: "google" }], null)).toBe("카카오·구글 연결됨");
+    expect(accountLabel([{ provider: "kakao" }, { provider: "google" }], null)).toBe("카카오·Google 연결됨");
   });
 });

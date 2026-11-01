@@ -360,7 +360,7 @@ test("20. 소셜 계정 연결: 실패하면 다시, 연결하면 로그아웃 �
   await shot(page, info, "more-link-account");
 
   await page.goto("/profile");
-  await expect(page.getByRole("link", { name: /계정/ })).toContainText(`구글 · ${email}`);
+  await expect(page.getByRole("link", { name: /계정/ })).toContainText(`Google · ${email}`);
 
   // 로그아웃 뒤 같은 구글 계정으로 들어오면 같은 기록(연속 1일)이 보인다
   await page.goto("/settings");
@@ -480,12 +480,12 @@ test("26. 연결 안 한 게스트는 로그아웃 전에 한 번 더 묻고, �
   await page.getByRole("button", { name: "취소" }).click();
   await expect(page.getByTestId("logout-confirm")).toHaveCount(0);
 
-  await page.getByRole("link", { name: "구글로 연결" }).click();
+  await page.getByRole("link", { name: "Google로 연결" }).click();
   await fakeConsent(page, `settings-${info.project.name}`);
   await expect(page).toHaveURL(/\/settings\?link=linked/);
   await expect(page.getByTestId("link-done")).toBeVisible();
-  await expect(page.getByTestId("account-label")).toContainText("구글");
-  await expect(page.getByRole("link", { name: "구글로 연결" })).toHaveCount(0);
+  await expect(page.getByTestId("account-label")).toContainText("Google");
+  await expect(page.getByRole("link", { name: "Google로 연결" })).toHaveCount(0);
   // 연결한 뒤에는 묻지 않고 바로 로그아웃된다
   await page.getByRole("button", { name: "로그아웃" }).click();
   await expect(page).toHaveURL(/\/$/);

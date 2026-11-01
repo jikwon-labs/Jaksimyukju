@@ -155,12 +155,6 @@
   justify-content: center;
   text-decoration: none;
 }
-/* 카카오 로그인 버튼 안내의 노란 바탕과 검은 글자 */
-.provider[data-kind="kakao"] {
-  background: #fee500;
-  color: rgba(0, 0, 0, 0.85);
-  border: none;
-}
 .error {
   margin: 0;
   font-size: 13px;

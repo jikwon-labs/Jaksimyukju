@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useFormStatus } from "react-dom";
 import { wrapUpAction } from "@/app/actions/lesson";
 import { Switch } from "@/components/ui";
+import { SocialButton } from "@/components/ui/SocialButton";
 import { ONE_LINER_MAX, RATING_MAX, REVIEW_MAX } from "@/lib/domain/lesson";
 import { LINK_ERROR_MESSAGE, linkSucceeded, messageFor, PROVIDER_LABEL, type ProviderId } from "@/lib/domain/oauth";
 import s from "./complete.module.css";
@@ -88,9 +89,9 @@ function LinkCard({ lessonId, providers, result }: { lessonId: string; providers
       {providers.length > 0 ? (
         <div className={s.linkBtns}>
           {providers.map((p) => (
-            <a key={p} href={`/api/auth/${p}/start?mode=link&next=${next}`} className={s.provider} data-kind={p} data-testid={`link-${p}`}>
+            <SocialButton key={p} provider={p} href={`/api/auth/${p}/start?mode=link&next=${next}`} className={s.provider} testId={`link-${p}`}>
               {PROVIDER_LABEL[p]}로 연결
-            </a>
+            </SocialButton>
           ))}
         </div>
       ) : (

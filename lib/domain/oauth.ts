@@ -6,7 +6,7 @@ export const PROVIDER_IDS = ["kakao", "google"] as const;
 export type ProviderId = (typeof PROVIDER_IDS)[number];
 export type OAuthMode = "login" | "link";
 
-export const PROVIDER_LABEL: Record<ProviderId, string> = { kakao: "카카오", google: "구글" };
+export const PROVIDER_LABEL: Record<ProviderId, string> = { kakao: "카카오", google: "Google" };
 
 export interface SocialProfile {
   sub: string;

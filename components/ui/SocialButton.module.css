@@ -1,0 +1,35 @@
+/* 색은 data-kind로 정해서 화면 CSS의 .provider보다 앞선다 */
+.btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  text-decoration: none;
+}
+.logo {
+  width: 18px;
+  height: 18px;
+  flex: none;
+}
+.btn[data-kind="kakao"] {
+  background: #fee500;
+  color: rgba(0, 0, 0, 0.85);
+  border: none;
+}
+.btn[data-kind="google"] {
+  background: #ffffff;
+  color: #1f1f1f;
+  border: 1px solid #747775;
+}
+:global([data-theme="dark"]) .btn[data-kind="google"] {
+  background: #131314;
+  color: #e3e3e3;
+  border-color: #8e918f;
+}
+@media (prefers-color-scheme: dark) {
+  :global(html:not([data-theme="light"])) .btn[data-kind="google"] {
+    background: #131314;
+    color: #e3e3e3;
+    border-color: #8e918f;
+  }
+}

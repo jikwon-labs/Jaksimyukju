@@ -5,6 +5,7 @@ import { useRef, useState, useTransition } from "react";
 import { logoutAction, saveSettingsAction } from "@/app/actions/settings";
 import { ThemeControl } from "@/components/ThemeControl";
 import { Switch } from "@/components/ui";
+import { SocialButton } from "@/components/ui/SocialButton";
 import type { TeacherName } from "@/lib/design/types";
 import { WEEKDAY_KO } from "@/lib/domain/dates";
 import { GUEST_LOSS_WARNING, LINK_ERROR_MESSAGE, linkSucceeded, messageFor, PROVIDER_LABEL, type ProviderId } from "@/lib/domain/oauth";
@@ -37,9 +38,9 @@ function ProviderLinks({ providers }: { providers: ProviderId[] }) {
   return (
     <div className={s.providers}>
       {providers.map((p) => (
-        <a key={p} href={`/api/auth/${p}/start?mode=link&next=%2Fsettings`} className={s.provider} data-kind={p}>
+        <SocialButton key={p} provider={p} href={`/api/auth/${p}/start?mode=link&next=%2Fsettings`} className={s.provider}>
           {PROVIDER_LABEL[p]}로 연결
-        </a>
+        </SocialButton>
       ))}
     </div>
   );

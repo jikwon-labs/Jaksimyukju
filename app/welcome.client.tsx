@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { Teacher } from "@/components/teacher/Teacher";
+import { SocialButton } from "@/components/ui/SocialButton";
 import type { TeacherName } from "@/lib/design/types";
 import { messageFor, PROVIDER_LABEL, type ProviderId } from "@/lib/domain/oauth";
 import s from "./welcome.module.css";
@@ -72,9 +73,9 @@ export function Welcome({
         )}
         <div className={s.providers} hidden={!showProviders}>
           {providers.map((p) => (
-            <a key={p} href={`/api/auth/${p}/start?mode=login`} className={s.provider} data-kind={p} data-testid={`login-${p}`}>
+            <SocialButton key={p} provider={p} href={`/api/auth/${p}/start?mode=login`} className={s.provider} testId={`login-${p}`}>
               {PROVIDER_LABEL[p]}로 계속하기
-            </a>
+            </SocialButton>
           ))}
         </div>
         <p className={s.footnote}>
