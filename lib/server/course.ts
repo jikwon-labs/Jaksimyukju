@@ -124,6 +124,8 @@ export function courseState(course: CourseFull, user: Pick<User, "studyDays">, t
         title: l.title,
         status: l.status as LessonStatus,
         minutes: l.minutes + l.extraMinutes,
+        rating: l.rating,
+        review: l.review,
       })),
       quizScore: w.quizAttempts[0] ? quizPercent(w.quizAttempts[0].score) : null,
       milestoneDone: w.milestones.some((m) => json<{ passed?: boolean }>(m.feedback).passed === true),

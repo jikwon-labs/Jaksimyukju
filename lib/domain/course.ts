@@ -1,5 +1,6 @@
 // 과정의 칸(레슨·퀴즈·마일스톤)과 상태 계산
 import { WEEKDAY_KO } from "./dates";
+import { RATING_MAX } from "./lesson";
 
 export type StepKind = "lesson" | "quiz" | "goal";
 /** done 완료, five 5분 버전으로 완료, today 오늘, todo 열림, lock 잠김 */
@@ -10,7 +11,15 @@ export interface WeekInput {
   index: number;
   goal: string;
   milestoneTitle: string;
-  lessons: { id: string; order: number; title: string; status: LessonStatus; minutes: number }[];
+  lessons: {
+    id: string;
+    order: number;
+    title: string;
+    status: LessonStatus;
+    minutes: number;
+    rating?: number | null;
+    review?: string | null;
+  }[];
   quizScore: number | null;
   milestoneDone: boolean;
 }
@@ -29,6 +38,9 @@ export interface Step {
   note?: string;
   /** 복귀 재조정으로 닫힌 레슨: summary(3분 요약 카드로 넘김) | merged(다음 레슨에 합침) */
   closed?: "summary" | "merged";
+  /** 완료 화면에서 남긴 평점(1~5)과 후기. 끝낸 레슨에만 붙는다 */
+  rating?: number;
+  review?: string;
 }
 
 export type WeekStatus = "done" | "current" | "todo";
@@ -64,6 +76,15 @@ function lessonDone(s: LessonStatus): boolean {
   return s !== "todo";
 }
 
+/** 끝낸 레슨(done·short)의 평점과 후기. 평점이 없으면 후기도 붙이지 않는다 */
+function lessonReview(l: WeekInput["lessons"][number]): Pick<Step, "rating" | "review"> {
+  if (l.status !== "done" && l.status !== "short") return {};
+  const r = l.rating;
+  if (typeof r !== "number" || !Number.isInteger(r) || r < 1 || r > RATING_MAX) return {};
+  const review = l.review?.trim();
+  return review ? { rating: r, review } : { rating: r };
+}
+
 export function buildCourseView(weeks: WeekInput[], studyDays: number[]): CourseView {
   const letters = studyDays.map((d) => WEEKDAY_KO[d]);
   const goalDay = letters[letters.length - 1] ?? "";
@@ -80,6 +101,7 @@ export function buildCourseView(weeks: WeekInput[], studyDays: number[]): Course
       order: l.order,
       minutes: l.minutes,
       closed: l.status === "summary" || l.status === "merged" ? l.status : undefined,
+      ...lessonReview(l),
     }));
     steps.push({
       id: `${w.index}-${steps.length}`,

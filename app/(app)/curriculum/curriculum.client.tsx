@@ -12,9 +12,11 @@ import {
   listDays,
   nodeLabel,
   popoverInfo,
+  popoverReview,
   roadIndexes,
   WEEK_STATE_WORD,
 } from "@/lib/domain/curriculum";
+import { RATING_MAX } from "@/lib/domain/lesson";
 import { MAP_W, mapLayout, popoverTop } from "@/lib/domain/map";
 import s from "./curriculum.module.css";
 
@@ -38,6 +40,21 @@ function nodeIcon(st: Step): keyof typeof STEP_ICONS {
   if (isDone(st.state)) return "check";
   if (st.state === "today") return "star";
   return st.kind === "quiz" ? "quiz" : "book";
+}
+
+const STAR_D = "M12 3.2l2.6 5.5 6 .8-4.4 4.2 1.1 6-5.3-2.9-5.3 2.9 1.1-6L3.4 9.5l6-.8z";
+
+/** 완료 화면에서 남긴 별점(읽기 전용) */
+function Stars({ rating, label }: { rating: number; label: string }) {
+  return (
+    <span role="img" aria-label={label} className={s.popStars} data-testid="popover-stars">
+      {Array.from({ length: RATING_MAX }, (_, i) => (
+        <svg key={i} width="16" height="16" viewBox="0 0 24 24" data-on={i < rating ? "true" : "false"} aria-hidden>
+          <path d={STAR_D} strokeLinejoin="round" />
+        </svg>
+      ))}
+    </span>
+  );
 }
 
 function Icon({ d, size, strokeWidth = 2.6 }: { d: string; size: number; strokeWidth?: number }) {
@@ -284,6 +301,7 @@ function WeekMap({
   const selIdx = week.steps.findIndex((x) => x.id === sel);
   const selStep = selIdx >= 0 ? week.steps[selIdx] : null;
   const pop = selStep ? popoverInfo(selStep) : null;
+  const rev = selStep ? popoverReview(selStep) : null;
   const [setFitEl, zoom] = useMapScale();
   return (
     <div ref={setFitEl} className={s.fit}>
@@ -351,6 +369,21 @@ function WeekMap({
             <span className={s.popKicker}>{pop.kicker}</span>
             <span className={s.popTitle}>{pop.title}</span>
             <span className={s.popMeta}>{pop.meta}</span>
+            {rev && (
+              <div className={s.popReview}>
+                <div className={s.popRateRow}>
+                  <Stars rating={rev.rating} label={rev.label} />
+                  <Link href={rev.href} className={s.popEdit} data-testid="popover-review-edit">
+                    후기 고치기
+                  </Link>
+                </div>
+                {rev.review && (
+                  <p className={s.popReviewText} data-testid="popover-review">
+                    {rev.review}
+                  </p>
+                )}
+              </div>
+            )}
             {pop.cta && (
               <Link href={pop.href} className={s.popCta} data-testid="popover-cta">
                 {pop.cta}

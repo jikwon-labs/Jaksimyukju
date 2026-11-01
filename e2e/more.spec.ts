@@ -622,3 +622,43 @@ test("32. 성향 질문의 뒤로: 둘째 질문에서는 이전 질문으로, �
   await expect(page).toHaveURL(/\/$/);
   await expect(page.getByTestId("start")).toBeVisible();
 });
+
+/** 접힌 주차 배너를 모두 펼친다(멀리 있는 주차는 펼칠 수 없어 뺀다) */
+async function openAllWeeks(page: Page) {
+  const closed = page.locator('[data-testid^="week-banner-"][aria-expanded="false"]:not([aria-disabled])');
+  const ids = await closed.evaluateAll((els) => els.map((el) => el.getAttribute("data-testid") ?? ""));
+  for (const id of ids) {
+    await page.getByTestId(id).click();
+    await expect(page.getByTestId(id)).toHaveAttribute("aria-expanded", "true");
+  }
+}
+
+test("33. 남긴 평점과 후기가 커리큘럼 지도 칸 설명 카드에 보이고, 후기 고치기로 완료 화면에 간다", async ({ page }) => {
+  await loginDemo(page, "/curriculum");
+  await openAllWeeks(page);
+  const node = page.locator('[data-testid^="map-node-"][data-kind="lesson"][data-state="done"]').first();
+  const nodeId = (await node.getAttribute("data-testid")) ?? "";
+  expect(nodeId).toMatch(/^map-node-/);
+  await node.click();
+  const lessonHref = (await page.getByTestId("popover-cta").getAttribute("href")) ?? "";
+  expect(lessonHref).toMatch(/^\/lesson\/[^/]+$/);
+
+  // 끝낸 레슨의 완료 화면에서 별 4개와 후기를 남긴다
+  await page.goto(`${lessonHref}/complete`);
+  await page.getByRole("radiogroup", { name: "오늘 수업 평점" }).getByRole("radio", { name: "4점" }).check({ force: true });
+  await page.getByTestId("lesson-review").fill("예시가 좋았어요.\n조금 길었어요.");
+  await page.getByTestId("complete-home").click();
+  await expect(page).toHaveURL(/\/home/);
+
+  await page.goto("/curriculum");
+  await openAllWeeks(page);
+  await page.getByTestId(nodeId).click();
+  const pop = page.getByTestId("popover");
+  await expect(pop.getByRole("img", { name: "별 4개" })).toBeVisible();
+  await expect(pop.getByTestId("popover-review")).toHaveText("예시가 좋았어요.\n조금 길었어요.");
+  const edit = pop.getByRole("link", { name: "후기 고치기" });
+  await expect(edit).toHaveAttribute("href", `${lessonHref}/complete`);
+  await edit.click();
+  await expect(page).toHaveURL(new RegExp(`${lessonHref}/complete$`));
+  await expect(page.getByRole("radio", { name: "4점" })).toBeChecked();
+});
