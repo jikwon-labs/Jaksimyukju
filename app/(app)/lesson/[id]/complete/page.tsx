@@ -152,6 +152,8 @@ export default async function CompletePage({
         <CompleteActions
           lessonId={lesson.id}
           oneLiner={lesson.oneLiner ?? ""}
+          rating={lesson.rating}
+          review={lesson.review ?? ""}
           needLink={!user.linkedAt}
           providers={availableProviders()}
           linkResult={link ?? null}

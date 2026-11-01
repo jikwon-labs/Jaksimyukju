@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useFormStatus } from "react-dom";
 import { wrapUpAction } from "@/app/actions/lesson";
 import { Switch } from "@/components/ui";
-import { ONE_LINER_MAX } from "@/lib/domain/lesson";
+import { ONE_LINER_MAX, RATING_MAX, REVIEW_MAX } from "@/lib/domain/lesson";
 import { LINK_ERROR_MESSAGE, linkSucceeded, messageFor, PROVIDER_LABEL, type ProviderId } from "@/lib/domain/oauth";
 import s from "./complete.module.css";
 
@@ -21,6 +21,60 @@ function Buttons() {
         홈으로
       </button>
     </div>
+  );
+}
+
+const RATING_WORD = ["", "별로였어요", "아쉬웠어요", "괜찮았어요", "좋았어요", "최고였어요"];
+
+/** 오늘 수업 평점(별 1~5)과 후기. 아래 "홈으로"·"다음 칸 보기"를 누를 때 한 줄 요약과 함께 저장된다 */
+function Review({ rating, review }: { rating: number | null; review: string }) {
+  const [stars, setStars] = useState(rating ?? 0);
+  const [text, setText] = useState(review);
+  return (
+    <section aria-label="오늘 수업 후기" className={s.review}>
+      <div className={s.reviewHead}>
+        <span className={s.oneLabel} id="rating-label">
+          오늘 수업은 어땠어요?
+        </span>
+        <span className={s.reviewWord} aria-live="polite">
+          {RATING_WORD[stars]}
+        </span>
+      </div>
+      <div role="radiogroup" aria-label="오늘 수업 평점" className={s.stars}>
+        {Array.from({ length: RATING_MAX }, (_, i) => i + 1).map((n) => (
+          <label key={n} className={s.star} data-on={n <= stars ? "true" : "false"}>
+            <input
+              type="radio"
+              name="rating"
+              value={n}
+              form={FORM}
+              checked={stars === n}
+              onChange={() => setStars(n)}
+              aria-label={`${n}점`}
+              className={s.starInput}
+            />
+            <svg width="32" height="32" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 3.2l2.6 5.5 6 .8-4.4 4.2 1.1 6-5.3-2.9-5.3 2.9 1.1-6L3.4 9.5l6-.8z" strokeLinejoin="round" />
+            </svg>
+          </label>
+        ))}
+      </div>
+      <label htmlFor="lesson-review" className={s.srOnly}>
+        수업 후기
+      </label>
+      <textarea
+        id="lesson-review"
+        name="review"
+        form={FORM}
+        rows={3}
+        maxLength={REVIEW_MAX}
+        placeholder="좋았던 점, 아쉬웠던 점을 적어 주세요(선택)"
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        className={s.oneInput}
+        data-testid="lesson-review"
+      />
+    </section>
   );
 }
 
@@ -66,6 +120,8 @@ function Linked() {
 export function CompleteActions({
   lessonId,
   oneLiner,
+  rating,
+  review,
   needLink,
   providers,
   linkResult,
@@ -73,6 +129,8 @@ export function CompleteActions({
 }: {
   lessonId: string;
   oneLiner: string;
+  rating: number | null;
+  review: string;
   needLink: boolean;
   providers: ProviderId[];
   linkResult: string | null;
@@ -100,6 +158,8 @@ export function CompleteActions({
           data-testid="one-liner"
         />
       </section>
+
+      <Review rating={rating} review={review} />
 
       {needLink ? (
         <LinkCard lessonId={lessonId} providers={providers} result={linkResult} />

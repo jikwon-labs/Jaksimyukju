@@ -373,3 +373,66 @@
   outline: 3px solid var(--a-text);
   outline-offset: 2px;
 }
+
+/* 오늘 수업 평점과 후기 */
+.review {
+  background: var(--surface);
+  border-radius: 20px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.reviewHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+.reviewWord {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--sub);
+}
+.stars {
+  display: flex;
+  gap: 4px;
+}
+.star {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  cursor: pointer;
+}
+.star svg {
+  fill: transparent;
+  stroke: var(--line);
+  stroke-width: 1.6;
+  transition: fill 120ms ease, stroke 120ms ease;
+}
+.star[data-on="true"] svg {
+  fill: #ffc533;
+  stroke: #f0ad00;
+}
+.starInput {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.star:has(.starInput:focus-visible) {
+  outline: 3px solid var(--a-text);
+  outline-offset: 1px;
+}
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}

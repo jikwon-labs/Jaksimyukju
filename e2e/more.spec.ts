@@ -583,3 +583,29 @@ test("30. 데모 로그인은 들어온 주소 그대로 돌려보낸다(폰에�
   const evil = await request.get("http://127.0.0.1:3100/api/dev/login?as=demo-me&to=//evil.example", { maxRedirects: 0 });
   expect(evil.headers()["location"]).toBe("/home");
 });
+
+test("31. 레슨을 마치면 평점과 후기를 남기고, 다시 열면 남긴 그대로 보인다", async ({ page }) => {
+  await loginDemo(page, "/home");
+  await page.getByRole("link", { name: "학습 시작" }).click();
+  await page.getByTestId("lesson-cta").click();
+  await expect(page).toHaveURL(/\/tutor/);
+  for (const answer of ["재무상태표는 한 시점의 재산과 빚이에요.", "회사 숫자를 볼 때 먼저 써 볼게요."]) {
+    await page.getByTestId("tutor-input").fill(answer);
+    await page.getByTestId("tutor-send").click();
+    await expect(page.getByTestId("tutor-input")).toHaveValue("");
+  }
+  await page.getByTestId("tutor-complete").click({ timeout: 15_000 });
+  await expect(page).toHaveURL(/\/complete/);
+  const url = page.url();
+
+  const rating = page.getByRole("radiogroup", { name: "오늘 수업 평점" });
+  await expect(rating.getByRole("radio")).toHaveCount(5);
+  await rating.getByRole("radio", { name: "4점" }).check({ force: true });
+  await page.getByTestId("lesson-review").fill("예시가 회사 일과 닿아서 좋았어요.\n조금 길었어요.");
+  await page.getByTestId("complete-home").click();
+  await expect(page).toHaveURL(/\/home/);
+
+  await page.goto(url);
+  await expect(page.getByRole("radio", { name: "4점" })).toBeChecked();
+  await expect(page.getByTestId("lesson-review")).toHaveValue("예시가 회사 일과 닿아서 좋았어요.\n조금 길었어요.");
+});

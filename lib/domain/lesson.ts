@@ -62,6 +62,23 @@ export function cleanOneLiner(v: unknown): string | null {
   return t.length > 0 ? t : null;
 }
 
+/** 수업 평점(별 1~5). 그 밖의 값은 버린다 */
+export const RATING_MAX = 5;
+export const REVIEW_MAX = 300;
+
+export function cleanRating(v: unknown): number | null {
+  if (typeof v !== "string" || !/^[1-9]$/.test(v)) return null;
+  const n = Number(v);
+  return n <= RATING_MAX ? n : null;
+}
+
+/** 수업 후기. 줄바꿈은 살리고 앞뒤 공백만 지운다 */
+export function cleanReview(v: unknown): string | null {
+  if (typeof v !== "string") return null;
+  const t = v.trim().slice(0, REVIEW_MAX).trim();
+  return t.length > 0 ? t : null;
+}
+
 export function isEmail(v: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v.trim());
 }

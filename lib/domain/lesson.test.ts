@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
   cleanOneLiner,
+  cleanRating,
+  cleanReview,
+  REVIEW_MAX,
   groupNotifyTargets,
   isEmail,
   planCompletion,
@@ -129,6 +132,21 @@ describe("groupNotifyTargets", () => {
     expect(groupNotifyTargets([{ ...base, id: "a" }], 23)).toEqual([]);
     expect(groupNotifyTargets([{ ...base, id: "a" }], 6)).toEqual([]);
     expect(groupNotifyTargets([{ ...base, id: "a" }], 7)).toEqual(["a"]);
+  });
+});
+
+describe("cleanRating / cleanReview", () => {
+  it("평점은 1~5 정수만 받는다", () => {
+    expect(cleanRating("4")).toBe(4);
+    expect(cleanRating("1")).toBe(1);
+    expect(cleanRating("5")).toBe(5);
+    for (const v of ["0", "6", "3.5", "", "별", null, undefined, 4]) expect(cleanRating(v)).toBeNull();
+  });
+  it("후기는 줄바꿈은 두고 앞뒤 공백을 지우며, 비면 null", () => {
+    expect(cleanReview("  예시가 좋았어요\n조금 길었어요  ")).toBe("예시가 좋았어요\n조금 길었어요");
+    expect(cleanReview("   ")).toBeNull();
+    expect(cleanReview(3)).toBeNull();
+    expect(cleanReview("가".repeat(1000))?.length).toBe(REVIEW_MAX);
   });
 });
 

@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/auth";
 import { getHour, getNow, getToday } from "@/lib/clock";
-import { cleanOneLiner, type CompleteMode } from "@/lib/domain/lesson";
+import { cleanOneLiner, cleanRating, cleanReview, type CompleteMode } from "@/lib/domain/lesson";
 import { prisma } from "@/lib/prisma";
 import { syncCourseStatus } from "@/lib/server/course";
 import { completeLesson, notifyGroupDone } from "@/lib/server/lesson";
@@ -37,9 +37,15 @@ export async function wrapUpAction(formData: FormData): Promise<void> {
   const lesson = await prisma.lesson.findFirst({ where: { id: lessonId, course: { userId: user.id } } });
   if (lesson && lesson.status !== "todo") {
     const oneLiner = cleanOneLiner(formData.get("oneLiner"));
-    if (oneLiner && oneLiner !== lesson.oneLiner) {
-      await prisma.lesson.update({ where: { id: lesson.id }, data: { oneLiner } });
-    }
+    const rating = cleanRating(formData.get("rating"));
+    // 후기는 지워서 저장할 수도 있으니 칸이 왔으면 빈 값도 반영한다
+    const review = formData.has("review") ? cleanReview(formData.get("review")) : lesson.review;
+    const data = {
+      ...(oneLiner && oneLiner !== lesson.oneLiner ? { oneLiner } : {}),
+      ...(rating && rating !== lesson.rating ? { rating } : {}),
+      ...(review !== lesson.review ? { review } : {}),
+    };
+    if (Object.keys(data).length > 0) await prisma.lesson.update({ where: { id: lesson.id }, data });
     if (formData.get("share") === "on") {
       await notifyGroupDone(user, await getToday(), await getHour(), await getNow());
     }
