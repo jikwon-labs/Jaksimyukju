@@ -148,8 +148,19 @@ export function tutorMessages(history: TutorTurn[]): MessageCreateParamsNonStrea
 // Sonnet은 거절되면 서버가 다른 모델로 한 번 더 돌린다. Haiku는 서버 fallback이 없다
 const FALLBACK = { betas: ["server-side-fallback-2026-07-01"], fallbacks: "default" as const };
 
+/** 모양이 틀린 답(parse)일 때만 한 번 더 부른다. 거절·연결 실패는 다시 불러도 같으니 그대로 던진다 */
+async function retryOnParse<T>(fn: () => Promise<T>, label: string): Promise<T> {
+  try {
+    return await fn();
+  } catch (e) {
+    if (!(e instanceof AiError) || e.reason !== "parse") throw e;
+    console.warn(`[ai] ${label} 다시 만든다:`, e.message);
+    return fn();
+  }
+}
+
 export function createAnthropicProvider(apiKey: string, transport: ClaudeTransport = sdkTransport(apiKey)): AiProvider {
-  return {
+  const provider: AiProvider = {
     name: "anthropic",
     generateCurriculum: (input) =>
       guard(async () => {
@@ -254,4 +265,7 @@ export function createAnthropicProvider(apiKey: string, transport: ClaudeTranspo
         return readReply(Retro, res);
       }),
   };
+  // 커리큘럼은 출력이 길어 가끔 모양이 어긋난다. 실패하면 온보딩 전체가 막히니 한 번 다시 만든다
+  const once = provider.generateCurriculum;
+  return { ...provider, generateCurriculum: (input) => retryOnParse(() => once(input), "커리큘럼") };
 }

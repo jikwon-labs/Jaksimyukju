@@ -182,3 +182,35 @@ describe("Claude 오류 처리", () => {
     await expect(guard(async () => Promise.reject(new AiError("x", "refusal")))).rejects.toMatchObject({ reason: "refusal" });
   });
 });
+
+describe("커리큘럼은 모양이 틀리면 한 번 다시 만든다", () => {
+  function seq(replies: (ClaudeReply | Error)[]) {
+    let n = 0;
+    const transport: ClaudeTransport = {
+      async send() {
+        const r = replies[Math.min(n++, replies.length - 1)];
+        if (r instanceof Error) throw r;
+        return r;
+      },
+    };
+    return { ai: createAnthropicProvider("test-key", transport), calls: () => n };
+  }
+  const broken = textReply({ goal: "x", excludes: [], weeks: [] });
+
+  it("첫 답이 틀리고 두 번째가 맞으면 두 번째 답을 쓴다", async () => {
+    const { ai, calls } = seq([broken, textReply(mockCurriculum(base))]);
+    const plan = await ai.generateCurriculum(base);
+    expect(plan.weeks.length).toBeGreaterThan(0);
+    expect(calls()).toBe(2);
+  });
+  it("두 번 다 틀리면 실패하고 세 번째는 부르지 않는다", async () => {
+    const { ai, calls } = seq([broken, broken, textReply(mockCurriculum(base))]);
+    await expect(ai.generateCurriculum(base)).rejects.toMatchObject({ reason: "parse" });
+    expect(calls()).toBe(2);
+  });
+  it("거절이나 연결 실패는 다시 부르지 않는다", async () => {
+    const refused = seq([textReply("", "refusal"), textReply(mockCurriculum(base))]);
+    await expect(refused.ai.generateCurriculum(base)).rejects.toMatchObject({ reason: "refusal" });
+    expect(refused.calls()).toBe(1);
+  });
+});
