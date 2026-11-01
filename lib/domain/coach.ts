@@ -57,6 +57,8 @@ export interface CoachInput {
   sent: { key: string; day: DayKey }[];
   /** 이번 주(월요일 기준) 회고를 이미 했는지 */
   retroDoneThisWeek: boolean;
+  /** 이번 주 월요일(또는 과정 시작일)부터 오늘 전까지 지난 학습일 수. 0이면 돌아볼 주가 없다 */
+  studyDaysThisWeek: number;
   /** 오늘이 학습일인지 */
   studyDay?: boolean;
   /** 스케줄러가 학습 시각 이후에 불렀는지(앱을 열 때는 학습 시간 알림을 남기지 않는다) */
@@ -75,7 +77,7 @@ export interface CoachNote {
 
 /**
  * 남길 알림. 학습일 1일 빔이면 다음 날 선생님 알림 한 번(2일 이상은 복귀 화면이 맡는다),
- * 일요일이면 주간 회고 알림 한 번, 스케줄러가 학습 시각 뒤에 부르면 비어 있는 학습일에 학습 시간 알림 한 번.
+ * 일요일이면 주간 회고 알림 한 번(이번 주에 지난 학습일이 있을 때만. 과정이 다음 주에 시작하면 보내지 않는다), 스케줄러가 학습 시각 뒤에 부르면 비어 있는 학습일에 학습 시간 알림 한 번.
  */
 export function coachNotes(i: CoachInput): CoachNote[] {
   const out: CoachNote[] = [];
@@ -97,7 +99,7 @@ export function coachNotes(i: CoachInput): CoachNote[] {
   }
   const week = mondayOf(i.today);
   const retroSent = i.sent.some((s) => s.key === "retro" && mondayOf(s.day) === week);
-  if (weekday(i.today) === 0 && !i.retroDoneThisWeek && !retroSent) {
+  if (weekday(i.today) === 0 && i.studyDaysThisWeek > 0 && !i.retroDoneThisWeek && !retroSent) {
     out.push({ key: "retro", kind: "retro", href: "/retro", dedupe: `retro:${week}` });
   }
   return out;

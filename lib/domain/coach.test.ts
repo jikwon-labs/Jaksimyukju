@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { coachNotes, notifyMinutesOf, reminderDue } from "./coach";
 
-const base = { today: "2026-10-29", missedDay: null as string | null, missed: 0, studiedToday: false, restingToday: false, sent: [], retroDoneThisWeek: false };
+const base = { today: "2026-10-29", missedDay: null as string | null, missed: 0, studiedToday: false, restingToday: false, sent: [], retroDoneThisWeek: false, studyDaysThisWeek: 5 };
 
 describe("앱을 열 때 선생님 알림", () => {
   it("학습일 1일 빔이면 하루 한 번", () => {
@@ -33,6 +33,10 @@ describe("앱을 열 때 선생님 알림", () => {
     expect(coachNotes({ ...sun, retroDoneThisWeek: true })).toEqual([]);
     expect(coachNotes({ ...sun, sent: [{ key: "retro", day: "2026-11-01" }] })).toEqual([]);
     expect(coachNotes({ ...base, today: "2026-10-31" })).toEqual([]); // 토요일
+  });
+  it("이번 주에 지난 학습일이 없으면(일요일에 막 시작한 과정) 회고 알림을 남기지 않는다", () => {
+    const sun = { ...base, today: "2026-11-01" };
+    expect(coachNotes({ ...sun, studyDaysThisWeek: 0 })).toEqual([]);
   });
 });
 

@@ -2,7 +2,7 @@ import "server-only";
 import type { User } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { TIME_ZONE } from "@/lib/clock";
-import { addDays, dayKeyAt, mondayOf, type DayKey } from "@/lib/domain/dates";
+import { addDays, dayKeyAt, diffDays, mondayOf, type DayKey } from "@/lib/domain/dates";
 import { coachNotes, MISSED_EARLIER_LINE, MISSED_ONE_LINE, reminderDue, RETRO_LINE, STUDY_LINE } from "@/lib/domain/coach";
 import { dayKind, missedStudyDays } from "@/lib/domain/rest";
 import type { CourseState } from "./course";
@@ -45,6 +45,12 @@ export async function runCoach(
       where: { userId: user.id, createdAt: { gte: new Date(`${mondayOf(today)}T00:00:00+09:00`) } },
     })) > 0;
   const gap = missedStudyDays(st.cal, st.levels, today);
+  // 과정 시작일 전 날은 세지 않는다. 일요일에 막 시작한 과정은 돌아볼 주가 없다
+  const weekStart = [mondayOf(today), st.course.startDate].sort().at(-1) ?? today;
+  let studyDaysThisWeek = 0;
+  for (let d = weekStart; diffDays(today, d) > 0; d = addDays(d, 1)) {
+    if (dayKind(st.cal, d) === "study") studyDaysThisWeek++;
+  }
   const notes = coachNotes({
     today,
     missed: gap.count,
@@ -53,6 +59,7 @@ export async function runCoach(
     restingToday: st.restingToday,
     sent,
     retroDoneThisWeek,
+    studyDaysThisWeek,
     studyDay: dayKind(st.cal, today) === "study",
     remind: tickMinute !== null && reminderDue(tickMinute, user.notifyTime),
   });
