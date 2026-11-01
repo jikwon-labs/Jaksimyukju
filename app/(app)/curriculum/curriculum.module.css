@@ -261,6 +261,7 @@
 .toggle button:focus-visible,
 .listHead:focus-visible,
 .popCta:focus-visible,
+.popEdit:focus-visible,
 .flag:focus-visible {
   outline: 3px solid var(--a-text);
   outline-offset: 3px;
@@ -351,6 +352,60 @@
 .popMeta {
   font-size: 13px;
   line-height: 19px;
+}
+/* 완료 화면에서 남긴 평점과 후기 */
+.popReview {
+  margin-top: 2px;
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.popRateRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.popStars {
+  display: inline-flex;
+  gap: 2px;
+}
+.popStars svg {
+  fill: transparent;
+  stroke: var(--line);
+  stroke-width: 1.8;
+}
+.popStars svg[data-on="true"] {
+  fill: #ffc533;
+  stroke: #f0ad00;
+}
+.popEdit {
+  min-height: 32px;
+  padding: 0 4px;
+  display: inline-flex;
+  align-items: center;
+  border-radius: 8px;
+  color: var(--a-text);
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  flex: none;
+}
+.popReviewText {
+  margin: 0;
+  color: var(--sub);
+  font-size: 13px;
+  line-height: 19px;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  white-space: pre-line;
 }
 .popCta {
   margin-top: 6px;

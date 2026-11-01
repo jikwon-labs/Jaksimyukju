@@ -7,7 +7,9 @@ import {
   maskLocked,
   nodeLabel,
   popoverInfo,
+  popoverReview,
   roadIndexes,
+  starsLabel,
   studyDaysLabel,
   weekMeta,
 } from "./curriculum";
@@ -89,6 +91,58 @@ describe("칸 설명 카드", () => {
   it("길 끝 칸", () => {
     expect(roadIndexes(w2)).toEqual({ lastDone: 3, todayIdx: 3 });
     expect(roadIndexes(v.weeks[2].steps)).toEqual({ lastDone: -1, todayIdx: -1 });
+  });
+});
+
+describe("칸 설명 카드의 평점과 후기", () => {
+  type L = WeekInput["lessons"][number];
+  const rated = buildCourseView(
+    [
+      {
+        ...week(1, ["done", "short", "done", "done"], null, false),
+        lessons: (
+          [
+            { status: "done", rating: 4, review: "  예시가 좋았어요\n다음엔 더 짧게  " },
+            { status: "short", rating: 2, review: null },
+            { status: "done", rating: null, review: "평점 없이 후기만" },
+            { status: "done", rating: 7, review: "범위 밖" },
+          ] as const
+        ).map((x, i): L => ({ id: `r${i}`, order: i, title: `레슨 ${i + 1}`, minutes: 10, ...x })),
+      },
+      {
+        ...week(2, ["todo"], null, false),
+        lessons: [{ id: "t0", order: 4, title: "레슨 1", status: "todo", minutes: 10, rating: 5, review: "아직" }],
+      },
+    ],
+    [1, 2, 3, 4, 5],
+  );
+  const w1 = rated.weeks[0].steps;
+  it("별 읽기 문구", () => {
+    expect(starsLabel(4)).toBe("별 4개");
+  });
+  it("평점 남긴 끝낸 레슨: 별, 후기(앞뒤 공백만 지움), 고치기 링크", () => {
+    expect(popoverReview(w1[0])).toEqual({
+      rating: 4,
+      label: "별 4개",
+      review: "예시가 좋았어요\n다음엔 더 짧게",
+      href: "/lesson/r0/complete",
+    });
+  });
+  it("5분 버전도 보여 주고, 후기가 없으면 빈 문자열", () => {
+    expect(popoverReview(w1[1])).toEqual({ rating: 2, label: "별 2개", review: "", href: "/lesson/r1/complete" });
+  });
+  it("평점이 없거나 범위 밖이면 아무것도 안 보인다", () => {
+    expect(popoverReview(w1[2])).toBeNull();
+    expect(popoverReview(w1[3])).toBeNull();
+    expect(w1[2].review).toBeUndefined();
+  });
+  it("안 끝낸 레슨, 퀴즈, 마일스톤은 null", () => {
+    expect(popoverReview(rated.weeks[1].steps[0])).toBeNull();
+    expect(popoverReview(w1[4])).toBeNull();
+    expect(popoverReview(w1[5])).toBeNull();
+  });
+  it("기존 데이터(평점 필드 없음)는 그대로", () => {
+    expect(v.weeks[0].steps.every((x) => popoverReview(x) === null)).toBe(true);
   });
 });
 

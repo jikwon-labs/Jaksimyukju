@@ -71,6 +71,29 @@ export function popoverInfo(st: Step): PopoverInfo {
   };
 }
 
+export interface PopoverReview {
+  rating: number;
+  /** 별 읽기 문구. 예: "별 4개" */
+  label: string;
+  review: string; // 빈 문자열이면 후기 없음
+  href: string;
+}
+
+export function starsLabel(n: number): string {
+  return `별 ${n}개`;
+}
+
+/** 칸 설명 카드의 평점·후기. 평점을 남긴 끝낸 레슨만, 아니면 null */
+export function popoverReview(st: Step): PopoverReview | null {
+  if (st.kind !== "lesson" || !isDone(st.state) || !st.lessonId || !st.rating) return null;
+  return {
+    rating: st.rating,
+    label: starsLabel(st.rating),
+    review: st.review ?? "",
+    href: `/lesson/${st.lessonId}/complete`,
+  };
+}
+
 export function nodeLabel(st: Step): string {
   return `${st.week}주차 ${KIND_WORD[st.kind]} ${st.title}, ${STATE_WORD[st.state]}`;
 }
