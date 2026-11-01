@@ -91,8 +91,13 @@ export function Personality() {
         <Link href="/start/teacher" className={st.cta} data-testid="personality-next">
           선생님 만나러 가기
         </Link>
+      ) : step === 0 ? (
+        // 첫 질문에는 돌아갈 질문이 없으니 시작 화면으로 보낸다
+        <Link href="/" className={s.prev} data-testid="personality-prev">
+          처음 화면으로
+        </Link>
       ) : (
-        <button type="button" className={s.prev} onClick={() => writeDraft({ answers: answers.slice(0, -1) })}>
+        <button type="button" className={s.prev} onClick={() => writeDraft({ answers: answers.slice(0, -1) })} data-testid="personality-prev">
           이전 질문
         </button>
       )}

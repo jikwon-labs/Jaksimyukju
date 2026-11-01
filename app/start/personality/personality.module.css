@@ -98,6 +98,12 @@
   cursor: pointer;
 }
 .prev {
+  /* 첫 질문에서는 링크(처음 화면으로), 그 뒤로는 버튼(이전 질문)이라 둘 다 같은 모양으로 맞춘다 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  font-family: inherit;
   height: 48px;
   border: none;
   background: transparent;

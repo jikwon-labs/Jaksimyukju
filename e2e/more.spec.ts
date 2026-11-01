@@ -609,3 +609,16 @@ test("31. 레슨을 마치면 평점과 후기를 남기고, 다시 열면 남�
   await expect(page.getByRole("radio", { name: "4점" })).toBeChecked();
   await expect(page.getByTestId("lesson-review")).toHaveValue("예시가 회사 일과 닿아서 좋았어요.\n조금 길었어요.");
 });
+
+test("32. 성향 질문의 뒤로: 둘째 질문에서는 이전 질문으로, 첫 질문에서는 시작 화면으로 간다", async ({ page }) => {
+  await page.goto("/start/personality");
+  await expect(page.getByText("질문 1 / 3")).toBeVisible();
+  await page.getByTestId("personality-option").first().click();
+  await expect(page.getByText("질문 2 / 3")).toBeVisible();
+  await page.getByTestId("personality-prev").click();
+  await expect(page.getByText("질문 1 / 3")).toBeVisible();
+  // 첫 질문에는 돌아갈 질문이 없으니 시작 화면으로 간다
+  await page.getByTestId("personality-prev").click();
+  await expect(page).toHaveURL(/\/$/);
+  await expect(page.getByTestId("start")).toBeVisible();
+});
