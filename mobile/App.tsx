@@ -60,6 +60,9 @@ export default function App() {
             sharedCookiesEnabled
             // 키보드 위의 위·아래 화살표와 "완료" 줄은 웹 폼용이라 앱에서는 숨긴다
             hideKeyboardAccessoryView
+            // 화면을 끌 때 웹뷰 전체가 고무줄처럼 튕기지 않게 한다(iOS bounces, 안드로이드 끝 번짐 효과). 페이지 안쪽 스크롤은 그대로 된다
+            bounces={false}
+            overScrollMode="never"
           />
         )}
       </SafeAreaView>
