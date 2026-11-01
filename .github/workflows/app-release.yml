@@ -1,0 +1,62 @@
+name: App release
+
+# main 에 병합되면 EAS 에서 iOS production 빌드를 만들고, 빌드가 끝나면 TestFlight 로 자동 제출한다.
+# quedot-commerce-app 의 production-release.yml 을 옮긴 것.
+#
+# 앱은 웹(Vercel)을 WebView 로 여는 껍데기라 웹만 바뀐 병합은 앱을 다시 빌드할 필요가 없다.
+# 그래서 mobile/ 이 바뀐 병합에서만 돈다. 그 밖에 빌드가 필요하면 Actions 탭에서 수동 실행(workflow_dispatch).
+#
+# GitHub Actions 는 EXPO_TOKEN 으로 빌드를 시작만 하고(--no-wait) 빌드·제출은 EAS 서버에서 이어진다.
+# 진행 상황은 expo.dev 프로젝트의 Builds·Submissions 에서 본다.
+# 필요한 것:
+#  - 레포 시크릿 EXPO_TOKEN (expo.dev > Account settings > Access tokens)
+#  - EAS 에 저장된 App Store Connect API 키 (처음 한 번 로컬에서 `eas submit -p ios` 로 등록)
+#  - mobile/eas.json submit.production.ios.ascAppId
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "mobile/**"
+      - ".github/workflows/app-release.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: app-release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check EXPO_TOKEN
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: |
+          if [ -z "$EXPO_TOKEN" ]; then
+            echo "::error::EXPO_TOKEN 시크릿이 없다. expo.dev Access tokens 에서 만들어 레포 Actions 시크릿에 넣는다."
+            exit 1
+          fi
+
+      - name: EAS build + TestFlight submit (iOS)
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: npx eas-cli@latest build --platform ios --profile production --non-interactive --no-wait --auto-submit

@@ -12,6 +12,15 @@
     "preview": {
       "distribution": "internal",
       "env": { "EXPO_PUBLIC_WEB_URL": "http://192.168.45.143:3100" }
+    },
+    "production": {
+      "autoIncrement": true,
+      "env": { "EXPO_PUBLIC_WEB_URL": "https://jaksimyukju.vercel.app" }
+    }
+  },
+  "submit": {
+    "production": {
+      "ios": { "ascAppId": "6829444199" }
     }
   }
 }

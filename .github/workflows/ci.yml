@@ -1,0 +1,64 @@
+name: CI
+
+# quedot-commerce-app 의 ci.yml 을 이 레포에 맞게 옮긴 것.
+# 단위 테스트(vitest)는 DB 를 쓰지 않고, ANTHROPIC_API_KEY 가 비어 있으면 AI 가 mock 으로 동작하므로
+# 시크릿 없이 돌아간다. E2E(Playwright)는 Postgres·시드가 필요해 여기서는 돌리지 않는다.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+
+      # 버전은 package.json 의 packageManager 를 따른다
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # mobile/ 은 pnpm 워크스페이스 밖(npm, package-lock.json)이다.
+      # vitest 가 mobile/bridge.test.ts 를 읽을 때 expo/tsconfig.base 가 필요해 따로 설치한다.
+      - name: Install mobile dependencies
+        run: npm ci --prefix mobile
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Test
+        run: pnpm test
+
+      - name: Build
+        run: pnpm build
+
+  # 게이트 잡. 브랜치 보호 규칙에서 이 'ci' 체크 하나만 필수로 걸면 된다.
+  ci:
+    if: always()
+    needs: [check]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Require check to pass
+        run: |
+          echo "check=${{ needs.check.result }}"
+          [ "${{ needs.check.result }}" = success ]
