@@ -30,12 +30,14 @@ pnpm dev        # http://localhost:3100
 - 쿠키 `j6_ai_fail=1` 튜터·마일스톤에서 AI 실패 상태를 강제로 본다
 - `/design` 선생님 15표정과 공용 컴포넌트 기준판, `/states` 빈 상태·오류 4종
 
-## 소셜 로그인(카카오·구글)
+## 소셜 로그인(카카오·구글·Apple)
 
-- 게스트로 시작하고, 첫 레슨을 마친 뒤 카카오나 구글 계정을 연결한다. 기록은 같은 사용자에 그대로 남는다. 다른 휴대폰에서는 **이미 계정이 있어요**로 같은 계정에 들어온다.
+- 게스트로 시작하고, 첫 레슨을 마친 뒤 카카오·구글·Apple 계정을 연결한다. 기록은 같은 사용자에 그대로 남는다. 다른 휴대폰에서는 **이미 계정이 있어요**로 같은 계정에 들어온다.
 - 키가 없으면 개발 모드에서만 앱 안의 가짜 공급자(`/api/dev/oauth/*`)가 대신한다. 코드 교환, PKCE 확인, 사용자 정보 해석은 실제와 같은 코드를 지난다. 사용자 번호를 `fail`로 시작하면 공급자 오류를 흉내 낸다. 운영 빌드에서 키가 없으면 버튼이 숨는다.
 - 실제로 쓰려면 `.env.local`에 넣는다: `KAKAO_CLIENT_ID`(REST API 키), `KAKAO_CLIENT_SECRET`(쓰는 경우), `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, 그리고 배포 주소 `APP_URL`(예: `https://example.com`, 비우면 요청 주소).
 - 공급자 콘솔에 등록할 리다이렉트 URI: `{APP_URL}/api/auth/kakao/callback`, `{APP_URL}/api/auth/google/callback` (로컬은 `http://localhost:3100/...`). 구글 범위는 `openid email profile`. 카카오는 동의 항목을 콘솔에서 정한다(이메일은 비즈 앱에서만 받을 수 있어 없어도 동작).
+- Apple(App Store 심사 4.8: 다른 소셜 로그인이 있으면 함께 둬야 한다): Apple Developer에서 Services ID를 만들어 Sign in with Apple을 켜고, 도메인과 리턴 URL `{APP_URL}/api/auth/apple/callback`을 등록한다(https만 되고 localhost는 안 된다). Keys에서 Sign in with Apple 키를 만들어 .p8을 받는다. `.env.local`에 `APPLE_CLIENT_ID`(Services ID), `APPLE_TEAM_ID`, `APPLE_KEY_ID`, `APPLE_PRIVATE_KEY`(.p8 내용, 줄바꿈은 `\n`)를 넣는다. 넷 다 있어야 켜진다.
+- Apple은 이름·이메일 범위를 요청하지 않는다. 요청하면 콜백이 다른 사이트 POST로 와서 state 쿠키(lax)가 실리지 않기 때문이다. 그래서 Apple 계정 줄에는 이메일 없이 "Apple 연결됨"으로 보인다. 앱 껍데기는 Apple 로그인 화면(`appleid.apple.com`)을 인앱 브라우저로 넘기지 않고 웹뷰 안에서 연다(`mobile/bridge.ts` `staysInWebView`).
 - 코드: 순수 함수 `lib/domain/oauth.ts`, 공급자 설정과 교환 `lib/server/oauth.ts`, 연결·로그인 `lib/auth.ts`(`linkSocial`, `findSocialUser`), 라우트 `app/api/auth/[provider]/{start,callback}`.
 
 ## 스케줄러(알림)

@@ -1,5 +1,5 @@
 // 소셜 로그인(OAuth 2.0 authorization code)의 순수 함수: state 쿠키, PKCE, 공급자 응답 해석
-import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
+import { createHash, createPrivateKey, randomBytes, sign, timingSafeEqual } from "node:crypto";
 import { z } from "zod";
 import { PROVIDER_IDS, PROVIDER_LABEL, type ProviderId } from "./oauth-copy";
 
@@ -18,7 +18,8 @@ export interface Provider {
   mock: boolean;
   authorizeUrl: string;
   tokenUrl: string;
-  userinfoUrl: string;
+  /** null이면 사용자 정보 주소가 없는 공급자(Apple)라서 토큰 응답의 id_token에서 읽는다 */
+  userinfoUrl: string | null;
   clientId: string;
   clientSecret: string | null;
   scope: string | null;
@@ -162,6 +163,8 @@ export function parseProfile(id: ProviderId, raw: unknown): SocialProfile | null
       name: r.data.name ?? null,
     };
   }
+  // Apple은 사용자 정보 주소가 없다(parseAppleIdToken)
+  if (id === "apple") return null;
   const r = KakaoUser.safeParse(raw);
   if (!r.success) return null;
   const acc = r.data.kakao_account;
@@ -170,6 +173,58 @@ export function parseProfile(id: ProviderId, raw: unknown): SocialProfile | null
     email: acc?.email && acc.is_email_verified !== false ? acc.email : null,
     name: acc?.profile?.nickname ?? null,
   };
+}
+
+// ---- Apple: 사용자 정보 주소가 없어 id_token을 읽고, client secret은 .p8 키로 서명한 JWT다 ----
+
+export const APPLE_ISSUER = "https://appleid.apple.com";
+
+const AppleClaims = z.object({
+  iss: z.literal(APPLE_ISSUER),
+  aud: z.string(),
+  sub: z.string().min(1),
+  exp: z.number(),
+  email: z.string().optional(),
+  // Apple은 문자열 "true"로 주기도 한다
+  email_verified: z.union([z.boolean(), z.enum(["true", "false"])]).optional(),
+});
+
+/**
+ * Apple 토큰 응답의 id_token에서 사용자를 꺼낸다. 서명은 확인하지 않는다:
+ * 우리 서버가 client secret으로 Apple 토큰 주소에서 TLS로 직접 받은 값이라서다(OIDC Core 3.1.3.7).
+ * 대신 발급자·받는 쪽(client_id)·만료는 본다. 이메일은 요청하지 않아서 보통 없다.
+ */
+export function parseAppleIdToken(idToken: string, clientId: string, nowSec: number): SocialProfile | null {
+  const part = idToken.split(".")[1];
+  if (!part) return null;
+  let raw: unknown;
+  try {
+    raw = JSON.parse(Buffer.from(part, "base64url").toString("utf8"));
+  } catch {
+    return null;
+  }
+  const r = AppleClaims.safeParse(raw);
+  if (!r.success || r.data.aud !== clientId || r.data.exp <= nowSec) return null;
+  const verified = r.data.email_verified === true || r.data.email_verified === "true";
+  return { sub: r.data.sub, email: r.data.email && verified ? r.data.email : null, name: null };
+}
+
+export interface AppleKey {
+  teamId: string;
+  keyId: string;
+  clientId: string;
+  /** App Store Connect에서 받은 .p8 파일 내용(PEM). 환경 변수의 \n도 받는다 */
+  privateKey: string;
+}
+
+/** Apple 토큰 교환에 쓰는 client secret(ES256 JWT). 5분만 유효하게 매번 새로 만든다 */
+export function appleClientSecret(k: AppleKey, nowSec: number): string {
+  const enc = (v: object) => Buffer.from(JSON.stringify(v)).toString("base64url");
+  const head = enc({ alg: "ES256", kid: k.keyId });
+  const body = enc({ iss: k.teamId, iat: nowSec, exp: nowSec + 300, aud: APPLE_ISSUER, sub: k.clientId });
+  const key = createPrivateKey(k.privateKey.replace(/\\n/g, "\n"));
+  const sig = sign("sha256", Buffer.from(`${head}.${body}`), { key, dsaEncoding: "ieee-p1363" }).toString("base64url");
+  return `${head}.${body}.${sig}`;
 }
 
 /** 내 정보의 계정 줄: "카카오 · me@example.com", 연결 전이면 "게스트" */

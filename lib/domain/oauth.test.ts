@@ -1,6 +1,9 @@
+import { generateKeyPairSync, verify } from "node:crypto";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   accountLabel,
+  APPLE_ISSUER,
+  appleClientSecret,
   appOrigin,
   authorizeUrl,
   callbackPath,
@@ -10,6 +13,7 @@ import {
   encodeFlow,
   newFlow,
   parseProfile,
+  parseAppleIdToken,
   pathOf,
   type Provider,
   safeNext,
@@ -170,5 +174,52 @@ describe("accountLabel", () => {
     expect(accountLabel([], null)).toBe("게스트");
     expect(accountLabel([{ provider: "kakao" }], "me@x.com")).toBe("카카오 · me@x.com");
     expect(accountLabel([{ provider: "kakao" }, { provider: "google" }], null)).toBe("카카오·Google 연결됨");
+  });
+});
+
+describe("Apple", () => {
+  const enc = (v: object) => Buffer.from(JSON.stringify(v)).toString("base64url");
+  const idToken = (claims: object) => `${enc({ alg: "RS256" })}.${enc(claims)}.sig`;
+  const base = { iss: APPLE_ISSUER, aud: "com.jaksim6.web", sub: "001.abc", exp: 2000 };
+
+  it("id_token에서 번호를 꺼내고, 확인된 이메일만 받는다", () => {
+    expect(parseAppleIdToken(idToken(base), "com.jaksim6.web", 1000)).toEqual({ sub: "001.abc", email: null, name: null });
+    expect(parseAppleIdToken(idToken({ ...base, email: "x@privaterelay.appleid.com", email_verified: "true" }), "com.jaksim6.web", 1000)?.email).toBe(
+      "x@privaterelay.appleid.com",
+    );
+    expect(parseAppleIdToken(idToken({ ...base, email: "x@a.com", email_verified: "false" }), "com.jaksim6.web", 1000)?.email).toBeNull();
+  });
+
+  it("다른 발급자, 다른 client_id, 만료된 토큰, 깨진 값은 받지 않는다", () => {
+    expect(parseAppleIdToken(idToken({ ...base, iss: "https://evil.example" }), "com.jaksim6.web", 1000)).toBeNull();
+    expect(parseAppleIdToken(idToken(base), "other.client", 1000)).toBeNull();
+    expect(parseAppleIdToken(idToken(base), "com.jaksim6.web", 2000)).toBeNull();
+    expect(parseAppleIdToken("not-a-jwt", "com.jaksim6.web", 1000)).toBeNull();
+    expect(parseAppleIdToken("a.@@@.c", "com.jaksim6.web", 1000)).toBeNull();
+  });
+
+  it("client secret은 .p8 키로 서명한 ES256 JWT다(환경 변수의 \\n도 받는다)", () => {
+    const { privateKey, publicKey } = generateKeyPairSync("ec", { namedCurve: "P-256" });
+    const pem = privateKey.export({ type: "pkcs8", format: "pem" }).toString().replace(/\n/g, "\\n");
+    const jwt = appleClientSecret({ teamId: "TEAM", keyId: "KEY", clientId: "com.jaksim6.web", privateKey: pem }, 1000);
+    const [head, body, sig] = jwt.split(".");
+    expect(JSON.parse(Buffer.from(head, "base64url").toString())).toEqual({ alg: "ES256", kid: "KEY" });
+    expect(JSON.parse(Buffer.from(body, "base64url").toString())).toEqual({
+      iss: "TEAM",
+      iat: 1000,
+      exp: 1300,
+      aud: APPLE_ISSUER,
+      sub: "com.jaksim6.web",
+    });
+    const ok = verify("sha256", Buffer.from(`${head}.${body}`), { key: publicKey, dsaEncoding: "ieee-p1363" }, Buffer.from(sig, "base64url"));
+    expect(ok).toBe(true);
+  });
+
+  it("사용자 정보 응답으로는 Apple 프로필을 만들지 않는다", () => {
+    expect(parseProfile("apple", { sub: "1" })).toBeNull();
+  });
+
+  it("계정 줄에 Apple 이름이 나온다", () => {
+    expect(accountLabel([{ provider: "apple" }], null)).toBe("Apple 연결됨");
   });
 });

@@ -402,6 +402,28 @@ test("20b. 이미 계정이 있어요: 연결된 계정은 들어가고, 없는 
   await expect(page.getByText("재무제표").first()).toBeVisible();
 });
 
+test("20d. Apple 계정을 연결하면 로그아웃 뒤 Apple로 같은 기록에 들어온다", async ({ page }, info) => {
+  await onboard(page, "영어 회화");
+  await finishShortFromHome(page);
+  await expect(page.getByTestId("link-apple")).toBeVisible();
+  const sub = `apple-${info.project.name}`;
+  await page.getByTestId("link-apple").click();
+  await fakeConsent(page, sub);
+  await expect(page.getByTestId("link-done")).toContainText("계정을 연결했어요");
+
+  await page.goto("/profile");
+  await expect(page.getByRole("link", { name: /계정/ })).toContainText("Apple");
+
+  await page.goto("/settings");
+  await page.getByRole("button", { name: "로그아웃" }).click();
+  await expect(page).toHaveURL(/\/$/);
+  await page.getByTestId("have-account").click();
+  await page.getByTestId("login-apple").click();
+  await fakeConsent(page, sub);
+  await expect(page).toHaveURL(/\/home/);
+  expect(await streak(page)).toBe(1);
+});
+
 test("20c. 로그인 뒤 돌아갈 주소(next)로 다른 사이트에 보낼 수 없다", async ({ page }) => {
   // 탭 문자를 끼우면 URL 해석기가 "//evil.example"로 바꾼다
   await page.goto("/api/auth/kakao/start?mode=login&next=%2F%09%2Fevil.example");

@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { OPEN_EXTERNAL as WEB_SIDE } from "../lib/external";
 import { PUSH_CHANNEL as WEB_PUSH_CHANNEL } from "../lib/domain/push";
 import { PUSH_REGISTER as WEB_PUSH_REGISTER, PUSH_TOKEN_EVENT as WEB_PUSH_TOKEN_EVENT, requestPushToken } from "../lib/push-bridge";
-import { externalUrl, notificationUrl, OPEN_EXTERNAL, PUSH_CHANNEL, PUSH_REGISTER, PUSH_TOKEN_EVENT, pushRequest, pushTokenScript } from "./bridge";
+import { externalUrl, notificationUrl, OPEN_EXTERNAL, PUSH_CHANNEL, PUSH_REGISTER, PUSH_TOKEN_EVENT, pushRequest, pushTokenScript, staysInWebView } from "./bridge";
 
 describe("externalUrl", () => {
   it("웹과 같은 메시지 이름을 쓴다", () => {
@@ -49,5 +49,19 @@ describe("notificationUrl", () => {
     expect(notificationUrl({ href: "https://evil.test" }, "https://j6.test")).toBeNull();
     expect(notificationUrl({ href: null }, "https://j6.test")).toBeNull();
     expect(notificationUrl(undefined, "https://j6.test")).toBeNull();
+  });
+});
+
+describe("staysInWebView", () => {
+  const web = "https://jaksim.example";
+  it("앱 주소와 Apple 로그인 화면만 웹뷰 안에서 연다", () => {
+    expect(staysInWebView("https://jaksim.example/home", web)).toBe(true);
+    expect(staysInWebView("about:blank", web)).toBe(true);
+    expect(staysInWebView("https://appleid.apple.com/auth/authorize?client_id=x", web)).toBe(true);
+    expect(staysInWebView("https://ko.wikipedia.org/wiki/x", web)).toBe(false);
+    // 호스트 이름이 Apple처럼 보이기만 하는 주소는 넘기지 않는다
+    expect(staysInWebView("https://appleid.apple.com.evil.example/", web)).toBe(false);
+    expect(staysInWebView("http://appleid.apple.com/", web)).toBe(false);
+    expect(staysInWebView("not a url", web)).toBe(false);
   });
 });

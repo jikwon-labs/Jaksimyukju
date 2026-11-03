@@ -45,3 +45,19 @@ export function notificationUrl(data: unknown, base: string = WEB_URL): string |
 }
 /** 서버가 보내는 channelId와 같아야 한다(lib/domain/push.ts의 PUSH_CHANNEL) */
 export const PUSH_CHANNEL = "default";
+
+/**
+ * 웹뷰 안에서 그대로 여는 바깥 주소. 로그인 화면은 인앱 브라우저로 넘기면 쿠키가 웹뷰와 달라
+ * 돌아왔을 때 state 쿠키도 세션도 없다. Apple 로그인 웹 화면은 웹뷰 안에서 열리므로 여기 둔다
+ */
+const IN_WEBVIEW_HOSTS = ["appleid.apple.com"];
+
+export function staysInWebView(url: string, webUrl: string = WEB_URL): boolean {
+  if (url.startsWith(webUrl) || url.startsWith("about:")) return true;
+  try {
+    const u = new URL(url);
+    return u.protocol === "https:" && IN_WEBVIEW_HOSTS.includes(u.hostname);
+  } catch {
+    return false;
+  }
+}

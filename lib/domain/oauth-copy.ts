@@ -1,10 +1,10 @@
 // 소셜 로그인의 이름·안내 문구. 브라우저 컴포넌트가 가져다 쓴다.
 // oauth.ts는 zod와 node:crypto를 불러오므로, 클라이언트에서는 이 파일만 import 해야 번들에 그것들이 딸려 가지 않는다.
 
-export const PROVIDER_IDS = ["kakao", "google"] as const;
+export const PROVIDER_IDS = ["kakao", "google", "apple"] as const;
 export type ProviderId = (typeof PROVIDER_IDS)[number];
 
-export const PROVIDER_LABEL: Record<ProviderId, string> = { kakao: "카카오", google: "Google" };
+export const PROVIDER_LABEL: Record<ProviderId, string> = { kakao: "카카오", google: "Google", apple: "Apple" };
 
 /** 안내 문구 표에서 찾는다. ?link=constructor 같은 값이 Object.prototype을 꺼내지 않게 */
 export function messageFor(table: Record<string, string>, key: string | null | undefined): string | undefined {

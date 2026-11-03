@@ -9,7 +9,7 @@ import { Pressable, StyleSheet, Text, useColorScheme, View } from "react-native"
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { WebView, type WebViewMessageEvent } from "react-native-webview";
 import type { ShouldStartLoadRequest } from "react-native-webview/lib/WebViewTypes";
-import { externalUrl, notificationUrl, pushRequest, pushTokenScript, WEB_URL } from "./bridge";
+import { externalUrl, notificationUrl, pushRequest, pushTokenScript, staysInWebView, WEB_URL } from "./bridge";
 import { getPushToken } from "./push";
 
 export default function App() {
@@ -63,9 +63,9 @@ export default function App() {
     }
   }
 
-  // 앱 주소 밖으로 나가는 이동(새 탭 링크 등)은 웹뷰에서 열지 않고 인앱 브라우저로 넘긴다
+  // 앱 주소 밖으로 나가는 이동(새 탭 링크 등)은 웹뷰에서 열지 않고 인앱 브라우저로 넘긴다(Apple 로그인 화면은 예외)
   function onShouldStart(req: ShouldStartLoadRequest): boolean {
-    if (req.url.startsWith(WEB_URL) || req.url.startsWith("about:")) return true;
+    if (staysInWebView(req.url)) return true;
     if (/^https:\/\//.test(req.url)) void WebBrowser.openBrowserAsync(req.url);
     return false;
   }
