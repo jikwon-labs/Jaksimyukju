@@ -50,3 +50,6 @@ next-env.d.ts
 
 # 에이전트 작업 폴더(git worktree)
 /.claude/worktrees/
+
+# Claude Code 개인 설정
+/.claude/settings.local.json
