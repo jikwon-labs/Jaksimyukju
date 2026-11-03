@@ -6,6 +6,7 @@ import { z } from "zod";
 import { lessonsPerWeek } from "@/lib/domain/course";
 import { WEEKDAY_KO } from "@/lib/domain/dates";
 import { systemPrompt } from "./teachers";
+import { tutorRole } from "./tutor";
 import { AiError, type AiProvider, type CurriculumInput, type TutorTurn } from "./types";
 
 // 무거운 일(커리큘럼, 마일스톤 피드백)과 가벼운 일(튜터, 회고)을 나눈다
@@ -152,17 +153,6 @@ export async function guard<T>(fn: () => Promise<T>): Promise<T> {
 }
 
 const OPENER = "레슨을 다 읽었어요. 확인 질문을 해 주세요.";
-// 화면은 content를 빈 줄마다 말풍선으로 나눈다(lib/domain/chat.ts)
-const BUBBLES = "content는 1~2문장짜리 짧은 덩어리 2~3개로 쓰고 덩어리 사이에 빈 줄을 넣는다. 질문은 마지막 덩어리에 따로 둔다.";
-
-// 처음부터 서술형이면 어려워서, 객관식으로 한 번 고르게 한 뒤 쉬운 열린 질문 하나로 이어 간다
-const TUTOR_FLOW = [
-  "첫 질문은 레슨 핵심을 묻는 객관식이다. 보기 3개를 choices에 각 30자 이내로 넣고 content에는 보기를 다시 쓰지 않는다.",
-  "정답은 하나, 나머지 둘은 그럴듯하지만 레슨을 읽었으면 분명히 틀린 보기로 하고 정답 자리는 섞는다.",
-  "사용자가 보기를 고르면 맞았는지 먼저 짧게 말하고(틀렸으면 정답과 이유를 한 문장으로), 이어서 레슨에서 읽은 내용만으로 한두 문장이면 답할 수 있는 쉬운 열린 질문 하나를 한다. 이때부터 choices는 빈 배열이다.",
-  "열린 질문에 레슨과 맞는 방향으로 답하면 완벽하지 않아도 칭찬하고 마무리하며 done=true. 엇나가면 힌트 하나를 주고 더 쉽게 다시 묻는다.",
-].join(" ");
-
 /** 대화는 user로 시작해야 한다. 저장된 기록은 AI 첫 질문부터라 여는 말을 앞에 붙인다 */
 export function tutorMessages(history: TutorTurn[]): MessageCreateParamsNonStreaming["messages"] {
   const turns = history.map((h) => ({
@@ -290,12 +280,7 @@ export function createAnthropicProvider(apiKey: string, transport: ClaudeTranspo
             model: LIGHT_MODEL,
             max_tokens: 4000,
             thinking: { type: "adaptive" },
-            system: systemPrompt(
-              input.teacher,
-              input.free
-                ? `Tutor. 레슨 "${input.lessonTitle}"(핵심: ${input.core}) 확인은 끝났고 사용자가 자유롭게 묻는다. 답을 바로 주지 않고 스스로 찾게 되묻는다. 한 번에 질문 하나. done=true, understanding="이해", choices=[]. ${BUBBLES}`
-                : `Tutor. 레슨 "${input.lessonTitle}"(핵심: ${input.core})을 이해했는지 가볍게 확인한다. 질문은 두 개다. ${TUTOR_FLOW} ${BUBBLES}`,
-            ),
+            system: systemPrompt(input.teacher, tutorRole(input)),
             messages: tutorMessages(input.history),
             // 대화는 빨라야 해서 생각을 짧게 한다
             output_config: { effort: "low", format: jsonFormat(Tutor) },

@@ -1,6 +1,7 @@
 // 결정적 모의 응답. 같은 입력이면 항상 같은 결과를 돌려준다.
 import { createLibrarian, type LinkCheck, type WebSearch } from "./librarian";
 import { LINES } from "./teachers";
+import { openAnswers, TUTOR_MAX_OPEN } from "./tutor";
 import {
   CASHFLOW_LESSON,
   CASHFLOW_QUIZ,
@@ -190,6 +191,15 @@ export function mockTutor(input: TutorInput): TutorReply {
     return { content: `${fix}${follow}`, understanding: "부분", done: false, choices: [] };
   }
   const lastAnswer = userTurns[userTurns.length - 1].content.trim();
+  // 열린 질문에 상한만큼 답했으면 정답을 알려 주고 끝낸다
+  if (lastAnswer.length < 6 && openAnswers(input.history) >= TUTOR_MAX_OPEN) {
+    const reveal = {
+      온: `괜찮아요, 여기까지 온 것도 충분해요. 이번 레슨의 핵심은 "${input.core}"예요.\n\n다음에 한 번 더 떠올려 봐요.`,
+      결: `여기서 정리합니다. 핵심은 "${input.core}"입니다.\n\n다음 레슨 전에 한 번 다시 읽으세요.`,
+      새: `정답 공개! 핵심은 "${input.core}"였어요.\n\n다음에 이걸 어디서 마주칠지 찾아봐요.`,
+    }[input.teacher];
+    return { content: reveal, understanding: "미흡", done: true, choices: [] };
+  }
   if (lastAnswer.length < 6) {
     const retry = {
       온: "괜찮아요. 한 문장만 더 길게, 예시 하나를 붙여서 말해 볼래요?",

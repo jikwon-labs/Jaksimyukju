@@ -63,8 +63,14 @@ export interface TutorInput {
   lessonTitle: string;
   core: string;
   history: TutorTurn[];
-  /** 확인이 끝난 뒤 사용자가 아무 때나 묻는 질문(F6). 답을 바로 주지 않고 되묻는다 */
+  /** 확인이 끝난 뒤 사용자가 아무 때나 묻는 질문(F6). 한 번 되묻고, 답을 원하면 바로 준다 */
   free?: boolean;
+  /** 레슨 본문. 질문과 채점, 자유 질문 답의 근거 */
+  sections?: LessonSection[];
+  /** 코스를 만들 때 적은 지금 수준. 질문 난이도를 맞춘다 */
+  level?: string;
+  /** 같은 코스 지난 레슨 중 확인이 덜 된 레슨 제목(최근 것부터) */
+  weak?: string[];
 }
 
 export interface TutorReply {
