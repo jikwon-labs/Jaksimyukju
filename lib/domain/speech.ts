@@ -1,16 +1,23 @@
 // 읽어 주기(브라우저 내장 TTS)의 순수 계산. 화면·브라우저 API에 기대지 않는다
+import { isSupertonicVoice, type SupertonicVoice } from "./supertonic";
 
 export const SPEECH_RATES = [0.8, 1, 1.2, 1.5] as const;
 export type SpeechRate = (typeof SPEECH_RATES)[number];
 
+/** device: 기기 내장 목소리, hq: 내려받은 고품질 목소리(Supertonic) */
+export type SpeechEngine = "device" | "hq";
+
 export interface SpeechPrefs {
   on: boolean;
+  engine: SpeechEngine;
+  /** 고품질 목소리 중 고른 것 */
+  hqVoice: SupertonicVoice;
   /** 기기에 있는 목소리의 voiceURI. 비우면 기기 기본 한국어 목소리 */
   voice: string;
   rate: SpeechRate;
 }
 
-export const DEFAULT_SPEECH_PREFS: SpeechPrefs = { on: true, voice: "", rate: 1 };
+export const DEFAULT_SPEECH_PREFS: SpeechPrefs = { on: true, engine: "device", hqVoice: "F1", voice: "", rate: 1 };
 
 /** 저장된 값이 깨져 있어도 기본값으로 돌아간다 */
 export function parseSpeechPrefs(raw: string | null | undefined): SpeechPrefs {
@@ -19,6 +26,8 @@ export function parseSpeechPrefs(raw: string | null | undefined): SpeechPrefs {
     const v = JSON.parse(raw) as Partial<Record<keyof SpeechPrefs, unknown>>;
     return {
       on: typeof v.on === "boolean" ? v.on : DEFAULT_SPEECH_PREFS.on,
+      engine: v.engine === "hq" ? "hq" : "device",
+      hqVoice: isSupertonicVoice(v.hqVoice) ? v.hqVoice : DEFAULT_SPEECH_PREFS.hqVoice,
       voice: typeof v.voice === "string" ? v.voice : "",
       rate: (SPEECH_RATES as readonly unknown[]).includes(v.rate) ? (v.rate as SpeechRate) : DEFAULT_SPEECH_PREFS.rate,
     };
@@ -108,4 +117,12 @@ export function voiceLabel(v: Pick<VoiceLike, "name">): string {
     .replace(/\s*-\s*Korean\b.*$/i, "")
     .trim();
   return out || v.name;
+}
+
+/**
+ * 화면의 덩어리(제목, 핵심, 설명 등)별로 문장을 자르고, 각 문장이 몇 번째 덩어리인지 붙인다.
+ * 지금 읽는 덩어리를 화면에 표시할 때 쓴다
+ */
+export function splitPartsForSpeech(parts: readonly string[]): { text: string; part: number }[] {
+  return parts.flatMap((p, part) => splitForSpeech(p).map((text) => ({ text, part })));
 }

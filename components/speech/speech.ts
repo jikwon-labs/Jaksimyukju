@@ -1,7 +1,8 @@
 "use client";
 // 브라우저 내장 TTS(speechSynthesis). 설정은 기기마다 목소리가 달라 localStorage에 둔다
 import { useSyncExternalStore } from "react";
-import { DEFAULT_SPEECH_PREFS, parseSpeechPrefs, pickVoice, splitForSpeech, type SpeechPrefs } from "@/lib/domain/speech";
+import { DEFAULT_SPEECH_PREFS, parseSpeechPrefs, pickVoice, splitPartsForSpeech, type SpeechPrefs } from "@/lib/domain/speech";
+import { hqReady, speakHq, stopHq } from "./supertonic";
 
 export const SPEECH_KEY = "j6_tts";
 
@@ -102,14 +103,34 @@ export function usePlaying(): string | null {
   );
 }
 
+/** 지금 읽는 덩어리 번호(speak에 넘긴 parts의 몇 번째). 읽지 않으면 null */
+let part: number | null = null;
+
 function setPlaying(id: string | null) {
   playing = id;
+  if (id === null) part = null;
   emit();
+}
+
+function setPart(p: number) {
+  if (part === p) return;
+  part = p;
+  emit();
+}
+
+/** id인 버튼이 읽고 있을 때 지금 읽는 덩어리 번호. 화면에서 그 덩어리를 표시한다 */
+export function useReadingPart(id: string): number | null {
+  return useSyncExternalStore(
+    subscribe,
+    () => (playing === id ? part : null),
+    () => null,
+  );
 }
 
 export function stop(): void {
   run++;
   if (supported()) window.speechSynthesis.cancel();
+  stopHq();
   if (playing !== null) setPlaying(null);
 }
 
@@ -118,22 +139,54 @@ export function stopIf(id: string): void {
   if (playing === id) stop();
 }
 
-/** 문장 단위로 이어서 읽는다. 다른 것을 읽기 시작하면 앞의 것은 멈춘다 */
-export function speak(id: string, text: string, prefs: SpeechPrefs = prefsSnapshot()): void {
-  if (!supported()) return;
+type Chunk = { text: string; part: number };
+
+/**
+ * 문장 단위로 이어서 읽는다. 다른 것을 읽기 시작하면 앞의 것은 멈춘다.
+ * 고품질 목소리를 골라 두고 받아 뒀으면 그걸로, 아니면 기기 목소리로 읽는다.
+ * text를 배열로 주면 각 항목이 화면의 한 덩어리이고, 읽는 동안 useReadingPart로 몇 번째인지 알 수 있다.
+ */
+export function speak(id: string, text: string | readonly string[], prefs: SpeechPrefs = prefsSnapshot()): void {
   stop();
-  const chunks = splitForSpeech(text);
+  const chunks = splitPartsForSpeech(typeof text === "string" ? [text] : text);
   if (chunks.length === 0) return;
+  if (prefs.engine === "hq" && hqReady()) {
+    const mine = ++run;
+    setPlaying(id);
+    setPart(chunks[0].part);
+    speakHq(
+      chunks.map((c) => c.text),
+      prefs.hqVoice,
+      prefs.rate,
+      {
+        onChunk: (i) => mine === run && setPart(chunks[i].part),
+        onEnd: () => mine === run && setPlaying(null),
+        // 모델이 이 기기에서 못 돌면 읽던 문장부터 기기 목소리로 이어 읽는다
+        onError: (from) => mine === run && speakDevice(id, chunks.slice(from), prefs),
+      },
+    );
+    return;
+  }
+  speakDevice(id, chunks, prefs);
+}
+
+function speakDevice(id: string, chunks: Chunk[], prefs: SpeechPrefs): void {
+  if (!supported()) {
+    stop();
+    return;
+  }
   const synth = window.speechSynthesis;
   const voice = pickVoice(synth.getVoices(), prefs.voice);
   const mine = ++run;
   setPlaying(id);
   try {
+    setPart(chunks[0].part);
     chunks.forEach((chunk, i) => {
-      const u = new SpeechSynthesisUtterance(chunk);
+      const u = new SpeechSynthesisUtterance(chunk.text);
       u.lang = voice?.lang ?? "ko-KR";
       if (voice) u.voice = voice;
       u.rate = prefs.rate;
+      u.onstart = () => mine === run && setPart(chunk.part);
       if (i === chunks.length - 1) {
         u.onend = () => mine === run && setPlaying(null);
       }

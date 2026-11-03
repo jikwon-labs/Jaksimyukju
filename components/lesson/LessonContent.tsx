@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ListenButton } from "@/components/speech/ListenButton";
+import { ReadingMark } from "@/components/speech/ReadingMark";
 import { Teacher } from "@/components/teacher/Teacher";
 import type { LessonBody, LessonSection } from "@/lib/ai/types";
 import type { TeacherName } from "@/lib/design/types";
@@ -66,11 +67,12 @@ function Section({ section, i, resources }: { section: LessonSection; i: number;
   );
 }
 
-/** 듣기 버튼이 읽을 순서: 제목, 핵심 한 줄, 설명과 예시 */
-export function lessonSpeech(title: string, body: LessonBody, sections: LessonSection[]): string {
-  const parts = [title, `핵심 한 줄. ${body.core}`];
-  for (const sec of sections) parts.push(sec.heading, sec.text, `예시. ${sec.example}`);
-  return parts.join("\n");
+/**
+ * 듣기 버튼이 읽을 순서: 제목, 핵심 한 줄, 설명과 예시.
+ * 항목 하나가 화면의 한 덩어리다(0 제목, 1 핵심, 2부터 설명). 읽는 동안 그 덩어리를 표시한다
+ */
+export function lessonSpeech(title: string, body: LessonBody, sections: LessonSection[]): string[] {
+  return [title, `핵심 한 줄. ${body.core}`, ...sections.map((sec) => [sec.heading, sec.text, `예시. ${sec.example}`].join("\n"))];
 }
 
 export function LessonContent({
@@ -88,6 +90,7 @@ export function LessonContent({
   const sections = short ? body.sections.slice(0, 1) : body.sections;
   const total = lesson.minutes + lesson.extraMinutes;
   const completed = lesson.status !== "todo";
+  const listenId = `lesson-${lesson.id}-${short ? "short" : "full"}`;
   return (
     <div className={s.content}>
       <header className={s.header}>
@@ -127,10 +130,13 @@ export function LessonContent({
             </span>
           )}
         </div>
-        <h1 data-testid="lesson-title">{lesson.title}</h1>
+        <ReadingMark group={listenId} index={0}>
+          <h1 data-testid="lesson-title">{lesson.title}</h1>
+        </ReadingMark>
         <div className={s.listenRow}>
           <ListenButton
-            key={short ? "short" : "full"}
+            key={listenId}
+            id={listenId}
             text={lessonSpeech(lesson.title, body, sections)}
             label={short ? "5분 버전 듣기" : "레슨 듣기"}
             testId="lesson-listen"
@@ -148,13 +154,17 @@ export function LessonContent({
         <p>{lesson.intro}</p>
       </div>
 
-      <section aria-label="핵심 한 줄" className={s.core}>
-        <span className={s.coreLabel}>핵심 한 줄</span>
-        <p>{body.core}</p>
-      </section>
+      <ReadingMark group={listenId} index={1}>
+        <section aria-label="핵심 한 줄" className={s.core}>
+          <span className={s.coreLabel}>핵심 한 줄</span>
+          <p>{body.core}</p>
+        </section>
+      </ReadingMark>
 
       {sections.map((sec, i) => (
-        <Section key={i} section={sec} i={i} resources={lesson.resources} />
+        <ReadingMark key={i} group={listenId} index={2 + i}>
+          <Section section={sec} i={i} resources={lesson.resources} />
+        </ReadingMark>
       ))}
 
       {short && (

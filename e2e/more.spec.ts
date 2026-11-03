@@ -732,10 +732,15 @@ async function fakeSpeech(page: Page) {
       { voiceURI: "sam", name: "Samantha", lang: "en-US", localService: true, default: false },
     ];
     const spoken: { text: string; voice: string | null; rate: number }[] = [];
-    (window as unknown as { __spoken: typeof spoken }).__spoken = spoken;
+    const utters: SpeechSynthesisUtterance[] = [];
+    (window as unknown as { __spoken: typeof spoken; __utters: typeof utters }).__spoken = spoken;
+    (window as unknown as { __utters: typeof utters }).__utters = utters;
     const fake = {
       getVoices: () => voices,
-      speak: (u: SpeechSynthesisUtterance) => spoken.push({ text: u.text, voice: u.voice?.voiceURI ?? null, rate: u.rate }),
+      speak: (u: SpeechSynthesisUtterance) => {
+        utters.push(u);
+        spoken.push({ text: u.text, voice: u.voice?.voiceURI ?? null, rate: u.rate });
+      },
       cancel: () => {},
       resume: () => {},
       addEventListener: () => {},
@@ -746,6 +751,7 @@ async function fakeSpeech(page: Page) {
       lang = "";
       rate = 1;
       voice: { voiceURI: string } | null = null;
+      onstart: (() => void) | null = null;
       onend: (() => void) | null = null;
       onerror: (() => void) | null = null;
       constructor(text: string) {
@@ -756,6 +762,10 @@ async function fakeSpeech(page: Page) {
     Object.defineProperty(window, "SpeechSynthesisUtterance", { value: FakeUtterance, configurable: true });
   });
 }
+
+/** 가짜 TTS가 n번째 발화를 읽기 시작한 것처럼 한다 */
+const startUtterance = (page: Page, n: number) =>
+  page.evaluate((i) => (window as unknown as { __utters: { onstart: (() => void) | null }[] }).__utters[i].onstart?.(), n);
 
 const spoken = (page: Page) => page.evaluate(() => (window as unknown as { __spoken: { text: string; voice: string | null; rate: number }[] }).__spoken);
 
@@ -784,7 +794,24 @@ test("29. 읽어 주기: 설정에서 목소리·속도를 고르면 레슨 듣�
   const title = await page.getByTestId("lesson-title").innerText();
   expect(said[0]).toEqual({ text: title, voice: "sora", rate: 1.2 });
   expect(said.some((x) => x.text.startsWith("핵심 한 줄."))).toBe(true);
+
+  // 읽기 시작한 문장의 덩어리(제목 -> 핵심 -> 설명)만 표시한다
+  const reading = page.locator("[data-reading]");
+  await startUtterance(page, before);
+  await expect(reading).toHaveCount(1);
+  await expect(reading.getByTestId("lesson-title")).toBeVisible();
+  await startUtterance(page, before + said.findIndex((x) => x.text.startsWith("핵심 한 줄.")));
+  await expect(reading).toHaveCount(1);
+  await expect(reading.getByRole("region", { name: "핵심 한 줄" })).toBeVisible();
+  // 첫 "예시." 문장은 첫 설명 덩어리에 속한다
+  const example = said.findIndex((x) => x.text.startsWith("예시."));
+  expect(example).toBeGreaterThan(0);
+  await startUtterance(page, before + example);
+  await expect(reading).toHaveCount(1);
+  await expect(reading.getByTestId("lesson-section")).toHaveCount(1);
+  await expect(reading.getByRole("region", { name: "설명 1" })).toBeVisible();
   await listen.click();
+  await expect(reading).toHaveCount(0);
   await expect(listen).toHaveAttribute("aria-pressed", "false");
 
   // 튜터의 선생님 말에도 듣기 버튼이 붙는다

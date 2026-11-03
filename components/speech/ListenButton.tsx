@@ -2,6 +2,7 @@
 
 import { useEffect, useId } from "react";
 import { speak, stop, stopIf, usePlaying, useSpeechPrefs, useSpeechSupported } from "./speech";
+import { useHqState, warmHq } from "./supertonic";
 import s from "./speech.module.css";
 
 function SpeakerIcon() {
@@ -28,21 +29,33 @@ function StopIcon() {
  */
 export function ListenButton({
   text,
+  id: given,
   label = "듣기",
   compact = false,
   testId,
 }: {
-  text: string;
+  /** 배열이면 화면의 덩어리별 글. 읽는 동안 useReadingPart(id)로 지금 덩어리를 알 수 있다 */
+  text: string | readonly string[];
+  /** 읽는 덩어리를 화면에 표시하려면 같은 id를 ReadingMark·useReadingPart에 넘긴다 */
+  id?: string;
   /** 화면에 보이는 글자. 스크린리더용 이름도 이걸로 만든다 */
   label?: string;
   /** 말풍선 옆처럼 좁은 자리에서는 아이콘만 */
   compact?: boolean;
   testId?: string;
 }) {
-  const id = useId();
-  const ok = useSpeechSupported();
+  const auto = useId();
+  const id = given ?? auto;
   const prefs = useSpeechPrefs();
+  const hq = useHqState();
+  const ok = useSpeechSupported() || (prefs.engine === "hq" && hq.kind === "ready");
   const playing = usePlaying() === id;
+
+  // 고품질 목소리는 세션 준비에 몇 초 걸려서, 버튼이 보일 때 미리 준비한다
+  const warm = prefs.on && prefs.engine === "hq" && hq.kind === "ready";
+  useEffect(() => {
+    if (warm) warmHq();
+  }, [warm]);
 
   // 화면을 떠나면 읽던 것을 멈춘다
   useEffect(() => () => stopIf(id), [id]);

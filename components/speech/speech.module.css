@@ -35,3 +35,86 @@
   outline: 3px solid var(--a-text);
   outline-offset: 2px;
 }
+
+/* 듣기 중 지금 읽는 덩어리. 자리를 바꾸지 않게 그림자로만 넓힌다 */
+.reading {
+  border-radius: 12px;
+  transition:
+    background-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+.reading[data-reading] {
+  background: var(--a-tint);
+  box-shadow: 0 0 0 8px var(--a-tint);
+}
+@media (prefers-reduced-motion: reduce) {
+  .reading {
+    transition: none;
+  }
+}
+
+/* ---- 설정: 목소리 종류, 고품질 목소리 ---- */
+.engines {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+.hqVoices {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+}
+.hqVoices > button {
+  padding: 0 2px;
+  font-size: 12px;
+}
+.progressBox {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.progress {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--line);
+  overflow: hidden;
+}
+.progress > span {
+  display: block;
+  height: 100%;
+  background: var(--a-text);
+  transition: width 0.2s ease;
+}
+.confirmBox {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.confirmRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.warn {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--warn);
+}
+.textBtn {
+  align-self: flex-start;
+  min-height: 44px;
+  padding: 0;
+  border: none;
+  background: none;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--sub);
+  text-decoration: underline;
+  cursor: pointer;
+}
+.textBtn:focus-visible {
+  outline: 3px solid var(--a-text);
+  outline-offset: 2px;
+}

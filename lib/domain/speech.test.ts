@@ -7,6 +7,7 @@ import {
   pickVoice,
   rateLabel,
   splitForSpeech,
+  splitPartsForSpeech,
   voiceLabel,
 } from "./speech";
 
@@ -16,7 +17,9 @@ describe("parseSpeechPrefs", () => {
     expect(parseSpeechPrefs("{oops")).toEqual(DEFAULT_SPEECH_PREFS);
   });
   it("keeps valid fields and drops unknown rates", () => {
-    expect(parseSpeechPrefs('{"on":false,"voice":"v1","rate":1.2}')).toEqual({ on: false, voice: "v1", rate: 1.2 });
+    expect(parseSpeechPrefs('{"on":false,"voice":"v1","rate":1.2}')).toEqual({ on: false, engine: "device", hqVoice: "F1", voice: "v1", rate: 1.2 });
+    expect(parseSpeechPrefs('{"engine":"hq","hqVoice":"M3"}')).toMatchObject({ engine: "hq", hqVoice: "M3" });
+    expect(parseSpeechPrefs('{"engine":"cloud","hqVoice":"X9"}')).toMatchObject({ engine: "device", hqVoice: "F1" });
     expect(parseSpeechPrefs('{"rate":7}').rate).toBe(1);
   });
   it("labels rates", () => {
@@ -71,5 +74,20 @@ describe("voices", () => {
     expect(voiceLabel({ name: "Microsoft Heami - Korean (Korean)" })).toBe("Microsoft Heami");
     expect(voiceLabel({ name: "유나(한국어(대한민국))" })).toBe("유나");
     expect(voiceLabel({ name: "Yuna (향상됨)" })).toBe("Yuna (향상됨)");
+  });
+});
+
+describe("splitPartsForSpeech", () => {
+  it("tags each sentence with the part it came from", () => {
+    expect(splitPartsForSpeech(["제목", "첫 문장. 둘째 문장.", "", "끝"])).toEqual([
+      { text: "제목", part: 0 },
+      { text: "첫 문장.", part: 1 },
+      { text: "둘째 문장.", part: 1 },
+      { text: "끝", part: 3 },
+    ]);
+  });
+  it("gives the same sentences as splitting the joined text", () => {
+    const parts = ["제목", "핵심 한 줄. 이건 핵심이다.", "설명\n예시. 이렇게."];
+    expect(splitPartsForSpeech(parts).map((x) => x.text)).toEqual(splitForSpeech(parts.join("\n")));
   });
 });
