@@ -114,6 +114,7 @@
   overflow-wrap: anywhere;
 }
 .bubble[data-from="ai"] {
+  animation: bubble-in 180ms ease-out;
   border-radius: 4px 18px 18px 18px;
   background: var(--surface);
   color: var(--ink);
@@ -122,6 +123,11 @@
 /* 나뉜 말풍선은 첫 말풍선에만 꼬리 모서리를 둔다 */
 .bubble[data-from="ai"] + .bubble[data-from="ai"] {
   border-radius: 18px;
+}
+/* 듣기 중 지금 읽는 말풍선 */
+.bubble[data-from="ai"][data-reading] {
+  background: var(--a-tint);
+  border-color: var(--a-text);
 }
 .bubble[data-from="user"] {
   border-radius: 18px 4px 18px 18px;
@@ -161,8 +167,15 @@
     transform: translateY(-3px);
   }
 }
+@keyframes bubble-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
 @media (prefers-reduced-motion: reduce) {
-  .dot {
+  .dot,
+  .bubble[data-from="ai"] {
     animation: none;
   }
 }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { splitBubbles } from "./chat";
+import { splitBubbles, typingMs } from "./chat";
 
 describe("splitBubbles", () => {
   it("빈 줄마다 나눈다", () => {
@@ -13,5 +13,17 @@ describe("splitBubbles", () => {
   });
   it("빈 글은 그대로 하나", () => {
     expect(splitBubbles("")).toEqual([""]);
+  });
+});
+
+describe("typingMs", () => {
+  it("짧은 말도 잠깐은 기다린다", () => {
+    expect(typingMs("네")).toBe(600);
+  });
+  it("길수록 오래 기다린다", () => {
+    expect(typingMs("가".repeat(40))).toBe(1300);
+  });
+  it("아주 긴 말도 2초를 넘지 않는다", () => {
+    expect(typingMs("가".repeat(500))).toBe(2000);
   });
 });

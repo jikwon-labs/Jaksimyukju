@@ -8,3 +8,12 @@ export function splitBubbles(text: string): string[] {
     .filter(Boolean);
   return parts.length > 0 ? parts : [text];
 }
+
+/**
+ * 말풍선 하나를 "치는" 데 걸린 것처럼 보일 시간(ms).
+ * 답이 한꺼번에 뜨면 어색하니 길이에 비례해 기다리되, 너무 짧거나 길지 않게 자른다.
+ */
+export function typingMs(text: string): number {
+  const ms = 300 + text.length * 25;
+  return Math.min(2000, Math.max(600, ms));
+}
