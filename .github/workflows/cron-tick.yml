@@ -1,0 +1,37 @@
+name: Cron tick
+
+# 스케줄러(/api/cron/tick)를 30분마다 부른다. 새로 만든 알림은 서버가 Expo 푸시로 보낸다(lib/server/push.ts).
+# Vercel Hobby 의 cron 은 하루 한 번만 돌아서 여기서 부른다. GitHub 의 schedule 은 몇 분씩 늦을 수 있는데,
+# 학습 시간 알림은 "알림 시각이 지났으면 그날 한 번" 이라 늦어도 빠지지는 않는다.
+# 필요한 것:
+#  - 레포 시크릿 CRON_SECRET (Vercel 운영 환경 변수 CRON_SECRET 과 같은 값)
+#  - 레포 변수 APP_URL (예: https://jaksimyukju.vercel.app). 없으면 아래 기본값
+# 주의: GitHub 은 60일 동안 커밋이 없는 레포의 schedule 을 멈춘다. 멈추면 Actions 탭에서 다시 켠다.
+
+on:
+  schedule:
+    - cron: "*/30 * * * *"
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: cron-tick
+  cancel-in-progress: false
+
+jobs:
+  tick:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Call /api/cron/tick
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          APP_URL: ${{ vars.APP_URL || 'https://jaksimyukju.vercel.app' }}
+        run: |
+          if [ -z "$CRON_SECRET" ]; then
+            echo "::error::CRON_SECRET 시크릿이 없다. Vercel 운영 환경 변수와 같은 값을 레포 Actions 시크릿에 넣는다."
+            exit 1
+          fi
+          curl --fail-with-body -sS --max-time 120 --retry 2 --retry-all-errors \
+            -X POST -H "Authorization: Bearer $CRON_SECRET" "${APP_URL%/}/api/cron/tick"

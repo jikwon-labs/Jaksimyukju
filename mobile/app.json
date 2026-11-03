@@ -30,6 +30,12 @@
     "plugins": [
       "expo-web-browser",
       [
+        "expo-notifications",
+        {
+          "color": "#2f6fd8"
+        }
+      ],
+      [
         "expo-splash-screen",
         {
           "image": "./assets/splash-icon.png",

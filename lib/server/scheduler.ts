@@ -21,7 +21,7 @@ export async function runTick(now: Date): Promise<TickResult> {
   for (const user of users) {
     const st = await loadState(user, today);
     if (!st) continue;
-    // 새로 만든 알림은 createCapped가 푸시로도 보낸다(lib/server/push.ts, 지금은 mock 발송기)
+    // 새로 만든 알림은 createCapped가 푸시로도 보낸다(lib/server/push.ts, 운영은 Expo)
     made += await runCoach(user, st, today, hour, now, minuteOfDay);
   }
   return { users: users.length, made };

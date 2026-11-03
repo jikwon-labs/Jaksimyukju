@@ -249,7 +249,7 @@ E2E 번호: 1 처음 시작~첫 레슨, 2 5분 버전, 3 복귀, 4 쉬어 가기
 
 - 실제 Claude 호출(`lib/ai/anthropic.ts`)은 키가 없어 한 번도 돌려 보지 못했다. 응답 처리만 단위 테스트했다. 키를 넣고 커리큘럼 생성·튜터·마일스톤을 한 번씩 확인해야 한다. 서버 쪽 fallbacks(거절 시 다른 모델로 다시) 옵션은 넣지 않았다.
 - 자료 검색(Librarian)은 "검색 후보 -> 링크 확인 -> 열린 것만 3개" 흐름을 만들었지만 검색과 링크 확인이 둘 다 mock이다(`lib/ai/librarian.ts`). 웹 검색 API를 골라 WebSearch와 LinkCheck를 구현해야 한다.
-- 실제 푸시는 보내지 않는다. 만든 알림은 mock 발송기(`lib/server/push.ts`)가 보낸 것으로만 기록한다(pushedAt). 발송 서비스를 골라 PushSender를 구현하고, 운영에서 `/api/cron/tick`을 부를 외부 cron을 붙여야 한다.
+- 푸시는 Expo로 보낸다(`lib/server/push.ts`, 운영 기본, 개발·E2E는 mock). 앱 껍데기가 첫 레슨 뒤 알림 권한을 묻고 토큰을 웹을 거쳐 저장하며(`lib/push-bridge.ts`, `mobile/push.ts`), 알림을 누르면 그 주소로 간다. cron은 GitHub Actions(`.github/workflows/cron-tick.yml`, 30분마다). 실기기 발송은 아직 못 돌려 봤다: APNs 키·FCM 키를 EAS에 등록하고, 레포 시크릿 `CRON_SECRET`을 넣은 뒤 새 빌드로 확인해야 한다.
 - 소셜 로그인(카카오·구글)은 키가 없어 실제 공급자와는 한 번도 돌려 보지 못했다. 개발용 가짜 공급자로 같은 코드 경로만 확인했다. 키와 리다이렉트 URI를 등록하고 한 번씩 확인해야 한다.
 - 기획서 9.1의 Thinking Orbs·Border beam·Metal 라이브러리는 쓰지 않았다(목업에도 없음). 생각 중 표정과 점 세 개로 대신한다.
 - 커리큘럼 수정은 미리보기의 주차 제목·마일스톤 고치기까지. 레슨 단위 편집은 없다.

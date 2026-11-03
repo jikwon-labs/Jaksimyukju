@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { getSessionUser, signIn, signOut } from "@/lib/auth";
 import { isTeacher } from "@/lib/design/tokens";
 import { prisma } from "@/lib/prisma";
+import { clearPushToken } from "@/lib/server/push";
 import { updateSettings } from "@/lib/server/settings";
 
 export async function saveSettingsAction(patch: unknown): Promise<{ ok: boolean }> {
@@ -28,6 +29,9 @@ export async function changeTeacherAction(teacher: string): Promise<{ ok: boolea
 }
 
 export async function logoutAction(): Promise<void> {
+  // 로그아웃한 기기로 이 사용자의 알림이 계속 가지 않게 토큰을 뗀다
+  const user = await getSessionUser();
+  if (user) await clearPushToken(user.id);
   await signOut();
   redirect("/");
 }
