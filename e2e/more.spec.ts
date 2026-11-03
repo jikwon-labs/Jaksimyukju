@@ -700,3 +700,80 @@ test("33. 남긴 평점과 후기가 커리큘럼 지도 칸 설명 카드에 �
   await expect(page).toHaveURL(new RegExp(`${lessonHref}/complete$`));
   await expect(page.getByRole("radio", { name: "4점" })).toBeChecked();
 });
+
+/** 브라우저 TTS를 가짜로 바꿔, 읽은 문장과 목소리를 window.__spoken에 남긴다 */
+async function fakeSpeech(page: Page) {
+  await page.addInitScript(() => {
+    const voices = [
+      { voiceURI: "yuna", name: "Yuna", lang: "ko-KR", localService: true, default: true },
+      { voiceURI: "sora", name: "Sora (한국어(대한민국))", lang: "ko-KR", localService: true, default: false },
+      { voiceURI: "sam", name: "Samantha", lang: "en-US", localService: true, default: false },
+    ];
+    const spoken: { text: string; voice: string | null; rate: number }[] = [];
+    (window as unknown as { __spoken: typeof spoken }).__spoken = spoken;
+    const fake = {
+      getVoices: () => voices,
+      speak: (u: SpeechSynthesisUtterance) => spoken.push({ text: u.text, voice: u.voice?.voiceURI ?? null, rate: u.rate }),
+      cancel: () => {},
+      resume: () => {},
+      addEventListener: () => {},
+      removeEventListener: () => {},
+    };
+    class FakeUtterance {
+      text: string;
+      lang = "";
+      rate = 1;
+      voice: { voiceURI: string } | null = null;
+      onend: (() => void) | null = null;
+      onerror: (() => void) | null = null;
+      constructor(text: string) {
+        this.text = text;
+      }
+    }
+    Object.defineProperty(window, "speechSynthesis", { value: fake, configurable: true });
+    Object.defineProperty(window, "SpeechSynthesisUtterance", { value: FakeUtterance, configurable: true });
+  });
+}
+
+const spoken = (page: Page) => page.evaluate(() => (window as unknown as { __spoken: { text: string; voice: string | null; rate: number }[] }).__spoken);
+
+test("29. 읽어 주기: 설정에서 목소리·속도를 고르면 레슨 듣기에 그대로 쓰고, 끄면 버튼이 사라진다", async ({ page }, info) => {
+  await fakeSpeech(page);
+  await loginDemo(page, "/settings");
+  const box = page.getByTestId("speech-settings");
+  await expect(box.getByRole("switch", { name: /레슨 읽어 주기/ })).toHaveAttribute("aria-checked", "true");
+  // 한국어 목소리만, 언어 꼬리표는 떼고 보인다
+  const voices = box.getByTestId("speech-voices").getByRole("radio");
+  await expect(voices).toHaveText(["Yuna", "Sora"]);
+  await voices.nth(1).click();
+  await expect(voices.nth(1)).toHaveAttribute("aria-checked", "true");
+  await box.getByTestId("speech-rates").getByRole("radio", { name: "1.2배" }).click();
+  await shot(page, info, "speech-settings");
+
+  await page.goto("/home");
+  await page.getByRole("link", { name: "학습 시작" }).click();
+  const listen = page.getByTestId("lesson-listen");
+  await expect(listen).toBeVisible();
+  const before = (await spoken(page)).length;
+  await listen.click();
+  await expect(listen).toHaveAttribute("aria-pressed", "true");
+  await shot(page, info, "speech-lesson");
+  const said = (await spoken(page)).slice(before);
+  const title = await page.getByTestId("lesson-title").innerText();
+  expect(said[0]).toEqual({ text: title, voice: "sora", rate: 1.2 });
+  expect(said.some((x) => x.text.startsWith("핵심 한 줄."))).toBe(true);
+  await listen.click();
+  await expect(listen).toHaveAttribute("aria-pressed", "false");
+
+  // 튜터의 선생님 말에도 듣기 버튼이 붙는다
+  await page.getByTestId("lesson-cta").click();
+  await expect(page.getByTestId("tutor-ai")).toHaveCount(1, { timeout: 15_000 });
+  await expect(page.getByTestId("tutor-listen")).toHaveCount(1);
+  await shot(page, info, "speech-tutor");
+
+  await page.goto("/settings");
+  await page.getByTestId("speech-settings").getByRole("switch", { name: /레슨 읽어 주기/ }).click();
+  await page.goBack();
+  await expect(page.getByTestId("tutor-ai")).toHaveCount(1, { timeout: 15_000 });
+  await expect(page.getByTestId("tutor-listen")).toHaveCount(0);
+});

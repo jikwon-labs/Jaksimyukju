@@ -261,3 +261,29 @@
   outline: 3px solid var(--a-text);
   outline-offset: 2px;
 }
+.voices {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px;
+}
+.voices .seg {
+  padding: 0 8px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.preview {
+  height: 44px;
+  border-radius: 12px;
+  border: none;
+  background: var(--a-tint);
+  color: var(--a-text);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.preview:focus-visible {
+  outline: 3px solid var(--a-text);
+  outline-offset: 2px;
+}

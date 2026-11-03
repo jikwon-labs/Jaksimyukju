@@ -1,0 +1,37 @@
+.listen {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1.5px solid var(--line);
+  background: transparent;
+  color: var(--a-text);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.listen[aria-pressed="true"] {
+  background: var(--a-tint);
+  border-color: var(--a-text);
+}
+/* 말풍선 옆 아이콘 버튼. 눌리는 영역은 44px을 지킨다 */
+.listen[data-compact] {
+  width: 44px;
+  height: 44px;
+  min-height: 44px;
+  padding: 0;
+  justify-content: center;
+  margin: -6px 0 -10px;
+  border-color: transparent;
+  color: var(--sub);
+}
+.listen[data-compact][aria-pressed="true"] {
+  color: var(--a-text);
+}
+.listen:focus-visible {
+  outline: 3px solid var(--a-text);
+  outline-offset: 2px;
+}

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ListenButton } from "@/components/speech/ListenButton";
 import { Teacher } from "@/components/teacher/Teacher";
 import type { LessonBody, LessonSection } from "@/lib/ai/types";
 import type { TeacherName } from "@/lib/design/types";
@@ -65,6 +66,13 @@ function Section({ section, i, resources }: { section: LessonSection; i: number;
   );
 }
 
+/** 듣기 버튼이 읽을 순서: 제목, 핵심 한 줄, 설명과 예시 */
+export function lessonSpeech(title: string, body: LessonBody, sections: LessonSection[]): string {
+  const parts = [title, `핵심 한 줄. ${body.core}`];
+  for (const sec of sections) parts.push(sec.heading, sec.text, `예시. ${sec.example}`);
+  return parts.join("\n");
+}
+
 export function LessonContent({
   lesson,
   short,
@@ -120,6 +128,14 @@ export function LessonContent({
           )}
         </div>
         <h1 data-testid="lesson-title">{lesson.title}</h1>
+        <div className={s.listenRow}>
+          <ListenButton
+            key={short ? "short" : "full"}
+            text={lessonSpeech(lesson.title, body, sections)}
+            label={short ? "5분 버전 듣기" : "레슨 듣기"}
+            testId="lesson-listen"
+          />
+        </div>
         {lesson.extraMinutes > 0 && !short && (
           <p className={s.extra} data-testid="lesson-extra">
             지난 레슨에서 남은 내용을 붙여서 {lesson.extraMinutes}분 더 길어졌어요

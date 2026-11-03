@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useEffectEvent, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { completeLessonAction } from "@/app/actions/lesson";
+import { ListenButton } from "@/components/speech/ListenButton";
 import { Teacher } from "@/components/teacher/Teacher";
 import { AI_FAIL_BODY } from "@/components/lesson/copy";
 import { BackIcon, OfflineBar, StateBlock } from "@/components/lesson/StateBlock";
@@ -167,6 +168,7 @@ export function TutorChat({
                 {part}
               </p>
             ))}
+            {m.role === "ai" && <ListenButton text={m.content} label={`${who} 선생님 말 듣기`} compact testId="tutor-listen" />}
           </div>
         ))}
         {choices.length > 0 && (

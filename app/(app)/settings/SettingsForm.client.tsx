@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRef, useState, useTransition } from "react";
 import { logoutAction, saveSettingsAction } from "@/app/actions/settings";
+import { SpeechSettings } from "@/components/speech/SpeechSettings";
 import { ThemeControl } from "@/components/ThemeControl";
 import { Switch } from "@/components/ui";
 import { SocialButton } from "@/components/ui/SocialButton";
@@ -242,6 +243,25 @@ export function SettingsForm({
         <div data-testid="theme-control">
           <ThemeControl initial={p.theme} onChange={(m) => save({ theme: m })} />
         </div>
+      </section>
+
+      <section aria-label="읽어 주기" className={s.section} data-testid="speech-settings">
+        <h2 className={s.label}>읽어 주기</h2>
+        <SpeechSettings
+          classes={{
+            card: s.card,
+            pad: s.pad,
+            block: s.block,
+            blockLabel: s.blockLabel,
+            caption: s.caption,
+            seg: s.seg,
+            segs: s.mins,
+            voice: s.voices,
+            divider: s.divider,
+            note: s.note,
+            preview: s.preview,
+          }}
+        />
       </section>
 
       <section aria-label="과정" className={s.section}>
