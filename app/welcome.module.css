@@ -238,3 +238,7 @@
     line-height: 46px;
   }
 }
+.policyLink {
+  color: inherit;
+  text-decoration: underline;
+}

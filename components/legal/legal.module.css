@@ -1,0 +1,87 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 20px 20px 48px;
+}
+.nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  font-size: 13px;
+}
+.nav a {
+  min-height: 32px;
+  display: inline-flex;
+  align-items: center;
+  color: var(--a-text);
+  text-decoration: underline;
+}
+.title {
+  font-size: 24px;
+  font-weight: 800;
+  line-height: 32px;
+  margin-top: 4px;
+}
+.date {
+  font-size: 13px;
+  color: var(--sub);
+}
+.intro {
+  font-size: 14px;
+  line-height: 22px;
+}
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  margin-top: 8px;
+}
+.article {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 14px;
+  line-height: 22px;
+}
+.h2 {
+  font-size: 16px;
+  font-weight: 800;
+  line-height: 24px;
+}
+.article ul,
+.article ol {
+  margin: 0;
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.tableWrap {
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+.table {
+  width: 100%;
+  min-width: 560px;
+  border-collapse: collapse;
+  font-size: 13px;
+  line-height: 19px;
+}
+.table th,
+.table td {
+  padding: 8px 10px;
+  border-top: 1px solid var(--line);
+  text-align: left;
+  vertical-align: top;
+}
+.table thead th {
+  border-top: none;
+  background: var(--surface);
+  font-weight: 700;
+}
+.nav a:focus-visible {
+  outline: 3px solid var(--a-text);
+  outline-offset: 2px;
+}

@@ -4,6 +4,7 @@ import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import { getSessionUser } from "@/lib/auth";
+import { hasAiConsent } from "@/lib/server/ai-consent";
 import { devToolsEnabled, getToday } from "@/lib/clock";
 import { AiError, getAi, type MilestoneFeedback } from "@/lib/ai";
 import { MILESTONE_MAX, normalizeFeedback } from "@/lib/domain/milestone";
@@ -43,7 +44,12 @@ export async function submitQuizAction(week: number, picks: number[]): Promise<Q
   const scored = scoreQuiz(quizOf(access.week.quiz), picks);
   if (!scored) return { ok: false, message: "답을 다시 골라 주세요" };
   await prisma.quizAttempt.create({
-    data: { weekId: access.week.id, score: scored.score, answers: scored.answers.map((a) => ({ choice: a.choice, correct: a.correct })), day: today },
+    data: {
+      weekId: access.week.id,
+      score: scored.score,
+      answers: scored.answers.map((a) => ({ choice: a.choice, correct: a.correct })),
+      day: today,
+    },
   });
   await syncCourseStatus(user, today);
   refresh(week);
@@ -54,9 +60,14 @@ export type MilestoneResult =
   | { ok: true; feedback: MilestoneFeedback; round: number; content: string }
   | { ok: false; reason: "auth" | "locked" | "empty" | "ai"; message: string };
 
-export async function submitMilestoneAction(week: number, content: string): Promise<MilestoneResult> {
+export async function submitMilestoneAction(
+  week: number,
+  content: string,
+): Promise<MilestoneResult> {
   const user = await getSessionUser();
   if (!user) return { ok: false, reason: "auth", message: "다시 들어와 주세요" };
+  if (!(await hasAiConsent(user)))
+    return { ok: false, reason: "ai", message: "AI 선생님 이용에 먼저 동의해 주세요" };
   const text = content.trim().slice(0, MILESTONE_MAX);
   if (!text) return { ok: false, reason: "empty", message: "한 줄이라도 적어 주세요" };
   const today = await getToday();

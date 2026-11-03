@@ -1,12 +1,19 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { useFormStatus } from "react-dom";
 import { wrapUpAction } from "@/app/actions/lesson";
 import { Switch } from "@/components/ui";
 import { SocialButton } from "@/components/ui/SocialButton";
 import { ONE_LINER_MAX, RATING_MAX, REVIEW_MAX } from "@/lib/domain/lesson";
-import { LINK_ERROR_MESSAGE, linkSucceeded, messageFor, PROVIDER_LABEL, type ProviderId } from "@/lib/domain/oauth-copy";
+import {
+  LINK_ERROR_MESSAGE,
+  linkSucceeded,
+  messageFor,
+  PROVIDER_LABEL,
+  type ProviderId,
+} from "@/lib/domain/oauth-copy";
 import s from "./complete.module.css";
 
 const FORM = "wrapup";
@@ -18,7 +25,14 @@ function Buttons() {
       <button type="submit" name="to" value="curriculum" className={s.next} disabled={pending}>
         다음 칸 보기
       </button>
-      <button type="submit" name="to" value="home" className={s.home} disabled={pending} data-testid="complete-home">
+      <button
+        type="submit"
+        name="to"
+        value="home"
+        className={s.home}
+        disabled={pending}
+        data-testid="complete-home"
+      >
         홈으로
       </button>
     </div>
@@ -55,7 +69,10 @@ function Review({ rating, review }: { rating: number | null; review: string }) {
               className={s.starInput}
             />
             <svg width="32" height="32" viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M12 3.2l2.6 5.5 6 .8-4.4 4.2 1.1 6-5.3-2.9-5.3 2.9 1.1-6L3.4 9.5l6-.8z" strokeLinejoin="round" />
+              <path
+                d="M12 3.2l2.6 5.5 6 .8-4.4 4.2 1.1 6-5.3-2.9-5.3 2.9 1.1-6L3.4 9.5l6-.8z"
+                strokeLinejoin="round"
+              />
             </svg>
           </label>
         ))}
@@ -79,7 +96,15 @@ function Review({ rating, review }: { rating: number | null; review: string }) {
   );
 }
 
-function LinkCard({ lessonId, providers, result }: { lessonId: string; providers: ProviderId[]; result: string | null }) {
+function LinkCard({
+  lessonId,
+  providers,
+  result,
+}: {
+  lessonId: string;
+  providers: ProviderId[];
+  result: string | null;
+}) {
   const error = messageFor(LINK_ERROR_MESSAGE, result);
   const next = encodeURIComponent(`/lesson/${lessonId}/complete`);
   return (
@@ -89,7 +114,13 @@ function LinkCard({ lessonId, providers, result }: { lessonId: string; providers
       {providers.length > 0 ? (
         <div className={s.linkBtns}>
           {providers.map((p) => (
-            <SocialButton key={p} provider={p} href={`/api/auth/${p}/start?mode=link&next=${next}`} className={s.provider} testId={`link-${p}`}>
+            <SocialButton
+              key={p}
+              provider={p}
+              href={`/api/auth/${p}/start?mode=link&next=${next}`}
+              className={s.provider}
+              testId={`link-${p}`}
+            >
               {PROVIDER_LABEL[p]}로 연결
             </SocialButton>
           ))}
@@ -102,7 +133,17 @@ function LinkCard({ lessonId, providers, result }: { lessonId: string; providers
           {error}
         </p>
       )}
-      <p className={s.foot}>연결하면 이용약관과 개인정보 처리방침에 동의하게 돼요.</p>
+      <p className={s.foot}>
+        연결하면{" "}
+        <Link href="/terms" className={s.policyLink}>
+          이용약관
+        </Link>
+        과{" "}
+        <Link href="/privacy" className={s.policyLink}>
+          개인정보 처리방침
+        </Link>
+        에 동의하게 돼요.
+      </p>
     </section>
   );
 }
@@ -110,7 +151,17 @@ function LinkCard({ lessonId, providers, result }: { lessonId: string; providers
 function Linked() {
   return (
     <div role="status" className={s.linked} data-testid="link-done">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <svg
+        width="16"
+        height="16"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+      >
         <path d="M5 12.5l4.5 4.5L19 7.5" />
       </svg>
       계정을 연결했어요. 기록이 안전하게 저장돼요.

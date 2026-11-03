@@ -2,8 +2,16 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Teacher } from "@/components/teacher/Teacher";
 import { getSessionUser } from "@/lib/auth";
+import { requireAiConsent } from "@/lib/server/ai-consent";
 import { getToday } from "@/lib/clock";
-import { addDays, diffDays, mondayOf, parseStudyDays, WEEKDAY_KO, weekday } from "@/lib/domain/dates";
+import {
+  addDays,
+  diffDays,
+  mondayOf,
+  parseStudyDays,
+  WEEKDAY_KO,
+  weekday,
+} from "@/lib/domain/dates";
 import { studyDaysLabel } from "@/lib/domain/prefs";
 import { retroChips, retroLines } from "@/lib/domain/retro";
 import { loadState, teacherOf } from "@/lib/server/course";
@@ -15,6 +23,7 @@ export const metadata = { title: "주간 회고 · 작심육주" };
 export default async function RetroPage() {
   const user = await getSessionUser();
   if (!user) redirect("/");
+  await requireAiConsent(user, "/retro");
   const today = await getToday();
   const st = await loadState(user, today);
   if (!st) redirect("/start/personality");
@@ -24,10 +33,16 @@ export default async function RetroPage() {
   const week = course.weeks.find((w) => w.index === weekNo);
   const nextWeek = course.weeks.find((w) => w.index === weekNo + 1);
   const mon = mondayOf(today);
-  const inThisWeek = (d: string | null) => !!d && diffDays(d, mon) >= 0 && diffDays(addDays(mon, 6), d) >= 0;
+  const inThisWeek = (d: string | null) =>
+    !!d && diffDays(d, mon) >= 0 && diffDays(addDays(mon, 6), d) >= 0;
   const all = course.weeks.flatMap((w) => w.lessons);
-  const doneThisWeek = all.filter((l) => (l.status === "done" || l.status === "short") && inThisWeek(l.completedDay));
-  const minutes = doneThisWeek.reduce((sum, l) => sum + (l.status === "short" ? 5 : l.minutes + l.extraMinutes), 0);
+  const doneThisWeek = all.filter(
+    (l) => (l.status === "done" || l.status === "short") && inThisWeek(l.completedDay),
+  );
+  const minutes = doneThisWeek.reduce(
+    (sum, l) => sum + (l.status === "short" ? 5 : l.minutes + l.extraMinutes),
+    0,
+  );
   const cells = [...st.levels].filter(([d, lv]) => lv > 0 && inThisWeek(d)).length;
   const short = doneThisWeek.find((l) => l.status === "short" && l.completedDay);
   const shortDay = short?.completedDay ? WEEKDAY_KO[weekday(short.completedDay)] : null;
@@ -41,7 +56,17 @@ export default async function RetroPage() {
     <>
       <header className={s.header}>
         <Link href="/home" aria-label="뒤로" className={s.back}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden
+          >
             <path d="M15 5l-7 7 7 7" />
           </svg>
         </Link>
@@ -56,7 +81,8 @@ export default async function RetroPage() {
         <div className={s.tile}>
           <span className={s.tileLabel}>레슨</span>
           <span className={s.tileValue}>
-            {week ? week.lessons.filter((l) => l.status !== "todo").length : 0}/{week?.lessons.length ?? 0}
+            {week ? week.lessons.filter((l) => l.status !== "todo").length : 0}/
+            {week?.lessons.length ?? 0}
           </span>
         </div>
         <div className={s.tile}>
@@ -82,7 +108,11 @@ export default async function RetroPage() {
       lines={lines}
       chips={[0, 1, 2].map((i) => retroChips(i, titles, user.minutesPerDay))}
       nextWeek={weekNo + 1}
-      milestone={nextWeek ? `${goalDay}요일 마일스톤: ${nextWeek.milestoneTitle}` : "다음 주는 목적지까지 마무리"}
+      milestone={
+        nextWeek
+          ? `${goalDay}요일 마일스톤: ${nextWeek.milestoneTitle}`
+          : "다음 주는 목적지까지 마무리"
+      }
       planOpts={{
         days: studyDays.map((d) => WEEKDAY_KO[d]),
         shortDay,

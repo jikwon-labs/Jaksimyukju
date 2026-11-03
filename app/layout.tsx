@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import { themeCss } from "@/lib/design/tokens";
 import { parseTeacher, parseTheme, TEACHER_COOKIE, THEME_COOKIE } from "@/lib/theme";
 import ui from "@/components/ui/ui.module.css";
+import { AppAuthReceiver } from "@/components/AppAuthReceiver";
 import { ServiceWorker } from "@/components/ServiceWorker";
 import "./globals.css";
 import "./motion.css";
@@ -53,6 +54,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
           <div className={ui.frame}>{children}</div>
         </div>
         <ServiceWorker />
+        <AppAuthReceiver />
       </body>
     </html>
   );

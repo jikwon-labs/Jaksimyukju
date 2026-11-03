@@ -5,6 +5,7 @@ import { getSessionUser } from "@/lib/auth";
 import { getToday } from "@/lib/clock";
 import { getAi, type RetroCard } from "@/lib/ai";
 import { prisma } from "@/lib/prisma";
+import { hasAiConsent } from "@/lib/server/ai-consent";
 import { loadState, teacherOf } from "@/lib/server/course";
 import { notifyGroup } from "@/lib/server/social";
 
@@ -14,10 +15,13 @@ function cleanAnswers(answers: unknown): string[] | null {
   return out.every((a) => a.length > 0) ? out : null;
 }
 
-export async function roommateAction(answers: string[]): Promise<{ ok: true; card: RetroCard } | { ok: false }> {
+export async function roommateAction(
+  answers: string[],
+): Promise<{ ok: true; card: RetroCard } | { ok: false }> {
   const user = await getSessionUser();
   const clean = cleanAnswers(answers);
   if (!user || !clean) return { ok: false };
+  if (!(await hasAiConsent(user))) return { ok: false };
   const st = await loadState(user, await getToday());
   if (!st) return { ok: false };
   try {
@@ -47,7 +51,13 @@ export async function saveRetroAction(input: {
   const st = await loadState(user, today);
   if (!st) return { ok: false, notified: 0 };
   await prisma.retro.create({
-    data: { userId: user.id, weekIndex: st.view.currentWeek, answers: clean, pledge, shared: !!input.shared },
+    data: {
+      userId: user.id,
+      weekIndex: st.view.currentWeek,
+      answers: clean,
+      pledge,
+      shared: !!input.shared,
+    },
   });
   let notified = 0;
   if (input.shared) {

@@ -27,6 +27,7 @@ model User {
   notifyTeacher Boolean   @default(true)
   notifyRetro   Boolean   @default(true)
   notifyGroup   Boolean   @default(true)
+  aiConsentAt   DateTime? // 외부 AI(Anthropic)로 학습 내용을 보내는 데 동의한 때. 비면 AI 기능 전에 동의 화면을 띄운다
   createdAt     DateTime  @default(now())
 
   courses       Course[]
@@ -281,10 +282,27 @@ model Account {
   providerUserId String
   userId         String
   email          String?
+  /// Apple 탈퇴 때 연결을 끊는 데(토큰 철회) 쓰는 refresh token. Apple만 저장한다
+  revokeToken    String?
   createdAt      DateTime @default(now())
   user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerUserId])
   @@unique([userId, provider]) // 한 사용자에 공급자마다 계정 하나
   @@map("accounts")
+}
+
+/// 앱 로그인 넘겨받기. 앱이 Safari 로그인 창에서 받아 온 결과를 웹뷰가 1회용 코드로 찾아간다
+model AuthHandoff {
+  id        String   @id // 1회용 코드의 sha256
+  bind      String // 시작한 웹뷰의 묶음 쿠키 값의 sha256. 다른 기기에서 코드를 써도 통하지 않게
+  provider  String
+  mode      String // login | link
+  next      String
+  result    String // ok(사용자 정보 있음) | cancel | failed
+  profile   Json?
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@map("auth_handoffs")
 }

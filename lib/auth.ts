@@ -13,7 +13,10 @@ const YEAR = 60 * 60 * 24 * 365;
 export async function getSessionUser(): Promise<User | null> {
   const token = (await cookies()).get(SESSION_COOKIE)?.value;
   if (!token) return null;
-  const session = await prisma.session.findUnique({ where: { id: token }, include: { user: true } });
+  const session = await prisma.session.findUnique({
+    where: { id: token },
+    include: { user: true },
+  });
   return session?.user ?? null;
 }
 
@@ -35,7 +38,11 @@ export async function signIn(user: Pick<User, "id" | "teacher">): Promise<void> 
       maxAge: YEAR,
     });
   }
-  jar.set(TEACHER_COOKIE, encodeURIComponent(user.teacher), { sameSite: "lax", path: "/", maxAge: YEAR });
+  jar.set(TEACHER_COOKIE, encodeURIComponent(user.teacher), {
+    sameSite: "lax",
+    path: "/",
+    maxAge: YEAR,
+  });
 }
 
 export async function signOut(): Promise<void> {
@@ -59,7 +66,11 @@ export type LinkResult = "linked" | "already" | "taken" | "other";
  * - taken: 그 소셜 계정이 다른 사용자 기록에 붙어 있음
  * - other: 이 사용자에 같은 공급자의 다른 계정이 이미 붙어 있음
  */
-export async function linkSocial(userId: string, provider: ProviderId, profile: SocialProfile): Promise<LinkResult> {
+export async function linkSocial(
+  userId: string,
+  provider: ProviderId,
+  profile: SocialProfile,
+): Promise<LinkResult> {
   const found = await prisma.account.findUnique({
     where: { provider_providerUserId: { provider, providerUserId: profile.sub } },
   });
@@ -68,7 +79,15 @@ export async function linkSocial(userId: string, provider: ProviderId, profile: 
   if (mine) return "other";
   try {
     await prisma.$transaction(async (tx) => {
-      await tx.account.create({ data: { provider, providerUserId: profile.sub, userId, email: profile.email } });
+      await tx.account.create({
+        data: {
+          provider,
+          providerUserId: profile.sub,
+          userId,
+          email: profile.email,
+          revokeToken: profile.revokeToken ?? null,
+        },
+      });
       const user = await tx.user.findUniqueOrThrow({ where: { id: userId } });
       await tx.user.update({
         where: { id: userId },

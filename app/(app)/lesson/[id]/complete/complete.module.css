@@ -405,7 +405,9 @@
   fill: transparent;
   stroke: var(--line);
   stroke-width: 1.6;
-  transition: fill 120ms ease, stroke 120ms ease;
+  transition:
+    fill 120ms ease,
+    stroke 120ms ease;
 }
 .star[data-on="true"] svg {
   fill: #ffc533;
@@ -429,4 +431,8 @@
   overflow: hidden;
   clip: rect(0 0 0 0);
   white-space: nowrap;
+}
+.policyLink {
+  color: inherit;
+  text-decoration: underline;
 }

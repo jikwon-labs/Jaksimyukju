@@ -5,6 +5,7 @@ import { z } from "zod";
 import { getAi } from "@/lib/ai";
 import type { CurriculumInput } from "@/lib/ai/types";
 import { createGuest, getSessionUser, signIn } from "@/lib/auth";
+import { carryAiConsent } from "@/lib/server/ai-consent";
 import { devToolsEnabled, getNow, getToday } from "@/lib/clock";
 import { DEMO_INVITE } from "@/lib/constants";
 import { sortStudyDays } from "@/lib/domain/dates";
@@ -43,7 +44,8 @@ export interface OnboardingSummary {
 /** 초대 쿠키(없으면 데모 그룹)의 그룹. 만료됐거나 없으면 null */
 export async function inviteGroup(now?: Date) {
   // 초대 쿠키가 없을 때 데모 그룹으로 보내는 것은 개발 모드에서만
-  const code = (await cookies()).get(INVITE_COOKIE)?.value || (devToolsEnabled() ? DEMO_INVITE : null);
+  const code =
+    (await cookies()).get(INVITE_COOKIE)?.value || (devToolsEnabled() ? DEMO_INVITE : null);
   if (!code) return null;
   const group = await prisma.group.findUnique({
     where: { inviteCode: code },
@@ -84,8 +86,13 @@ export async function startOnboarding(data: OnboardingInput): Promise<Onboarding
   } else {
     const guest = await createGuest({ teacher: data.teacher });
     const n = await prisma.user.count();
-    user = await prisma.user.update({ where: { id: guest.id }, data: { ...profile, name: nickname(n) } });
+    user = await prisma.user.update({
+      where: { id: guest.id },
+      data: { ...profile, name: nickname(n) },
+    });
   }
+  // 시작 흐름에서 쿠키로 받은 AI 동의를 계정에 옮긴다
+  await carryAiConsent(user);
 
   await createCourse(user.id, input, plan, await getToday());
 

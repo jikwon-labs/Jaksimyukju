@@ -74,7 +74,10 @@ function appleSecret(clientId: string): string | null {
 /** 키가 갖춰졌는지. Apple은 client id에 더해 서명 키 세 가지가 다 있어야 한다 */
 function configured(id: ProviderId): boolean {
   if (!process.env[ENV[id].id]) return false;
-  return id !== "apple" || !!(process.env.APPLE_TEAM_ID && process.env.APPLE_KEY_ID && process.env.APPLE_PRIVATE_KEY);
+  return (
+    id !== "apple" ||
+    !!(process.env.APPLE_TEAM_ID && process.env.APPLE_KEY_ID && process.env.APPLE_PRIVATE_KEY)
+  );
 }
 
 /** 쓸 수 있는 공급자. 키가 없고 운영 빌드면 null(버튼을 숨긴다) */
@@ -83,7 +86,8 @@ export function getProvider(id: ProviderId, origin: string): Provider | null {
   // E2E는 J6_FORCE_MOCK=1로 키가 있어도 가짜 공급자를 쓴다(개발 모드일 때만)
   const forceMock = process.env.J6_FORCE_MOCK === "1" && devToolsEnabled();
   if (clientId && configured(id) && !forceMock) {
-    const clientSecret = id === "apple" ? appleSecret(clientId) : process.env[ENV[id].secret] || null;
+    const clientSecret =
+      id === "apple" ? appleSecret(clientId) : process.env[ENV[id].secret] || null;
     return { ...REAL[id], mock: false, clientId, clientSecret };
   }
   if (!devToolsEnabled()) return null;
@@ -107,11 +111,20 @@ export function availableProviders(): ProviderId[] {
   return PROVIDER_IDS.filter((id) => configured(id) || devToolsEnabled());
 }
 
-const Token = z.object({ access_token: z.string().min(1), id_token: z.string().optional() });
+const Token = z.object({
+  access_token: z.string().min(1),
+  id_token: z.string().optional(),
+  refresh_token: z.string().optional(),
+});
 
 const TIMEOUT = 8000;
 
-export async function fetchProfile(p: Provider, code: string, flow: OAuthFlow, redirect: string): Promise<SocialProfile> {
+export async function fetchProfile(
+  p: Provider,
+  code: string,
+  flow: OAuthFlow,
+  redirect: string,
+): Promise<SocialProfile> {
   const body = new URLSearchParams({
     grant_type: "authorization_code",
     code,
@@ -132,9 +145,12 @@ export async function fetchProfile(p: Provider, code: string, flow: OAuthFlow, r
   if (!token.success) throw new OAuthError("token shape");
 
   if (p.userinfoUrl === null) {
-    const profile = token.data.id_token ? parseAppleIdToken(token.data.id_token, p.clientId, nowSec()) : null;
+    const profile = token.data.id_token
+      ? parseAppleIdToken(token.data.id_token, p.clientId, nowSec())
+      : null;
     if (!profile) throw new OAuthError("id_token shape");
-    return profile;
+    // 탈퇴 때 Apple 연결을 끊으려고(토큰 철회) refresh token을 같이 넘긴다
+    return { ...profile, revokeToken: token.data.refresh_token ?? null };
   }
 
   const infoRes = await fetch(p.userinfoUrl, {
@@ -145,4 +161,79 @@ export async function fetchProfile(p: Provider, code: string, flow: OAuthFlow, r
   const profile = parseProfile(p.id, await infoRes.json());
   if (!profile) throw new OAuthError("userinfo shape");
   return profile;
+}
+
+// ---- 앱 껍데기의 카카오 SDK 로그인: 앱이 받아 온 액세스 토큰을 확인한다 ----
+
+const KakaoTokenInfo = z.object({
+  id: z.union([z.number(), z.string()]),
+  app_id: z.union([z.number(), z.string()]),
+});
+
+/** 앱 SDK 로그인을 받을 준비가 됐는지. 토큰이 우리 앱 것인지 보려면 KAKAO_APP_ID(앱 ID 숫자)가 있어야 한다 */
+export function kakaoNativeReady(): boolean {
+  return !!process.env.KAKAO_APP_ID?.trim();
+}
+
+/**
+ * 앱이 카카오 SDK로 받은 액세스 토큰의 사용자. 다른 카카오 앱에서 받은 토큰을 들고 와도 통하지 않게
+ * 토큰 정보의 app_id가 KAKAO_APP_ID와 같은지 먼저 본다(토큰 바꿔치기 막기)
+ */
+export async function kakaoNativeProfile(accessToken: string): Promise<SocialProfile> {
+  const appId = process.env.KAKAO_APP_ID?.trim();
+  if (!appId) throw new OAuthError("KAKAO_APP_ID missing");
+  const headers = { Authorization: `Bearer ${accessToken}` };
+  const infoRes = await fetch("https://kapi.kakao.com/v1/user/access_token_info", {
+    headers,
+    signal: AbortSignal.timeout(TIMEOUT),
+  });
+  if (!infoRes.ok) throw new OAuthError(`token info ${infoRes.status}`);
+  const info = KakaoTokenInfo.safeParse(await infoRes.json());
+  if (!info.success || String(info.data.app_id) !== appId)
+    throw new OAuthError("token app mismatch");
+  const meRes = await fetch(REAL.kakao.userinfoUrl as string, {
+    headers,
+    signal: AbortSignal.timeout(TIMEOUT),
+  });
+  if (!meRes.ok) throw new OAuthError(`userinfo ${meRes.status}`);
+  const profile = parseProfile("kakao", await meRes.json());
+  if (!profile || profile.sub !== String(info.data.id)) throw new OAuthError("userinfo shape");
+  return profile;
+}
+
+// ---- 탈퇴할 때 공급자 쪽 연결 끊기(실패해도 탈퇴는 계속한다) ----
+
+/** Apple 토큰 철회. 키가 없거나 실패하면 false */
+export async function revokeApple(refreshToken: string): Promise<boolean> {
+  const clientId = process.env.APPLE_CLIENT_ID;
+  const secret = clientId ? appleSecret(clientId) : null;
+  if (!clientId || !secret) return false;
+  const res = await fetch("https://appleid.apple.com/auth/revoke", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({
+      client_id: clientId,
+      client_secret: secret,
+      token: refreshToken,
+      token_type_hint: "refresh_token",
+    }),
+    signal: AbortSignal.timeout(TIMEOUT),
+  });
+  return res.ok;
+}
+
+/** 카카오 연결 끊기(어드민 키). KAKAO_ADMIN_KEY가 없거나 실패하면 false */
+export async function unlinkKakao(kakaoUserId: string): Promise<boolean> {
+  const admin = process.env.KAKAO_ADMIN_KEY?.trim();
+  if (!admin) return false;
+  const res = await fetch("https://kapi.kakao.com/v1/user/unlink", {
+    method: "POST",
+    headers: {
+      Authorization: `KakaoAK ${admin}`,
+      "Content-Type": "application/x-www-form-urlencoded;charset=utf-8",
+    },
+    body: new URLSearchParams({ target_id_type: "user_id", target_id: kakaoUserId }),
+    signal: AbortSignal.timeout(TIMEOUT),
+  });
+  return res.ok;
 }

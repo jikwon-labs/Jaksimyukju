@@ -31,7 +31,9 @@ const FAIL_BODY: Record<TeacherName, string> = {
   새: "어, 생각하다 길을 잃었어요. 질문은 잘 챙겨 뒀어요!",
 };
 
-type Result = { ok: true; data: OnboardingSummary } | { ok: false; kind: "ai" | "invalid" | "server" };
+type Result =
+  | { ok: true; data: OnboardingSummary }
+  | { ok: false; kind: "ai" | "invalid" | "server" | "consent" };
 
 async function post(d: Draft): Promise<Result> {
   try {
@@ -51,7 +53,12 @@ async function post(d: Draft): Promise<Result> {
     });
     if (res.ok) return { ok: true, data: (await res.json()) as OnboardingSummary };
     const body = (await res.json().catch(() => ({}))) as { error?: string };
-    return { ok: false, kind: body.error === "ai" ? "ai" : body.error === "invalid" ? "invalid" : "server" };
+    // 다른 탭에서 AI 동의를 철회한 경우 등. 화면이 안내로 보낸다
+    if (body.error === "consent") return { ok: false, kind: "consent" };
+    return {
+      ok: false,
+      kind: body.error === "ai" ? "ai" : body.error === "invalid" ? "invalid" : "server",
+    };
   } catch {
     return { ok: false, kind: "server" };
   }
@@ -81,8 +88,14 @@ export function Preview() {
     const req = reqRef.current;
     let alive = true;
     const started = Date.now();
-    const timers = [1, 2].map((i) => setTimeout(() => alive && setPhase((p) => Math.max(p, i)), STEP_MS * i));
+    const timers = [1, 2].map((i) =>
+      setTimeout(() => alive && setPhase((p) => Math.max(p, i)), STEP_MS * i),
+    );
     req.then((r) => {
+      if (!r.ok && r.kind === "consent") {
+        router.replace("/ai-consent?next=%2Fstart%2Fpreview");
+        return;
+      }
       const wait = Math.max(0, STEP_MS * 3 - (Date.now() - started));
       timers.push(
         setTimeout(() => {
@@ -111,11 +124,19 @@ export function Preview() {
     return (
       <main className={s.fail}>
         <div className={s.failMid}>
-          <Teacher who={who} state="sad" size={120} jump label={`${who} 선생님, 커리큘럼 생성 실패`} />
+          <Teacher
+            who={who}
+            state="sad"
+            size={120}
+            jump
+            label={`${who} 선생님, 커리큘럼 생성 실패`}
+          />
           <span className={s.tag}>커리큘럼 생성 실패</span>
           <h1 className={s.failTitle}>선생님이 잠깐 말을 놓쳤어요</h1>
           <p className={s.failBody} role="alert">
-            {shown.kind === "invalid" ? "답변 중에 빠진 게 있어요. 앞 단계에서 한 번만 다시 확인해 주세요." : FAIL_BODY[who]}
+            {shown.kind === "invalid"
+              ? "답변 중에 빠진 게 있어요. 앞 단계에서 한 번만 다시 확인해 주세요."
+              : FAIL_BODY[who]}
           </p>
         </div>
         {shown.kind === "invalid" ? (
@@ -141,7 +162,8 @@ export function Preview() {
         <div className={s.makingText}>
           <h1 className={s.makingTitle}>{who} 선생님이 과정을 짜고 있어요</h1>
           <p className={s.makingSub}>
-            {draft.topic || "나만의 과정"} · {draft.weeks}주 · 주 {draft.studyDays.length}일 {draft.minutes}분
+            {draft.topic || "나만의 과정"} · {draft.weeks}주 · 주 {draft.studyDays.length}일{" "}
+            {draft.minutes}분
           </p>
         </div>
         <ol className={s.steps} aria-live="polite" data-testid="preview-steps">
@@ -149,16 +171,44 @@ export function Preview() {
             const state = phase > i ? "done" : phase === i ? "active" : "wait";
             return (
               <li key={i} className={s.step} data-state={state}>
-                <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" className={s.stepIcon}>
+                <svg
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                  className={s.stepIcon}
+                >
                   {state === "done" ? (
                     <>
                       <circle cx="12" cy="12" r="11" fill="var(--a-btn-bg)" />
-                      <path d="M7 12.5l3.2 3.2L17 9" fill="none" stroke="var(--a-btn-ink)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                      <path
+                        d="M7 12.5l3.2 3.2L17 9"
+                        fill="none"
+                        stroke="var(--a-btn-ink)"
+                        strokeWidth="2.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
                     </>
                   ) : (
                     <g className={state === "active" ? s.spin : undefined}>
-                      <circle cx="12" cy="12" r="9" fill="none" stroke="var(--line)" strokeWidth="3" />
-                      {state === "active" && <path d="M12 3a9 9 0 0 1 9 9" fill="none" stroke="var(--a-text)" strokeWidth="3" strokeLinecap="round" />}
+                      <circle
+                        cx="12"
+                        cy="12"
+                        r="9"
+                        fill="none"
+                        stroke="var(--line)"
+                        strokeWidth="3"
+                      />
+                      {state === "active" && (
+                        <path
+                          d="M12 3a9 9 0 0 1 9 9"
+                          fill="none"
+                          stroke="var(--a-text)"
+                          strokeWidth="3"
+                          strokeLinecap="round"
+                        />
+                      )}
                     </g>
                   )}
                 </svg>
@@ -200,12 +250,19 @@ export function Preview() {
                 </li>
               ))}
             </ul>
-            <p className={s.skipNote}>목적지에 필요 없는 것은 빼 두었어요. 나중에 과정 수정에서 넣을 수 있어요.</p>
+            <p className={s.skipNote}>
+              목적지에 필요 없는 것은 빼 두었어요. 나중에 과정 수정에서 넣을 수 있어요.
+            </p>
           </section>
         )}
       </div>
       <div className={s.footer}>
-        <button type="button" className={`${st.ghostBtn} ${s.remake}`} onClick={remake} data-testid="preview-remake">
+        <button
+          type="button"
+          className={`${st.ghostBtn} ${s.remake}`}
+          onClick={remake}
+          data-testid="preview-remake"
+        >
           다시 만들기
         </button>
         <Link href="/home" className={`${st.cta} ${s.start}`} data-testid="preview-start">

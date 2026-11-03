@@ -287,3 +287,17 @@
   outline: 3px solid var(--a-text);
   outline-offset: 2px;
 }
+.deleteLink {
+  align-self: center;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  font-size: 13px;
+  color: var(--sub);
+  text-decoration: underline;
+}
+.deleteLink:focus-visible {
+  outline: 3px solid var(--a-text);
+  outline-offset: 2px;
+}

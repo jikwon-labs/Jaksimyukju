@@ -7,20 +7,31 @@
     "development": {
       "developmentClient": false,
       "distribution": "internal",
-      "env": { "EXPO_PUBLIC_WEB_URL": "http://192.168.45.143:3100" }
+      "env": {
+        "EXPO_PUBLIC_WEB_URL": "http://192.168.45.143:3100",
+        "KAKAO_NATIVE_APP_KEY": "291bedbd172ec2b2070fe2448e2e3cd2"
+      }
     },
     "preview": {
       "distribution": "internal",
-      "env": { "EXPO_PUBLIC_WEB_URL": "http://192.168.45.143:3100" }
+      "env": {
+        "EXPO_PUBLIC_WEB_URL": "http://192.168.45.143:3100",
+        "KAKAO_NATIVE_APP_KEY": "291bedbd172ec2b2070fe2448e2e3cd2"
+      }
     },
     "production": {
       "autoIncrement": true,
-      "env": { "EXPO_PUBLIC_WEB_URL": "https://jaksimyukju.vercel.app" }
+      "env": {
+        "EXPO_PUBLIC_WEB_URL": "https://jaksimyukju.vercel.app",
+        "KAKAO_NATIVE_APP_KEY": "291bedbd172ec2b2070fe2448e2e3cd2"
+      }
     }
   },
   "submit": {
     "production": {
-      "ios": { "ascAppId": "6829444199" }
+      "ios": {
+        "ascAppId": "6829444199"
+      }
     }
   }
 }

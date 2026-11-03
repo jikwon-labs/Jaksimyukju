@@ -1,8 +1,12 @@
+"use client";
+
 // 소셜 로그인·연결 버튼. 공급자 안내에 맞춰 색과 로고를 넣는다.
 // 카카오: 노란 바탕(#FEE500), 검은 말풍선 심볼, 85% 검은 글자. 구글: 흰 바탕과 회색 테두리, 네 색 G 로고(다크 모드는 어두운 바탕).
 // Apple: 검은 바탕에 흰 로고·글자, 다크 모드는 반대(Apple 휴먼 인터페이스 가이드의 Sign in with Apple 버튼).
 // 크기와 모서리는 화면마다 다르게 쓰므로 className으로 받는다.
+// 앱 껍데기 안에서는 웹뷰가 공급자 화면으로 가지 않고 앱에 로그인을 맡긴다(lib/app-auth-bridge.ts).
 import type { ReactNode } from "react";
+import { startAppAuth } from "@/lib/app-auth-bridge";
 import type { ProviderId } from "@/lib/domain/oauth-copy";
 import s from "./SocialButton.module.css";
 
@@ -20,10 +24,22 @@ function KakaoSymbol() {
 function GoogleLogo() {
   return (
     <svg className={s.logo} viewBox="0 0 48 48" aria-hidden="true">
-      <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z" />
-      <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z" />
-      <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z" />
-      <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z" />
+      <path
+        fill="#EA4335"
+        d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"
+      />
+      <path
+        fill="#4285F4"
+        d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"
+      />
+      <path
+        fill="#FBBC05"
+        d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"
+      />
+      <path
+        fill="#34A853"
+        d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"
+      />
     </svg>
   );
 }
@@ -39,7 +55,11 @@ function AppleLogo() {
   );
 }
 
-const LOGO: Record<ProviderId, () => ReactNode> = { kakao: KakaoSymbol, google: GoogleLogo, apple: AppleLogo };
+const LOGO: Record<ProviderId, () => ReactNode> = {
+  kakao: KakaoSymbol,
+  google: GoogleLogo,
+  apple: AppleLogo,
+};
 
 export function SocialButton({
   provider,
@@ -55,7 +75,16 @@ export function SocialButton({
   children: ReactNode;
 }) {
   return (
-    <a href={href} className={`${s.btn} ${className ?? ""}`} data-kind={provider} data-testid={testId}>
+    <a
+      href={href}
+      className={`${s.btn} ${className ?? ""}`}
+      data-kind={provider}
+      data-testid={testId}
+      // 앱 껍데기 안이면 카카오는 카카오톡 앱, Apple·구글은 Safari 로그인 창으로 연다
+      onClick={(e) => {
+        if (startAppAuth(provider, href)) e.preventDefault();
+      }}
+    >
       {LOGO[provider]()}
       <span>{children}</span>
     </a>

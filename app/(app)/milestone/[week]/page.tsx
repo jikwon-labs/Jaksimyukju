@@ -1,5 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/auth";
+import { requireAiConsent } from "@/lib/server/ai-consent";
 import { getToday } from "@/lib/clock";
 import type { MilestoneFeedback } from "@/lib/ai/types";
 import { storedFeedback } from "@/lib/domain/milestone";
@@ -16,12 +17,21 @@ export default async function MilestonePage({ params }: { params: Promise<{ week
   if (!Number.isInteger(n) || n < 1) notFound();
   const user = await getSessionUser();
   if (!user) redirect("/");
+  await requireAiConsent(user, `/milestone/${n}`);
   const { st, access } = await weekAccess(user, await getToday(), n);
   if (!st) redirect("/start/personality");
   if (!access) notFound();
   const who = teacherOf(user);
   if (access.locked) {
-    return <LockedWeek who={who} title="마일스톤 피드백" week={n} currentWeek={st.view.currentWeek} what="마일스톤" />;
+    return (
+      <LockedWeek
+        who={who}
+        title="마일스톤 피드백"
+        week={n}
+        currentWeek={st.view.currentWeek}
+        what="마일스톤"
+      />
+    );
   }
   const labels = criteriaOf(access.week);
   const latest = access.week.milestones[0] ?? null;

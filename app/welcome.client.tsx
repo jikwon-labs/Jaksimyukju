@@ -34,7 +34,8 @@ export function Welcome({
   guestAtRisk: boolean;
 }) {
   // 로그인에서 돌아온 경우(?login=사유)에는 로그인 단계를 바로 보여 준다
-  const [step, setStep] = useState<"intro" | "login">(loginResult ? "login" : "intro");
+  const deleted = loginResult === "deleted";
+  const [step, setStep] = useState<"intro" | "login">(loginResult && !deleted ? "login" : "intro");
   const error = messageFor(LOGIN_MESSAGE, loginResult);
   const [accepted, setAccepted] = useState(false);
   const showProviders = !guestAtRisk || accepted;
@@ -43,7 +44,17 @@ export function Welcome({
     return (
       <main className={s.login}>
         <button type="button" aria-label="뒤로" className={s.back} onClick={() => setStep("intro")}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
             <path d="M15 5l-7 7 7 7" />
           </svg>
         </button>
@@ -64,7 +75,8 @@ export function Welcome({
         {!showProviders && (
           <div role="alert" className={s.warnBox} data-testid="guest-warning">
             <p>
-              이 휴대폰에 계정을 연결하지 않은 기록이 있어요. 다른 계정으로 들어가면 그 기록은 다시 열 수 없어요.
+              이 휴대폰에 계정을 연결하지 않은 기록이 있어요. 다른 계정으로 들어가면 그 기록은 다시
+              열 수 없어요.
             </p>
             <button type="button" className={s.warnBtn} onClick={() => setAccepted(true)}>
               알겠어요, 다른 계정으로 들어갈게요
@@ -73,13 +85,21 @@ export function Welcome({
         )}
         <div className={s.providers} hidden={!showProviders}>
           {providers.map((p) => (
-            <SocialButton key={p} provider={p} href={`/api/auth/${p}/start?mode=login`} className={s.provider} testId={`login-${p}`}>
+            <SocialButton
+              key={p}
+              provider={p}
+              href={`/api/auth/${p}/start?mode=login`}
+              className={s.provider}
+              testId={`login-${p}`}
+            >
               {PROVIDER_LABEL[p]}로 계속하기
             </SocialButton>
           ))}
         </div>
         <p className={s.footnote}>
-          {providers.length > 0 ? "처음이라면 뒤로 가서 시작하기를 눌러 주세요." : "계정 로그인은 곧 열려요. 처음이라면 시작하기를 눌러 주세요."}
+          {providers.length > 0
+            ? "처음이라면 뒤로 가서 시작하기를 눌러 주세요."
+            : "계정 로그인은 곧 열려요. 처음이라면 시작하기를 눌러 주세요."}
         </p>
       </main>
     );
@@ -103,7 +123,16 @@ export function Welcome({
           {POINTS.map((t) => (
             <li key={t}>
               <span className={s.check} aria-hidden="true">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.6"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
                   <path d="M5 12.5l4.5 4.5L19 7.5" />
                 </svg>
               </span>
@@ -117,11 +146,32 @@ export function Welcome({
           <strong>{invite.inviter}님</strong>이 &lsquo;{invite.group}&rsquo;에 초대했어요
         </p>
       )}
+      {deleted && (
+        <p role="status" className={s.caption} data-testid="account-deleted">
+          계정과 모든 기록을 삭제했어요.
+        </p>
+      )}
       <Link href="/start/personality" className={s.cta} data-testid="start">
         시작하기
       </Link>
       <p className={s.caption}>가입 없이 바로 시작해요. 계정은 첫 레슨을 마친 뒤에 연결해요.</p>
-      <button type="button" className={s.textBtn} onClick={() => setStep("login")} data-testid="have-account">
+      <p className={s.caption}>
+        시작하면{" "}
+        <Link href="/terms" className={s.policyLink}>
+          이용약관
+        </Link>
+        과{" "}
+        <Link href="/privacy" className={s.policyLink}>
+          개인정보 처리방침
+        </Link>
+        에 동의하게 돼요.
+      </p>
+      <button
+        type="button"
+        className={s.textBtn}
+        onClick={() => setStep("login")}
+        data-testid="have-account"
+      >
         이미 계정이 있어요
       </button>
     </main>

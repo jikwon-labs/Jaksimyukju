@@ -4,13 +4,23 @@ import { z } from "zod";
 import { PROVIDER_IDS, PROVIDER_LABEL, type ProviderId } from "./oauth-copy";
 
 // 이름·안내 문구는 클라이언트도 쓰므로 oauth-copy.ts에 둔다. 서버 쪽은 지금처럼 여기서 가져가면 된다
-export { GUEST_LOSS_WARNING, LINK_ERROR_MESSAGE, linkSucceeded, messageFor, PROVIDER_IDS, PROVIDER_LABEL, type ProviderId } from "./oauth-copy";
+export {
+  GUEST_LOSS_WARNING,
+  LINK_ERROR_MESSAGE,
+  linkSucceeded,
+  messageFor,
+  PROVIDER_IDS,
+  PROVIDER_LABEL,
+  type ProviderId,
+} from "./oauth-copy";
 export type OAuthMode = "login" | "link";
 
 export interface SocialProfile {
   sub: string;
   email: string | null;
   name: string | null;
+  /** Apple만: 탈퇴 때 토큰을 철회하려고 저장하는 refresh token */
+  revokeToken?: string | null;
 }
 
 export interface Provider {
@@ -55,16 +65,24 @@ const Flow = z.object({
   provider: z.enum(PROVIDER_IDS),
   mode: z.enum(["login", "link"]),
   next: z.string(),
+  /** 앱 껍데기의 Safari 로그인 창에서 시작했으면 묶음 쿠키의 sha256. 콜백이 세션 대신 1회용 코드를 만든다 */
+  bind: z.string().optional(),
 });
 export type OAuthFlow = z.infer<typeof Flow>;
 
-export function newFlow(provider: ProviderId, mode: OAuthMode, next: string): OAuthFlow {
+export function newFlow(
+  provider: ProviderId,
+  mode: OAuthMode,
+  next: string,
+  bind?: string,
+): OAuthFlow {
   return {
     state: randomBytes(24).toString("base64url"),
     verifier: randomBytes(48).toString("base64url"),
     provider,
     mode,
     next: safeNext(next, "/home"),
+    ...(bind ? { bind } : {}),
   };
 }
 
@@ -90,7 +108,8 @@ export function sameState(a: string, b: string): boolean {
 
 /** 앱 안 경로만 허용한다(다른 사이트로 보내는 열린 리다이렉트 막기) */
 export function safeNext(next: string | null | undefined, fallback: string): string {
-  if (!next || !next.startsWith("/") || next.startsWith("//") || next.includes("\\")) return fallback;
+  if (!next || !next.startsWith("/") || next.startsWith("//") || next.includes("\\"))
+    return fallback;
   // URL 해석기는 탭·줄바꿈을 지운다("/\t/evil.com" -> "//evil.com"). 제어 문자와 공백은 아예 받지 않는다
   if (/[\u0000-\u0020\u007f]/.test(next)) return fallback;
   return next;
@@ -99,7 +118,10 @@ export function safeNext(next: string | null | undefined, fallback: string): str
 const PATH_BASE = "http://app.invalid";
 
 /** 콜백 뒤 돌아갈 앱 안 경로. 연결은 next에 ?link=결과, 로그인 실패는 첫 화면에 ?login=사유를 붙인다 */
-export function callbackPath(flow: Pick<OAuthFlow, "mode" | "next"> | null, result: string): string {
+export function callbackPath(
+  flow: Pick<OAuthFlow, "mode" | "next"> | null,
+  result: string,
+): string {
   const build = (path: string): string | null => {
     const u = new URL(path, PATH_BASE);
     if (flow?.mode === "link") u.searchParams.set("link", result);
@@ -194,7 +216,11 @@ const AppleClaims = z.object({
  * 우리 서버가 client secret으로 Apple 토큰 주소에서 TLS로 직접 받은 값이라서다(OIDC Core 3.1.3.7).
  * 대신 발급자·받는 쪽(client_id)·만료는 본다. 이메일은 요청하지 않아서 보통 없다.
  */
-export function parseAppleIdToken(idToken: string, clientId: string, nowSec: number): SocialProfile | null {
+export function parseAppleIdToken(
+  idToken: string,
+  clientId: string,
+  nowSec: number,
+): SocialProfile | null {
   const part = idToken.split(".")[1];
   if (!part) return null;
   let raw: unknown;
@@ -221,15 +247,26 @@ export interface AppleKey {
 export function appleClientSecret(k: AppleKey, nowSec: number): string {
   const enc = (v: object) => Buffer.from(JSON.stringify(v)).toString("base64url");
   const head = enc({ alg: "ES256", kid: k.keyId });
-  const body = enc({ iss: k.teamId, iat: nowSec, exp: nowSec + 300, aud: APPLE_ISSUER, sub: k.clientId });
+  const body = enc({
+    iss: k.teamId,
+    iat: nowSec,
+    exp: nowSec + 300,
+    aud: APPLE_ISSUER,
+    sub: k.clientId,
+  });
   const key = createPrivateKey(k.privateKey.replace(/\\n/g, "\n"));
-  const sig = sign("sha256", Buffer.from(`${head}.${body}`), { key, dsaEncoding: "ieee-p1363" }).toString("base64url");
+  const sig = sign("sha256", Buffer.from(`${head}.${body}`), {
+    key,
+    dsaEncoding: "ieee-p1363",
+  }).toString("base64url");
   return `${head}.${body}.${sig}`;
 }
 
 /** 내 정보의 계정 줄: "카카오 · me@example.com", 연결 전이면 "게스트" */
 export function accountLabel(accounts: { provider: string }[], email: string | null): string {
-  const names = accounts.map((a) => (isProviderId(a.provider) ? PROVIDER_LABEL[a.provider] : null)).filter(Boolean);
+  const names = accounts
+    .map((a) => (isProviderId(a.provider) ? PROVIDER_LABEL[a.provider] : null))
+    .filter(Boolean);
   if (names.length === 0) return "게스트";
   return email ? `${names.join("·")} · ${email}` : `${names.join("·")} 연결됨`;
 }

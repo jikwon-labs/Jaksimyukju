@@ -9,7 +9,14 @@ import { Switch } from "@/components/ui";
 import { SocialButton } from "@/components/ui/SocialButton";
 import type { TeacherName } from "@/lib/design/types";
 import { WEEKDAY_KO } from "@/lib/domain/dates";
-import { GUEST_LOSS_WARNING, LINK_ERROR_MESSAGE, linkSucceeded, messageFor, PROVIDER_LABEL, type ProviderId } from "@/lib/domain/oauth-copy";
+import {
+  GUEST_LOSS_WARNING,
+  LINK_ERROR_MESSAGE,
+  linkSucceeded,
+  messageFor,
+  PROVIDER_LABEL,
+  type ProviderId,
+} from "@/lib/domain/oauth-copy";
 import { MINUTE_OPTIONS, shiftTime, timeLabel, toggleStudyDay } from "@/lib/domain/prefs";
 import type { ThemeMode } from "@/lib/theme";
 import s from "./settings.module.css";
@@ -27,6 +34,12 @@ interface Prefs {
 
 const WEEK = [1, 2, 3, 4, 5, 6, 0];
 
+const POLICY_ROWS = [
+  { label: "AI 선생님과 데이터", href: "/ai-consent?from=settings" },
+  { label: "개인정보 처리방침", href: "/privacy" },
+  { label: "이용약관", href: "/terms" },
+];
+
 interface Account {
   linked: boolean;
   label: string;
@@ -39,7 +52,12 @@ function ProviderLinks({ providers }: { providers: ProviderId[] }) {
   return (
     <div className={s.providers}>
       {providers.map((p) => (
-        <SocialButton key={p} provider={p} href={`/api/auth/${p}/start?mode=link&next=%2Fsettings`} className={s.provider}>
+        <SocialButton
+          key={p}
+          provider={p}
+          href={`/api/auth/${p}/start?mode=link&next=%2Fsettings`}
+          className={s.provider}
+        >
           {PROVIDER_LABEL[p]}로 연결
         </SocialButton>
       ))}
@@ -73,13 +91,18 @@ function AccountSection({ account }: { account: Account }) {
         )}
         {!account.linked && (
           <>
-            <p className={s.note}>{GUEST_LOSS_WARNING} 휴대폰을 바꿔도 이어 하려면 연결해 두세요.</p>
+            <p className={s.note}>
+              {GUEST_LOSS_WARNING} 휴대폰을 바꿔도 이어 하려면 연결해 두세요.
+            </p>
             <ProviderLinks providers={account.providers} />
           </>
         )}
         {confirm ? (
           <div role="alert" className={s.confirm} data-testid="logout-confirm">
-            <p>지금 로그아웃하면 이 과정과 잔디를 다시 열 수 없어요. 위에서 계정을 먼저 연결해 주세요.</p>
+            <p>
+              지금 로그아웃하면 이 과정과 잔디를 다시 열 수 없어요. 위에서 계정을 먼저 연결해
+              주세요.
+            </p>
             <div className={s.confirmBtns}>
               <button type="button" className={s.ghost} onClick={() => setConfirm(false)}>
                 취소
@@ -102,6 +125,9 @@ function AccountSection({ account }: { account: Account }) {
             로그아웃
           </button>
         )}
+        <Link href="/settings/delete" className={s.deleteLink} data-testid="settings-delete">
+          계정 삭제
+        </Link>
       </div>
     </section>
   );
@@ -109,7 +135,18 @@ function AccountSection({ account }: { account: Account }) {
 
 function Chevron() {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden className={s.chev}>
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+      className={s.chev}
+    >
       <path d="M9 6l6 6-6 6" />
     </svg>
   );
@@ -152,7 +189,12 @@ export function SettingsForm({
   }
 
   const rows: { label: string; value: string; href: string; testid?: string }[] = [
-    { label: "쉬어 가기 예약", value: `남은 ${restLeft}일`, href: "/pause", testid: "settings-pause" },
+    {
+      label: "쉬어 가기 예약",
+      value: `남은 ${restLeft}일`,
+      href: "/pause",
+      testid: "settings-pause",
+    },
     { label: "선생님 바꾸기", value: teacher, href: "/profile?teacher=1#teacher" },
     { label: "과정 기간과 목표", value: duration, href: "/curriculum" },
     { label: "알림 목록", value: "", href: "/notifications" },
@@ -186,7 +228,9 @@ export function SettingsForm({
                 );
               })}
             </div>
-            <span className={s.caption}>고르지 않은 날은 쉬는 날이에요. 연속 기록이 끊기지 않아요.</span>
+            <span className={s.caption}>
+              고르지 않은 날은 쉬는 날이에요. 연속 기록이 끊기지 않아요.
+            </span>
           </div>
           <div className={s.block}>
             <span className={s.blockLabel}>하루 학습 시간</span>
@@ -216,24 +260,54 @@ export function SettingsForm({
               <span className={s.blockLabel}>선생님 알림 시각</span>
               <span className={s.caption}>이 시각까지 안 했으면 한 번만 알려요</span>
             </span>
-            <button type="button" aria-label="30분 앞으로" className={s.step} onClick={() => moveTime(-30)}>
+            <button
+              type="button"
+              aria-label="30분 앞으로"
+              className={s.step}
+              onClick={() => moveTime(-30)}
+            >
               -
             </button>
             <span aria-live="polite" className={s.time} data-testid="notify-time">
               {timeLabel(p.notifyTime)}
             </span>
-            <button type="button" aria-label="30분 뒤로" className={s.step} onClick={() => moveTime(30)}>
+            <button
+              type="button"
+              aria-label="30분 뒤로"
+              className={s.step}
+              onClick={() => moveTime(30)}
+            >
               +
             </button>
           </div>
           <div className={s.divider} />
-          <Switch label="선생님 알림" sub="정한 시각에 하루 한 번" on={p.notifyTeacher} onChange={(v) => save({ notifyTeacher: v })} />
+          <Switch
+            label="선생님 알림"
+            sub="정한 시각에 하루 한 번"
+            on={p.notifyTeacher}
+            onChange={(v) => save({ notifyTeacher: v })}
+          />
           <div className={s.divider} />
-          <Switch label="콕 찌르기 받기" sub="하루 최대 1번" on={p.notifyNudge} onChange={(v) => save({ notifyNudge: v })} />
+          <Switch
+            label="콕 찌르기 받기"
+            sub="하루 최대 1번"
+            on={p.notifyNudge}
+            onChange={(v) => save({ notifyNudge: v })}
+          />
           <div className={s.divider} />
-          <Switch label="주간 회고" sub="일요일 밤 9시" on={p.notifyRetro} onChange={(v) => save({ notifyRetro: v })} />
+          <Switch
+            label="주간 회고"
+            sub="일요일 밤 9시"
+            on={p.notifyRetro}
+            onChange={(v) => save({ notifyRetro: v })}
+          />
           <div className={s.divider} />
-          <Switch label="그룹 소식" sub="연속 기록, 완료 소식" on={p.notifyGroup} onChange={(v) => save({ notifyGroup: v })} />
+          <Switch
+            label="그룹 소식"
+            sub="연속 기록, 완료 소식"
+            on={p.notifyGroup}
+            onChange={(v) => save({ notifyGroup: v })}
+          />
         </div>
         <p className={s.note}>하루 최대 2번 · 밤 11시~아침 7시는 보내지 않아요</p>
       </section>
@@ -271,6 +345,18 @@ export function SettingsForm({
             <Link key={r.label} href={r.href} className={s.row} data-testid={r.testid}>
               <span className={s.rowLabel}>{r.label}</span>
               {r.value && <span className={s.rowValue}>{r.value}</span>}
+              <Chevron />
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      <section aria-label="약관과 정책" className={s.section}>
+        <h2 className={s.label}>약관과 정책</h2>
+        <div className={s.card}>
+          {POLICY_ROWS.map((r) => (
+            <Link key={r.href} href={r.href} className={s.row}>
+              <span className={s.rowLabel}>{r.label}</span>
               <Chevron />
             </Link>
           ))}

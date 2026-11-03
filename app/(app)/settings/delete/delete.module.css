@@ -1,0 +1,93 @@
+.page {
+  gap: 14px;
+}
+.card {
+  background: var(--surface);
+  border: var(--card-border);
+  border-radius: 20px;
+  padding: 18px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.title {
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 28px;
+}
+.body {
+  font-size: 14px;
+  line-height: 21px;
+}
+.list {
+  margin: 0;
+  padding-left: 20px;
+  font-size: 14px;
+  line-height: 22px;
+}
+.note {
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--sub);
+}
+.link {
+  color: var(--a-text);
+  text-decoration: underline;
+}
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.check {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  min-height: 44px;
+  padding: 12px 4px;
+  font-size: 14px;
+  line-height: 20px;
+  cursor: pointer;
+}
+.check input {
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  flex: none;
+  accent-color: var(--warn);
+}
+.warn {
+  font-size: 13px;
+  color: var(--warn);
+  font-weight: 700;
+  margin: 0 4px;
+}
+.danger,
+.cancel {
+  min-height: 48px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+}
+.danger {
+  border: none;
+  background: var(--warn);
+  color: var(--bg);
+}
+.cancel {
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--ink);
+}
+.danger:focus-visible,
+.cancel:focus-visible,
+.check input:focus-visible {
+  outline: 3px solid var(--a-text);
+  outline-offset: 2px;
+}
