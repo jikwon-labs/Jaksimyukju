@@ -9,6 +9,10 @@
     "userInterfaceStyle": "automatic",
     "ios": {
       "supportsTablet": true,
+      "usesAppleSignIn": true,
+      "entitlements": {
+        "com.apple.developer.applesignin": ["Default"]
+      },
       "bundleIdentifier": "com.jaksim6.app",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
