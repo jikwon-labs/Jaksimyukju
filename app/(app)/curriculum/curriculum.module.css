@@ -612,3 +612,22 @@
   background: var(--future);
   color: var(--sub);
 }
+
+/* 진행 중 과정에 내 자료(PDF·링크) 더하기 */
+.materialLink {
+  align-self: flex-start;
+  min-height: 36px;
+  padding: 0 12px;
+  border-radius: 18px;
+  border: 1.5px solid var(--line);
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+}
+.materialLink:focus-visible {
+  outline: 3px solid var(--a-text);
+  outline-offset: 2px;
+}

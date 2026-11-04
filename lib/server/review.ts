@@ -4,6 +4,7 @@ import "server-only";
 // 튜터 확인에서 헷갈린 개념(app/api/tutor/route.ts). 어느 쪽이 실패해도 원래 흐름은 막지 않는다.
 import { Prisma, type User } from "@prisma/client";
 import { getAi, type QuizQuestion } from "@/lib/ai";
+import { hasAiConsent } from "@/lib/server/ai-consent";
 import { mockReviewQuestion } from "@/lib/ai/review";
 import type { DayKey } from "@/lib/domain/dates";
 import {
@@ -151,6 +152,8 @@ export async function prepareSession(user: User, st: CourseState): Promise<Sessi
     ? await prisma.lesson.findMany({ where: { id: { in: missing.map((c) => c.lessonId as string) } } })
     : [];
   const who = teacherOf(user);
+  // 외부 AI 이용에 동의하지 않았으면 레슨 본문을 보내지 않고 mock 문제로 만든다
+  const useAi = missing.length > 0 && (await hasAiConsent(user));
   const made = await Promise.all(
     missing.map(async (c) => {
       const lesson = lessons.find((l) => l.id === c.lessonId);
@@ -167,10 +170,11 @@ export async function prepareSession(user: User, st: CourseState): Promise<Sessi
       };
       let q: QuizQuestion;
       try {
+        if (!useAi) throw new Error("no ai consent");
         q = await getAi().reviewQuestion(input);
         if (!validQuestion(q)) throw new Error("bad review question");
       } catch (e) {
-        console.warn("[review] AI 문제 대신 mock 문제를 쓴다:", e instanceof Error ? e.message : e);
+        if (useAi) console.warn("[review] AI 문제 대신 mock 문제를 쓴다:", e instanceof Error ? e.message : e);
         q = mockReviewQuestion(input);
       }
       const question = { q: q.q, choices: q.choices, answer: q.answer, why: q.why };

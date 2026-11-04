@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { Teacher } from "@/components/teacher/Teacher";
 import type { TeacherName } from "@/lib/design/types";
 import type { OnboardingSummary } from "@/lib/server/onboarding";
-import { draftTeacher, readDraft, useDraft, useTeacherFallback, type Draft } from "../draft";
+import { draftTeacher, readDraft, useDraft, useTeacherFallback, writeDraft, type Draft } from "../draft";
 import st from "../start.module.css";
 import s from "./preview.module.css";
 import { WeekList } from "./WeekList.client";
@@ -49,12 +49,20 @@ async function post(d: Draft): Promise<Result> {
         minutes: d.minutes,
         weeks: d.weeks,
         notifyTime: d.notifyTime,
+        ...(d.materialId ? { materialId: d.materialId } : {}),
       }),
     });
-    if (res.ok) return { ok: true, data: (await res.json()) as OnboardingSummary };
-    const body = (await res.json().catch(() => ({}))) as { error?: string };
+    if (res.ok) {
+      const data = (await res.json()) as OnboardingSummary;
+      // 자료는 이제 이 과정에 붙었다. 다음에 시작 흐름을 다시 밟을 때 따라오지 않게 초안에서 뺀다
+      if (d.materialId) writeDraft({ materialId: null, materialTitle: "" });
+      return { ok: true, data };
+    }
+    const body = (await res.json().catch(() => ({}))) as { error?: string; issues?: string[] };
     // 다른 탭에서 AI 동의를 철회한 경우 등. 화면이 안내로 보낸다
     if (body.error === "consent") return { ok: false, kind: "consent" };
+    // 올린 자료를 쓸 수 없게 됐으면(다른 기기, 로그아웃, 이미 다른 과정에 붙음) 초안에서 빼고 다시 고르게 한다
+    if (body.issues?.includes("materialId")) writeDraft({ materialId: null, materialTitle: "" });
     return {
       ok: false,
       kind: body.error === "ai" ? "ai" : body.error === "invalid" ? "invalid" : "server",
@@ -238,6 +246,11 @@ export function Preview() {
           </span>
           <strong className={s.summaryTopic}>{d.topic}</strong>
           <span className={s.summaryGoal}>목적지: {d.goal}</span>
+          {d.material && (
+            <span className={s.summaryGoal} data-testid="preview-material">
+              내 자료: {d.material}
+            </span>
+          )}
         </section>
         <WeekList key={d.weeks.map((w) => w.title).join("|")} initial={d.weeks} />
         {d.excludes.length > 0 && (

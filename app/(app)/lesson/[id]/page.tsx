@@ -45,7 +45,7 @@ export default async function LessonPage({
       title: r.title,
       kind: r.kind,
       minutes: r.minutes,
-      source: hostOf(r.url),
+      source: r.materialId ? "내 자료" : hostOf(r.url),
     })),
   };
   return <LessonView lesson={payload} initialShort={sp.mode === "short" || lesson.status === "summary"} />;

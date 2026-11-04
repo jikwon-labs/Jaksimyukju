@@ -3,7 +3,7 @@ import type { Prisma, User } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getLibrarian } from "@/lib/ai";
 import type { CurriculumInput, CurriculumPlan, LessonBody, QuizQuestion } from "@/lib/ai/types";
-import { writeCourse } from "./write-course";
+import { type CourseMaterial, writeCourse } from "./write-course";
 import { isTeacher, DEFAULT_TEACHER } from "@/lib/design/tokens";
 import type { TeacherName } from "@/lib/design/types";
 import { buildCourseView, type CourseView, type LessonStatus } from "@/lib/domain/course";
@@ -36,8 +36,9 @@ export async function createCourse(
   input: CurriculumInput,
   plan: CurriculumPlan,
   startDate: DayKey,
+  material?: CourseMaterial,
 ) {
-  return writeCourse(prisma, getLibrarian(), userId, input, plan, startDate);
+  return writeCourse(prisma, getLibrarian(), userId, input, plan, startDate, material);
 }
 
 const courseInclude = {

@@ -25,7 +25,10 @@ export type OwnLesson = NonNullable<Awaited<ReturnType<typeof getOwnLesson>>>;
 export async function getOwnResource(user: User, id: string) {
   return prisma.resource.findFirst({
     where: { id, lesson: { course: { userId: user.id } } },
-    include: { lesson: { include: { resources: { orderBy: { id: "asc" } }, week: true, course: true } } },
+    include: {
+      lesson: { include: { resources: { orderBy: { id: "asc" } }, week: true, course: true } },
+      material: { select: { source: true, kind: true } },
+    },
   });
 }
 

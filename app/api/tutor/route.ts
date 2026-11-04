@@ -5,9 +5,12 @@ import { devToolsEnabled, getToday } from "@/lib/clock";
 import { AiError, getAi, type TutorTurn } from "@/lib/ai";
 import { carriedUnderstanding, forceDone, stripLeak, weakSpots } from "@/lib/ai/tutor";
 import { prisma } from "@/lib/prisma";
+import { excerptsForTutor } from "@/lib/domain/material";
 import { tutorNeedsReview } from "@/lib/domain/review";
 import { lessonBody, teacherOf } from "@/lib/server/course";
+import { courseMaterialTexts } from "@/lib/server/material";
 import { markTutorWeak } from "@/lib/server/review";
+import { lessonQuery } from "@/lib/server/write-course";
 import {
   toChoices,
   toMessageView as view,
@@ -68,7 +71,10 @@ export async function POST(req: NextRequest) {
       choices: toChoices(m.choices),
     }));
     const body = lessonBody(lesson.body);
+    // 과정에 내 자료가 있으면 이 레슨과 맞닿은 문장만 골라 넣는다(소유자 기준으로 읽는다)
+    const material = excerptsForTutor(await courseMaterialTexts(user.id, lesson.courseId), lessonQuery(lesson.title, body)) ?? undefined;
     const raw = await getAi().tutorReply({
+      material,
       teacher: teacherOf(user),
       lessonTitle: lesson.title,
       core: body.core,

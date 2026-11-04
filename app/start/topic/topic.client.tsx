@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { Teacher } from "@/components/teacher/Teacher";
+import { MaterialUpload } from "@/components/material/MaterialUpload";
 import { useFitToKeyboard } from "@/components/ui/keyboard";
 import type { TeacherName } from "@/lib/design/types";
 import { draftTeacher, useDraft, useTeacherFallback, writeDraft } from "../draft";
@@ -32,6 +33,21 @@ const QUESTIONS: Record<TeacherName, [string, string, string, string]> = {
   ],
 };
 
+/** 주제 정하기에서 "가지고 있는 교재·자료가 있어요"를 골랐을 때 */
+export const MATERIAL_CHOICE = "가지고 있는 교재·자료가 있어요";
+
+const MATERIAL_ASK: Record<TeacherName, string> = {
+  온: "좋아요. PDF 파일이나 웹 링크를 올려 주세요. 그 자료를 바탕으로 과정을 짤게요.",
+  결: "자료를 올리세요. PDF 파일이나 웹 링크 하나면 됩니다. 그 내용으로 과정을 짭니다.",
+  새: "오, 지도를 갖고 왔군요! PDF 파일이나 웹 링크를 올려 주세요.",
+};
+
+const MATERIAL_DONE: Record<TeacherName, (title: string) => string> = {
+  온: (t) => `"${t}" 잘 받았어요. 이 자료로 과정을 짤게요. 주제는 한 줄로 뭐라고 할까요?`,
+  결: (t) => `"${t}" 받았습니다. 이 자료로 짭니다. 주제를 한 줄로 적으세요.`,
+  새: (t) => `"${t}" 접수! 이 자료로 탐험 지도를 그릴게요. 주제는 뭐라고 부를까요?`,
+};
+
 export function Topic({ next }: { next?: { topic: string; level: string } }) {
   const draft = useDraft();
 
@@ -46,18 +62,25 @@ export function Topic({ next }: { next?: { topic: string; level: string } }) {
   const typing = step < 2;
   const finished = step >= 3;
   const [text, setText] = useState("");
+  const [materialOpen, setMaterialOpen] = useState(false);
+  const hasMaterial = !!draft.materialId;
   const chatRef = useRef<HTMLDivElement>(null);
   const screenRef = useRef<HTMLElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const q = QUESTIONS[who];
-  const chips = step === 0 ? TOPIC_CHIPS : goalChips(draft.topic);
+  const chips =
+    step === 0
+      ? hasMaterial && draft.materialTitle
+        ? [draft.materialTitle.slice(0, 60), ...TOPIC_CHIPS]
+        : TOPIC_CHIPS
+      : goalChips(draft.topic);
 
   function toBottom() {
     const el = chatRef.current;
     if (el) el.scrollTop = el.scrollHeight;
   }
 
-  useEffect(toBottom, [step]);
+  useEffect(toBottom, [step, materialOpen, hasMaterial]);
   // 튜터 채팅과 같이 키보드가 올라와도 머리와 입력칸이 보이게 한다
   useFitToKeyboard(screenRef, toBottom);
 
@@ -76,9 +99,15 @@ export function Topic({ next }: { next?: { topic: string; level: string } }) {
     setText("");
   }
 
-  const rows: { who: "ai" | "me"; text: string }[] = [];
+  const showMaterial = hasMaterial || (materialOpen && step === 0);
+  const rows: { who: "ai" | "me" | "upload"; text: string }[] = [];
   for (let i = 0; i <= Math.min(step, 3); i++) {
     rows.push({ who: "ai", text: q[i] });
+    if (i === 0 && showMaterial) {
+      rows.push({ who: "me", text: MATERIAL_CHOICE }, { who: "ai", text: MATERIAL_ASK[who] });
+      if (hasMaterial) rows.push({ who: "ai", text: MATERIAL_DONE[who](draft.materialTitle || "내 자료") });
+      else rows.push({ who: "upload", text: "" });
+    }
     if (i < step) rows.push({ who: "me", text: ans[i] });
   }
 
@@ -88,7 +117,22 @@ export function Topic({ next }: { next?: { topic: string; level: string } }) {
         <StepHeader step={2} backHref="/start/teacher" backLabel="선생님 고르기로 돌아가기" />
       </div>
       <div className={s.chat} ref={chatRef} aria-live="polite" onClick={closeKeyboard} data-testid="topic-chat">
-        {rows.map((m, i) => (
+        {rows.map((m, i) =>
+          m.who === "upload" ? (
+            <div key={i} className={s.upload}>
+              <MaterialUpload
+                mode="start"
+                teacher={who}
+                onDone={(r) => {
+                  writeDraft({ materialId: r.id, materialTitle: r.title.slice(0, 80) });
+                  setMaterialOpen(false);
+                }}
+              />
+              <button type="button" className={s.uploadCancel} onClick={() => setMaterialOpen(false)} data-testid="material-cancel">
+                자료 없이 할게요
+              </button>
+            </div>
+          ) : (
           <div key={i} className={s.row} data-who={m.who}>
             {m.who === "ai" && <Teacher who={who} size={36} decorative />}
             <p className={s.bubble} data-who={m.who}>
@@ -96,7 +140,8 @@ export function Topic({ next }: { next?: { topic: string; level: string } }) {
               {m.text}
             </p>
           </div>
-        ))}
+          ),
+        )}
         {step === 2 && (
           <div role="radiogroup" aria-label="지금 수준" className={s.levels}>
             {LEVELS.map((l) => (
@@ -117,6 +162,17 @@ export function Topic({ next }: { next?: { topic: string; level: string } }) {
               <dd>{draft.goal}</dd>
               <dt>지금 수준</dt>
               <dd>{draft.level}</dd>
+              {hasMaterial && (
+                <>
+                  <dt>내 자료</dt>
+                  <dd data-testid="topic-material">
+                    {draft.materialTitle || "내 자료"}{" "}
+                    <button type="button" className={s.unlink} onClick={() => writeDraft({ materialId: null, materialTitle: "" })} data-testid="material-remove">
+                      빼기
+                    </button>
+                  </dd>
+                </>
+              )}
             </dl>
           </section>
         )}
@@ -124,6 +180,13 @@ export function Topic({ next }: { next?: { topic: string; level: string } }) {
 
       {typing && (
         <div className={s.composer} data-testid="topic-composer">
+          {step === 0 && !showMaterial && (
+            <div className={s.materialRow}>
+              <button type="button" className={s.materialBtn} onClick={() => setMaterialOpen(true)} data-testid="material-open">
+                {MATERIAL_CHOICE}
+              </button>
+            </div>
+          )}
           <div className={s.chips}>
             {chips.map((c) => (
               <button key={c} type="button" className={s.chip} onClick={() => push(c)} data-testid="topic-chip">
