@@ -5,25 +5,20 @@
     "version": "1.0.0",
     "scheme": "jaksim6",
     "orientation": "portrait",
-    "scheme": "jaksim6",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
     "ios": {
       "supportsTablet": true,
       "usesAppleSignIn": true,
       "entitlements": {
-        "com.apple.developer.applesignin": ["Default"]
+        "com.apple.developer.applesignin": ["Default"],
+        "com.apple.security.application-groups": ["group.com.jaksim6.app"]
       },
       "bundleIdentifier": "com.jaksim6.app",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       },
-      "appleTeamId": "K6599UJ4KM",
-      "entitlements": {
-        "com.apple.security.application-groups": [
-          "group.com.jaksim6.app"
-        ]
-      }
+      "appleTeamId": "K6599UJ4KM"
     },
     "android": {
       "adaptiveIcon": {
