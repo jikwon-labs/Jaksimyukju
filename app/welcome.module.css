@@ -242,3 +242,13 @@
   color: inherit;
   text-decoration: underline;
 }
+
+/* PC: 첫 화면은 소개 글 폭에 맞춰 좁은 단으로 모은다(버튼만 넓게 퍼지지 않게) */
+@media (min-width: 1024px) {
+  .intro,
+  .login {
+    width: 100%;
+    max-width: 480px;
+    margin: 0 auto;
+  }
+}

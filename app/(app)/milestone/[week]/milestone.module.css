@@ -277,3 +277,11 @@
   outline: 3px solid var(--a-text);
   outline-offset: 2px;
 }
+
+/* PC: 다른 화면 제목(22px)과 크기를 맞춘다 */
+@media (min-width: 1024px) {
+  .headTitle {
+    font-size: 22px;
+    letter-spacing: -0.4px;
+  }
+}

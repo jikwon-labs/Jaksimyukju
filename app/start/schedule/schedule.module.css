@@ -147,16 +147,11 @@
   left: 50%;
   transform: translateX(-50%);
   width: 100%;
-  max-width: 430px;
+  max-width: var(--frame-w);
   height: 96px;
   padding: 12px 20px 28px 20px;
   background: var(--bg);
   border-top: 1px solid var(--line);
-}
-@media (min-width: 600px) {
-  .footer {
-    width: 390px;
-  }
 }
 .disabled {
   height: 56px;

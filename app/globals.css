@@ -3,6 +3,22 @@
 *::after {
   box-sizing: border-box;
 }
+/* 화면 기둥 폭. 폰은 화면 전체(최대 430px), 태블릿은 폰 목업(390px), PC는 읽기 좋은 단(720px).
+   화면에 붙는 고정 요소(채팅 화면, 아래 버튼 줄)도 이 값을 따른다 */
+:root {
+  --frame-w: 430px;
+  --side-w: 240px;
+}
+@media (min-width: 600px) {
+  :root {
+    --frame-w: 390px;
+  }
+}
+@media (min-width: 1024px) {
+  :root {
+    --frame-w: 720px;
+  }
+}
 html,
 body {
   margin: 0;
