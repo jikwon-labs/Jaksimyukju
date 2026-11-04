@@ -6,6 +6,7 @@ import { FINANCE_GOAL, FINANCE_TOPIC } from "../lib/ai/finance";
 import { addDays, dayKeyAt, diffDays, mondayOf, type DayKey, weekday } from "../lib/domain/dates";
 import { writeCourse } from "../lib/server/write-course";
 import { DEMO_ACCOUNT_SUB, DEMO_EMAIL, DEMO_INVITE } from "../lib/constants";
+import { lessonKey, quizKey } from "../lib/domain/review";
 import { assertLocalDb } from "./guard";
 
 assertLocalDb();
@@ -19,6 +20,7 @@ async function wipe() {
   await prisma.account.deleteMany();
   await prisma.report.deleteMany();
   await prisma.notification.deleteMany();
+  await prisma.reviewCard.deleteMany();
   await prisma.retro.deleteMany();
   await prisma.nudge.deleteMany();
   await prisma.restDay.deleteMany();
@@ -86,6 +88,41 @@ async function progress(courseId: string, start: DayKey, today: DayKey, opts: { 
   }
 }
 
+/**
+ * 데모 복습 카드: 가장 최근에 마친 레슨 2개는 오늘 복습(1일 간격), 그 전 레슨은 며칠 뒤로 잡힌 카드,
+ * 1주차 퀴즈에서 틀린 3번 문제도 오늘 복습. 문제는 복습 화면을 열 때 mock(또는 AI)이 만든다
+ */
+async function seedReview(userId: string, courseId: string, today: DayKey) {
+  const lessons = await prisma.lesson.findMany({
+    where: { courseId, completedDay: { not: null } },
+    orderBy: { order: "desc" },
+  });
+  for (const [i, l] of lessons.entries()) {
+    const recent = i < 2;
+    await prisma.reviewCard.create({
+      data: {
+        userId,
+        courseId,
+        lessonId: l.id,
+        sourceKey: lessonKey(l.id),
+        source: "lesson",
+        title: l.title,
+        step: recent ? 0 : 1,
+        dueDay: recent ? today : addDays(today, 2 + (i % 3)),
+        lastDay: recent ? null : addDays(today, -1),
+        reviews: recent ? 0 : 1,
+      },
+    });
+  }
+  const week1 = await prisma.week.findFirst({ where: { courseId, index: 1 }, include: { quizAttempts: true } });
+  const quiz = (week1?.quiz ?? []) as { q: string; choices: string[]; answer: number; why: string }[];
+  if (week1 && week1.quizAttempts.length > 0 && quiz[2]) {
+    await prisma.reviewCard.create({
+      data: { userId, courseId, sourceKey: quizKey(week1.id, 2), source: "quiz", title: "1주차 퀴즈", question: quiz[2], dueDay: today },
+    });
+  }
+}
+
 async function main() {
   await wipe();
   const today = dayKeyAt(new Date());
@@ -111,6 +148,8 @@ async function main() {
   const weekend = !STUDY.includes(weekday(today));
   const skip = weekend ? [addDays(mondayOf(today), 1), addDays(mondayOf(today), 3)] : [];
   await progress(myCourse.id, start, today, { skip, short: STUDY.includes(weekday(yesterday)) ? [yesterday] : [] });
+
+  await seedReview(me.id, myCourse.id, today);
 
   const others: [typeof minji, string, string, { skip?: DayKey[] }][] = [
     [minji, "영어 회화", "회의에서 영어로 의견 말하기", {}],

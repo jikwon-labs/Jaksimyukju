@@ -6,6 +6,7 @@ import { z } from "zod";
 import { lessonsPerWeek } from "@/lib/domain/course";
 import { WEEKDAY_KO } from "@/lib/domain/dates";
 import { systemPrompt } from "./teachers";
+import { reviewRole } from "./review";
 import { tutorRole } from "./tutor";
 import { AiError, type AiProvider, type CurriculumInput, type TutorTurn } from "./types";
 
@@ -81,6 +82,12 @@ export const Milestone = z.object({
   passed: z.boolean(),
 });
 export const Retro = z.object({ bridge: z.string(), pledge: z.string() });
+export const ReviewQ = z.object({
+  q: z.string().min(1),
+  choices: z.array(z.string().min(1)).length(4),
+  answer: z.number().int().min(0).max(3),
+  why: z.string(),
+});
 
 /** 응답에서 쓰는 부분만. 테스트는 이 모양으로 가짜 응답을 만든다 */
 export type ClaudeReply = Pick<BetaMessage, "content" | "stop_reason">;
@@ -335,6 +342,21 @@ export function createAnthropicProvider(apiKey: string, transport: ClaudeTranspo
           { stream: false, timeout: 60_000 },
         );
         return readReply(Retro, res);
+      }),
+    reviewQuestion: (input) =>
+      guard(async () => {
+        const res = await transport.send(
+          {
+            model: LIGHT_MODEL,
+            max_tokens: 4000,
+            thinking: { type: "adaptive" },
+            system: systemPrompt(input.teacher, reviewRole(input)),
+            messages: [{ role: "user", content: `복습 문제 하나를 내 주세요. (${input.step + 1}번째 복습)` }],
+            output_config: { effort: "low", format: jsonFormat(ReviewQ) },
+          },
+          { stream: false, timeout: 60_000 },
+        );
+        return readReply(ReviewQ, res);
       }),
   };
   return provider;

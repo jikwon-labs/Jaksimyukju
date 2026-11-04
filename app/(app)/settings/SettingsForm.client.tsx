@@ -22,6 +22,7 @@ interface Prefs {
   notifyTeacher: boolean;
   notifyRetro: boolean;
   notifyGroup: boolean;
+  notifyReview: boolean;
   theme: ThemeMode;
 }
 
@@ -232,6 +233,8 @@ export function SettingsForm({
           <Switch label="콕 찌르기 받기" sub="하루 최대 1번" on={p.notifyNudge} onChange={(v) => save({ notifyNudge: v })} />
           <div className={s.divider} />
           <Switch label="주간 회고" sub="일요일 밤 9시" on={p.notifyRetro} onChange={(v) => save({ notifyRetro: v })} />
+          <div className={s.divider} />
+          <Switch label="복습 알림" sub="복습할 카드가 있고 오늘 레슨을 마쳤을 때" on={p.notifyReview} onChange={(v) => save({ notifyReview: v })} />
           <div className={s.divider} />
           <Switch label="그룹 소식" sub="연속 기록, 완료 소식" on={p.notifyGroup} onChange={(v) => save({ notifyGroup: v })} />
         </div>

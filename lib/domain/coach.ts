@@ -63,11 +63,13 @@ export interface CoachInput {
   studyDay?: boolean;
   /** 스케줄러가 학습 시각 이후에 불렀는지(앱을 열 때는 학습 시간 알림을 남기지 않는다) */
   remind?: boolean;
+  /** 오늘 복습할 카드 수(쉬는 날이면 0) */
+  reviewDue?: number;
 }
 
 export interface CoachNote {
-  key: "missed_one" | "retro" | "study";
-  kind: "teacher" | "retro";
+  key: "missed_one" | "retro" | "study" | "review";
+  kind: "teacher" | "retro" | "review";
   href: string;
   /** 같은 빈 날·같은 주에 한 번만 남기기 위한 키 */
   dedupe: string;
@@ -78,6 +80,9 @@ export interface CoachNote {
 /**
  * 남길 알림. 학습일 1일 빔이면 다음 날 선생님 알림 한 번(2일 이상은 복귀 화면이 맡는다),
  * 일요일이면 주간 회고 알림 한 번(이번 주에 지난 학습일이 있을 때만. 과정이 다음 주에 시작하면 보내지 않는다), 스케줄러가 학습 시각 뒤에 부르면 비어 있는 학습일에 학습 시간 알림 한 번.
+ * 복습 알림은 스케줄러가 학습 시각 뒤에, 복습할 카드가 있고 오늘 레슨 몫이 없거나(학습일 아님) 이미 끝났을 때 하루 한 번.
+ * 레슨이 남은 학습일에는 학습 시간 알림이 먼저라서 복습 알림으로 하루 2번 한도를 쓰지 않는다.
+ * 순서가 곧 한도 안의 우선순위다: 빈 날 > 학습 시간 > 회고 > 복습.
  */
 export function coachNotes(i: CoachInput): CoachNote[] {
   const out: CoachNote[] = [];
@@ -101,6 +106,11 @@ export function coachNotes(i: CoachInput): CoachNote[] {
   const retroSent = i.sent.some((s) => s.key === "retro" && mondayOf(s.day) === week);
   if (weekday(i.today) === 0 && i.studyDaysThisWeek > 0 && !i.retroDoneThisWeek && !retroSent) {
     out.push({ key: "retro", kind: "retro", href: "/retro", dedupe: `retro:${week}` });
+  }
+  // 복습은 매일 다시 올 수 있지만 회고는 일요일 하루뿐이라, 하루 2번 한도에서 복습이 회고 칸을 빼앗지 않게 맨 뒤에 둔다
+  const reviewTime = i.remind && (i.reviewDue ?? 0) > 0 && (i.studiedToday || !i.studyDay);
+  if (reviewTime && !i.sent.some((s) => s.key === "review" && s.day === i.today)) {
+    out.push({ key: "review", kind: "review", href: "/review", dedupe: `review:${i.today}` });
   }
   return out;
 }

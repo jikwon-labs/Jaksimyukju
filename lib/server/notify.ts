@@ -5,12 +5,13 @@ import { addDays, type DayKey } from "@/lib/domain/dates";
 import { canNotify, NOTIFY_DAILY_MAX, type NotifyDecision } from "@/lib/domain/limits";
 import { pushNotification } from "./push";
 
-export type NotifyKind = "nudge" | "teacher" | "retro" | "group" | "comeback" | "invite";
+export type NotifyKind = "nudge" | "teacher" | "retro" | "group" | "comeback" | "invite" | "review";
 
 function enabledFor(user: User, kind: NotifyKind): boolean {
   if (kind === "nudge") return user.notifyNudge;
   if (kind === "teacher") return user.notifyTeacher;
   if (kind === "retro") return user.notifyRetro;
+  if (kind === "review") return user.notifyReview;
   return user.notifyGroup;
 }
 

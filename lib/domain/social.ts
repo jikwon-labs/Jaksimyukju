@@ -105,7 +105,7 @@ export function memberStatus(m: MemberStatusInput): MemberStatus {
 
 // 알림 목록
 
-export type NotifIcon = "poke" | "bell" | "fire" | "moon" | "users" | "route" | "book";
+export type NotifIcon = "poke" | "bell" | "fire" | "moon" | "users" | "route" | "book" | "repeat";
 
 export function notifIcon(kind: string): NotifIcon {
   switch (kind) {
@@ -121,6 +121,8 @@ export function notifIcon(kind: string): NotifIcon {
       return "users";
     case "comeback":
       return "route";
+    case "review":
+      return "repeat";
     default:
       return "book";
   }

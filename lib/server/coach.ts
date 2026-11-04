@@ -5,9 +5,11 @@ import { TIME_ZONE } from "@/lib/clock";
 import { addDays, dayKeyAt, diffDays, mondayOf, type DayKey } from "@/lib/domain/dates";
 import { coachNotes, MISSED_EARLIER_LINE, MISSED_ONE_LINE, reminderDue, RETRO_LINE, STUDY_LINE } from "@/lib/domain/coach";
 import { dayKind, missedStudyDays } from "@/lib/domain/rest";
+import { reviewLine } from "@/lib/domain/review";
 import type { CourseState } from "./course";
 import { teacherOf } from "./course";
 import { createCapped, notifyDecision } from "./notify";
+import { countDue } from "./review";
 
 /**
  * 홈을 열 때와 스케줄러가 부른다. 남길 선생님 알림이 있으면 알림 목록에 넣는다(알림 제한을 지킨다).
@@ -26,14 +28,16 @@ export async function runCoach(
   const who = teacherOf(user);
   const since = new Date(`${addDays(mondayOf(today), -7)}T00:00:00+09:00`);
   const recent = await prisma.notification.findMany({
-    where: { userId: user.id, kind: { in: ["teacher", "retro"] }, createdAt: { gte: since } },
+    where: { userId: user.id, kind: { in: ["teacher", "retro", "review"] }, createdAt: { gte: since } },
     select: { kind: true, body: true, createdAt: true },
   });
   const sent = recent.map((n) => ({
     key:
       n.kind === "retro"
         ? "retro"
-        : Object.values(STUDY_LINE).includes(n.body)
+        : n.kind === "review"
+          ? "review"
+          : Object.values(STUDY_LINE).includes(n.body)
           ? "study"
           : [...Object.values(MISSED_ONE_LINE), ...Object.values(MISSED_EARLIER_LINE)].includes(n.body)
           ? "missed_one"
@@ -51,6 +55,9 @@ export async function runCoach(
   for (let d = weekStart; diffDays(today, d) > 0; d = addDays(d, 1)) {
     if (dayKind(st.cal, d) === "study") studyDaysThisWeek++;
   }
+  const remind = tickMinute !== null && reminderDue(tickMinute, user.notifyTime);
+  // 복습 알림은 스케줄러만 남기므로 그때만 센다
+  const reviewDue = remind && !st.restingToday ? await countDue(st) : 0;
   const notes = coachNotes({
     today,
     missed: gap.count,
@@ -61,14 +68,17 @@ export async function runCoach(
     retroDoneThisWeek,
     studyDaysThisWeek,
     studyDay: dayKind(st.cal, today) === "study",
-    remind: tickMinute !== null && reminderDue(tickMinute, user.notifyTime),
+    remind,
+    reviewDue,
   });
   let made = 0;
   for (const n of notes) {
     const d = await notifyDecision(user, n.kind, today, hour);
     if (!d.ok) continue;
     const body =
-      n.key === "retro"
+      n.key === "review"
+        ? reviewLine(who, reviewDue)
+        : n.key === "retro"
         ? RETRO_LINE[who]
         : n.key === "study"
           ? STUDY_LINE[who]
@@ -80,7 +90,14 @@ export async function runCoach(
       {
         userId: user.id,
         kind: n.kind,
-        title: n.key === "retro" ? "주간 회고" : n.key === "study" ? "학습 시간" : `${who} 선생님`,
+        title:
+          n.key === "review"
+            ? "오늘 복습"
+            : n.key === "retro"
+              ? "주간 회고"
+              : n.key === "study"
+                ? "학습 시간"
+                : `${who} 선생님`,
         body,
         href: n.href,
         dedupeKey: `${user.id}:${n.dedupe}`,

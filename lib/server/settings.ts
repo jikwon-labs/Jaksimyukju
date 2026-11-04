@@ -16,6 +16,7 @@ export const settingsSchema = z
     notifyTeacher: z.boolean(),
     notifyRetro: z.boolean(),
     notifyGroup: z.boolean(),
+    notifyReview: z.boolean(),
     theme: z.enum(["system", "light", "dark"]),
   })
   .partial();
@@ -58,6 +59,7 @@ export async function updateSettings(user: User, patch: unknown): Promise<User |
       ...(p.notifyTeacher !== undefined && { notifyTeacher: p.notifyTeacher }),
       ...(p.notifyRetro !== undefined && { notifyRetro: p.notifyRetro }),
       ...(p.notifyGroup !== undefined && { notifyGroup: p.notifyGroup }),
+      ...(p.notifyReview !== undefined && { notifyReview: p.notifyReview }),
       ...(p.theme && { theme: p.theme }),
     },
   });

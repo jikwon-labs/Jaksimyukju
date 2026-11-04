@@ -2,7 +2,7 @@ import { test } from "@playwright/test";
 import { expectNoA11yViolations, loginDemo, resetDb } from "./helpers";
 
 // 주요 화면에 심각(serious/critical) 접근성 위반이 없는지 axe로 본다
-const ROUTES = ["/home", "/curriculum", "/group", "/profile", "/settings", "/notifications", "/pause", "/states"];
+const ROUTES = ["/home", "/curriculum", "/group", "/profile", "/settings", "/notifications", "/pause", "/review", "/states"];
 
 test.beforeAll(() => {
   resetDb();

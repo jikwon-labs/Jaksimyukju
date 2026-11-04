@@ -27,6 +27,7 @@ model User {
   notifyTeacher Boolean   @default(true)
   notifyRetro   Boolean   @default(true)
   notifyGroup   Boolean   @default(true)
+  notifyReview  Boolean   @default(true)
   createdAt     DateTime  @default(now())
 
   courses       Course[]
@@ -40,6 +41,7 @@ model User {
   sessions      Session[]
   accounts      Account[]
   reports       Report[]
+  reviewCards   ReviewCard[]
 
   @@map("users")
 }
@@ -89,6 +91,7 @@ model Course {
   weeks       Week[]
   lessons     Lesson[]
   restDays    RestDay[]
+  reviewCards ReviewCard[]
 
   @@index([userId])
   @@map("courses")
@@ -132,6 +135,7 @@ model Lesson {
   course       Course         @relation(fields: [courseId], references: [id], onDelete: Cascade)
   resources    Resource[]
   messages     TutorMessage[]
+  reviewCards  ReviewCard[]
 
   @@unique([courseId, order])
   @@map("lessons")
@@ -221,7 +225,7 @@ model RestDay {
 model Notification {
   id        String    @id @default(cuid())
   userId    String
-  kind      String // nudge | teacher | retro | invite | comeback | group
+  kind      String // nudge | teacher | retro | invite | comeback | group | review
   title     String
   body      String
   href      String?
@@ -287,4 +291,31 @@ model Account {
   @@unique([provider, providerUserId])
   @@unique([userId, provider]) // 한 사용자에 공급자마다 계정 하나
   @@map("accounts")
+}
+
+/// 간격 복습 카드. 마친 레슨, 퀴즈에서 틀린 문제, 튜터 확인에서 헷갈린 레슨마다 하나.
+/// 간격은 1일 -> 3일 -> 7일 -> 14일(lib/domain/review.ts). 맞히면 다음 간격, 틀리면 1일로 돌아간다
+model ReviewCard {
+  id        String   @id @default(cuid())
+  userId    String
+  courseId  String
+  lessonId  String?
+  sourceKey String // lesson:<lessonId> | quiz:<weekId>:<문제 번호>. 과정 안에서 유일
+  source    String // lesson(마친 레슨) | tutor(튜터 확인에서 헷갈림) | quiz(퀴즈에서 틀림)
+  title     String // 카드 위에 보일 출처(레슨 제목, "2주차 퀴즈")
+  question  Json? // QuizQuestion. 비어 있으면 복습 화면을 열 때 레슨 본문으로 만든다
+  step      Int      @default(0) // 지금 간격 번호(0=1일, 1=3일, 2=7일, 3=14일)
+  dueDay    String // YYYY-MM-DD. 이날부터 복습 대상
+  lastDay   String? // 마지막으로 푼 날
+  reviews   Int      @default(0)
+  lapses    Int      @default(0) // 틀려서 1일로 돌아간 횟수
+  retired   Boolean  @default(false) // 14일 간격까지 맞혀 졸업
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  lesson    Lesson?  @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@unique([courseId, sourceKey])
+  @@index([userId, dueDay])
+  @@map("review_cards")
 }

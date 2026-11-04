@@ -6,6 +6,7 @@ import { addDays } from "@/lib/domain/dates";
 import { type CompleteMode, groupNotifyTargets, planCompletion } from "@/lib/domain/lesson";
 import { getGroupView } from "./group";
 import { createCapped } from "./notify";
+import { addLessonCard } from "./review";
 
 /** 내 과정의 레슨만 연다 */
 export async function getOwnLesson(user: User, id: string) {
@@ -67,6 +68,8 @@ export async function completeLesson(
     }
     return true;
   });
+  // 마친 레슨은 1일 뒤 복습 카드가 된다(이미 있으면 그대로)
+  if (applied) await addLessonCard(user.id, lesson, today);
   return { ok: true, firstTime: applied && plan.firstTime };
 }
 

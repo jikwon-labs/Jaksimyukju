@@ -826,3 +826,30 @@ test("29. 읽어 주기: 설정에서 목소리·속도를 고르면 레슨 듣�
   await expect(page.getByTestId("tutor-ai")).toHaveCount(1, { timeout: 15_000 });
   await expect(page.getByTestId("tutor-listen")).toHaveCount(0);
 });
+
+test("간격 복습: 홈 진입점 -> 객관식 -> 결과 -> 홈에 오늘 복습 끝", async ({ page }, info) => {
+  resetDb();
+  await loginDemo(page, "/home");
+  const entry = page.getByTestId("review-entry");
+  await expect(entry).toContainText(/오늘 복습 \d+개 · \d+분/);
+  await entry.click();
+  await expect(page).toHaveURL(/\/review$/);
+  const total = await page.locator('[role="progressbar"] span').count();
+  expect(total).toBeGreaterThan(0);
+  for (let i = 0; i < total; i++) {
+    await page.getByTestId("review-choice-0").click();
+    // 다음 복습 날은 서버가 정해서 돌려준다
+    await expect(page.getByText(/볼게요|오래 기억할 거예요/)).toBeVisible();
+    if (i === 0) await shot(page, info, "review");
+    await page.getByTestId("review-next").click();
+  }
+  await expect(page.getByTestId("review-score")).toContainText(`/ ${total}`);
+  await expect(page.getByText("복습은 잔디와 연속 기록에 세지 않아요", { exact: false })).toBeVisible();
+  await page.getByTestId("review-home").click();
+  await expect(page).toHaveURL(/\/home$/);
+  await expect(page.getByTestId("review-entry")).toHaveCount(0);
+  await expect(page.getByTestId("review-done")).toContainText(`오늘 복습 ${total}개를 마쳤어요`);
+  // 같은 날 다시 열면 풀 카드가 없다
+  await page.goto("/review");
+  await expect(page.getByTestId("review-empty")).toContainText("오늘 복습을 마쳤어요");
+});

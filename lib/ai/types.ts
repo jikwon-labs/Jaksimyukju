@@ -109,6 +109,20 @@ export interface RetroCard {
   pledge: string; // 다음 주 다짐 한 줄
 }
 
+/** 복습 카드 문제 하나를 만들 때 주는 것(lib/domain/review.ts) */
+export interface ReviewInput {
+  teacher: TeacherName;
+  lessonTitle: string;
+  core: string;
+  /** 레슨 본문. 문제는 여기서만 낸다 */
+  sections: LessonSection[];
+  level?: string;
+  /** lesson: 마친 레슨을 다시 꺼내 보기, tutor: 튜터 확인에서 헷갈린 개념을 다시 묻기 */
+  focus: "lesson" | "tutor";
+  /** 몇 번째 간격인지(0부터). 같은 레슨이라도 다른 각도로 묻는다 */
+  step: number;
+}
+
 export interface ResourceItem {
   title: string;
   url: string;
@@ -124,6 +138,8 @@ export interface AiProvider {
   tutorReply(input: TutorInput): Promise<TutorReply>;
   milestoneFeedback(input: MilestoneInput): Promise<MilestoneFeedback>;
   roommate(input: RetroInput): Promise<RetroCard>;
+  /** 복습 카드 객관식 한 문제(보기 4개) */
+  reviewQuestion(input: ReviewInput): Promise<QuizQuestion>;
 }
 
 /** Librarian: 레슨마다 자료를 3개까지 고른다(lib/ai/librarian.ts) */

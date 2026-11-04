@@ -69,3 +69,26 @@ describe("스케줄러의 학습 시간 알림", () => {
     expect(reminderDue(22 * 60 + 30, "23:00")).toBe(true);
   });
 });
+
+describe("복습 알림", () => {
+  const due = { ...base, remind: true, studyDay: true, reviewDue: 3 };
+  it("학습일에는 오늘 레슨을 마친 뒤에만, 하루 한 번", () => {
+    expect(coachNotes(due).map((n) => n.key)).toEqual(["study"]);
+    const done = coachNotes({ ...due, studiedToday: true });
+    expect(done).toEqual([{ key: "review", kind: "review", href: "/review", dedupe: "review:2026-10-29" }]);
+    expect(coachNotes({ ...due, studiedToday: true, sent: [{ key: "review", day: "2026-10-29" }] })).toEqual([]);
+  });
+  it("학습일이 아닌 날에는 학습 시각 뒤에 보낸다", () => {
+    expect(coachNotes({ ...due, studyDay: false }).map((n) => n.key)).toEqual(["review"]);
+  });
+  it("카드가 없거나, 앱을 열 때거나, 쉬는 날이면 보내지 않는다", () => {
+    expect(coachNotes({ ...due, studyDay: false, reviewDue: 0 })).toEqual([]);
+    expect(coachNotes({ ...due, studyDay: false, remind: false })).toEqual([]);
+    expect(coachNotes({ ...due, studyDay: false, restingToday: true })).toEqual([]);
+  });
+  it("일요일에는 회고 알림이 복습 알림보다 앞선다(하루 2번 한도에서 회고가 밀리지 않게)", () => {
+    const sun = { ...due, today: "2026-11-01", studyDay: false };
+    expect(coachNotes(sun).map((n) => n.key)).toEqual(["retro", "review"]);
+    expect(coachNotes({ ...sun, missed: 1, missedDay: "2026-10-31" }).map((n) => n.key)).toEqual(["missed_one", "retro", "review"]);
+  });
+});
