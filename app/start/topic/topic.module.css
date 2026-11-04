@@ -187,3 +187,52 @@
   outline: 3px solid var(--a-text);
   outline-offset: 2px;
 }
+/* 내 자료 올리기: 선생님 말풍선과 줄을 맞춘다 */
+.upload {
+  padding-left: 44px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.uploadCancel {
+  align-self: flex-start;
+  min-height: 40px;
+  padding: 0 4px;
+  border: none;
+  background: transparent;
+  color: var(--sub);
+  font-size: 13px;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.materialRow {
+  padding: 0 20px 8px 20px;
+}
+.materialBtn {
+  width: 100%;
+  min-height: 44px;
+  padding: 0 14px;
+  border-radius: 14px;
+  border: 1.5px dashed var(--a-text);
+  background: var(--a-tint);
+  color: var(--a-text);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.unlink {
+  min-height: 28px;
+  padding: 0 4px;
+  border: none;
+  background: transparent;
+  color: var(--sub);
+  font-size: 12px;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.materialBtn:focus-visible,
+.uploadCancel:focus-visible,
+.unlink:focus-visible {
+  outline: 3px solid var(--a-text);
+  outline-offset: 2px;
+}

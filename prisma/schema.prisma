@@ -40,6 +40,7 @@ model User {
   sessions      Session[]
   accounts      Account[]
   reports       Report[]
+  materials     Material[]
 
   @@map("users")
 }
@@ -71,24 +72,25 @@ model GroupMember {
 }
 
 model Course {
-  id          String    @id @default(cuid())
+  id          String     @id @default(cuid())
   userId      String
   topic       String
   goal        String
   level       String
-  excludes    Json      @default("[]")
-  status      String    @default("active") // active | finished | stopped
+  excludes    Json       @default("[]")
+  status      String     @default("active") // active | finished | stopped
   startDate   String // YYYY-MM-DD (사용자 기준 날짜)
-  weeksCount  Int       @default(6)
-  extraDays   Int       @default(0) // 미루기·쉬어 가기로 늘어난 학습일
+  weeksCount  Int        @default(6)
+  extraDays   Int        @default(0) // 미루기·쉬어 가기로 늘어난 학습일
   comebackDay String? // 복귀 화면에서 재조정을 고른 날
-  schedule    Json      @default("[]") // 학습 요일 변경 이력 [{ from: YYYY-MM-DD, days: number[] }]
+  schedule    Json       @default("[]") // 학습 요일 변경 이력 [{ from: YYYY-MM-DD, days: number[] }]
   replan      String? // 마지막 재조정: delay | squeeze | skip
-  createdAt   DateTime  @default(now())
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt   DateTime   @default(now())
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   weeks       Week[]
   lessons     Lesson[]
   restDays    RestDay[]
+  materials   Material[]
 
   @@index([userId])
   @@map("courses")
@@ -138,18 +140,43 @@ model Lesson {
 }
 
 model Resource {
-  id        String    @id @default(cuid())
-  lessonId  String
-  title     String
-  url       String
-  kind      String // 글 | 영상 | 문서
-  minutes   Int
-  reason    String
-  summary   Json // string[] 최대 3줄
-  checkedAt DateTime?
-  lesson    Lesson    @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  id         String    @id @default(cuid())
+  lessonId   String
+  title      String
+  url        String // 내 자료(PDF)는 빈 문자열
+  kind       String // 글 | 영상 | 책 | 내 자료
+  minutes    Int
+  reason     String
+  summary    Json // string[] 최대 3줄. 내 자료는 자료에서 그대로 뽑은 문장
+  checkedAt  DateTime?
+  materialId String? // 내 자료에서 뽑은 근거면 그 자료
+  lesson     Lesson    @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  material   Material? @relation(fields: [materialId], references: [id], onDelete: Cascade)
 
+  @@index([materialId])
   @@map("resources")
+}
+
+/// 내 자료(PDF·웹 링크). 원본 파일은 두지 않고 서버에서 뽑은 글만 둔다
+model Material {
+  id        String     @id @default(cuid())
+  userId    String
+  courseId  String? // 시작 흐름에서 올리면 과정을 만들 때 붙는다
+  kind      String // pdf | link
+  title     String
+  source    String // PDF 파일 이름 또는 링크 주소(리다이렉트 뒤 최종 주소)
+  text      String // 뽑은 글(lib/domain/material.ts TEXT_MAX_CHARS까지)
+  chars     Int
+  pages     Int?
+  truncated Boolean    @default(false)
+  createdAt DateTime   @default(now())
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course    Course?    @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  resources Resource[]
+
+  @@index([userId])
+  @@index([courseId])
+  @@map("materials")
 }
 
 model TutorMessage {

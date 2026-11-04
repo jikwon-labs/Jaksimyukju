@@ -24,6 +24,7 @@ async function wipe() {
   await prisma.restDay.deleteMany();
   await prisma.tutorMessage.deleteMany();
   await prisma.resource.deleteMany();
+  await prisma.material.deleteMany();
   await prisma.quizAttempt.deleteMany();
   await prisma.milestoneSubmission.deleteMany();
   await prisma.lesson.deleteMany();

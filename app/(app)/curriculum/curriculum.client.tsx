@@ -136,6 +136,9 @@ export function CurriculumView({ who, goal, currentWeek, finished, weeks, progre
           </span>
           <span className={s.pct}>{progress.pct}%</span>
         </div>
+        <Link href="/material" className={s.materialLink} data-testid="curriculum-material">
+          내 자료 올리기
+        </Link>
       </section>
 
       {view === "map" ? (

@@ -5,6 +5,7 @@ import type { BetaMessage, MessageCreateParamsNonStreaming } from "@anthropic-ai
 import { z } from "zod";
 import { lessonsPerWeek } from "@/lib/domain/course";
 import { WEEKDAY_KO } from "@/lib/domain/dates";
+import { MATERIAL_RULE, PROMPT_CURRICULUM_CHARS, wrapMaterial } from "@/lib/domain/material";
 import { systemPrompt } from "./teachers";
 import { tutorRole } from "./tutor";
 import { AiError, type AiProvider, type CurriculumInput, type TutorTurn } from "./types";
@@ -180,14 +181,26 @@ async function retryOnParse<T>(fn: () => Promise<T>, label: string): Promise<T> 
 
 const ADVISOR = "Advisor. 목적지에서 거꾸로 커리큘럼을 짠다. 레슨 하나는 하루 분량을 넘지 않는다. 목적지에 필요 없는 것은 제외 목록에 둔다.";
 
-function learnerLines(input: CurriculumInput): string[] {
+export function learnerLines(input: CurriculumInput): string[] {
   const days = input.studyDays.map((d) => WEEKDAY_KO[d]).join("");
-  return [
+  const lines = [
     `주제: ${input.topic}`,
     `목적지: ${input.goal}`,
     `지금 수준: ${input.level}`,
     `학습 요일: ${days} (주 ${input.studyDays.length}일), 하루 ${input.minutes}분`,
   ];
+  if (input.material?.text.trim()) {
+    lines.push(
+      "학습자가 가진 교재·자료가 있다. 과정의 순서와 레슨 본문은 이 자료의 내용을 근거로 짜고, 자료가 다루지 않는 부분만 보충한다. 근거 자료 번호 0은 이 자료다.",
+      wrapMaterial(input.material.title, input.material.text, PROMPT_CURRICULUM_CHARS),
+    );
+  }
+  return lines;
+}
+
+/** 커리큘럼 시스템 프롬프트. 내 자료가 있으면 자료를 데이터로만 읽으라는 규칙을 붙인다 */
+export function advisorRole(input: CurriculumInput): string {
+  return input.material?.text.trim() ? `${ADVISOR}\n${MATERIAL_RULE}` : ADVISOR;
 }
 
 /** 뼈대: 주차 제목, 마일스톤, 평가 기준, 레슨 제목과 핵심 한 줄. 짧고 빨라야 해서 Haiku가 만든다 */
@@ -198,7 +211,7 @@ async function curriculumOutline(transport: ClaudeTransport, input: CurriculumIn
       model: LIGHT_MODEL,
       max_tokens: 16000,
       thinking: { type: "adaptive" },
-      system: systemPrompt(input.teacher, ADVISOR),
+      system: systemPrompt(input.teacher, advisorRole(input)),
       messages: [
         {
           role: "user",
@@ -225,7 +238,7 @@ async function curriculumWeek(transport: ClaudeTransport, input: CurriculumInput
       max_tokens: 16000,
       thinking: { type: "adaptive" },
       ...FALLBACK,
-      system: systemPrompt(input.teacher, ADVISOR),
+      system: systemPrompt(input.teacher, advisorRole(input)),
       messages: [
         {
           role: "user",

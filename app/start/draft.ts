@@ -18,6 +18,9 @@ export interface Draft {
   minutes: number;
   weeks: number;
   notifyTime: string;
+  /** 주제 정하기에서 올린 내 자료(서버에 글만 저장돼 있다) */
+  materialId: string | null;
+  materialTitle: string;
 }
 
 const KEY = "j6_draft";
@@ -29,6 +32,8 @@ export const EMPTY_DRAFT: Draft = {
   topic: "",
   goal: "",
   level: "",
+  materialId: null,
+  materialTitle: "",
   ...DEFAULT_SCHEDULE,
 };
 
@@ -46,6 +51,8 @@ function parse(raw: string | null): Draft {
       answers: Array.isArray(v.answers) ? v.answers.filter(isTeacher) : [],
       reco: isTeacher(v.reco) ? v.reco : null,
       teacher: isTeacher(v.teacher) ? v.teacher : null,
+      materialId: typeof v.materialId === "string" && v.materialId ? v.materialId : null,
+      materialTitle: typeof v.materialTitle === "string" ? v.materialTitle : "",
     };
   } catch {
     return EMPTY_DRAFT;

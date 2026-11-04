@@ -11,6 +11,7 @@ import {
 } from "./finance";
 import { lessonsPerWeek } from "@/lib/domain/course";
 import { eul, iga } from "@/lib/domain/josa";
+import { clip, spreadSentences } from "@/lib/domain/material";
 import type {
   AiProvider,
   CurriculumInput,
@@ -99,10 +100,32 @@ function genericQuiz(topic: string, week: PlannedWeek): QuizQuestion[] {
   ];
 }
 
+/** 내 자료가 있으면 자료 문장을 레슨 본문의 근거로 쓴다. 근거 번호 0이 내 자료다 */
+function materialLesson(title: string, pair: [string, string], materialTitle: string): LessonBody {
+  return {
+    core: `오늘은 "${clip(pair[0], 40)}" 이 문장 하나를 내 말로 바꿔 봐요.`,
+    sections: [
+      {
+        heading: "1. 자료에서 읽기",
+        text: `${materialTitle}에는 이렇게 나와요. ${pair[0]}`,
+        example: `"${title}"를 처음 듣는 동료에게 이 문장을 30초 안에 설명한다고 생각해 봐요.`,
+        ref: 0,
+      },
+      {
+        heading: "2. 이어지는 내용",
+        text: `바로 다음에는 이 내용이 이어져요. ${pair[1]}`,
+        example: "두 문장이 어떻게 이어지는지 한 줄로 적어 봐요.",
+        ref: 0,
+      },
+    ],
+  };
+}
+
 export function mockCurriculum(input: CurriculumInput): CurriculumPlan {
   const perWeek = lessonsPerWeek(input.studyDays.length);
   const weeks: PlannedWeek[] = [];
-  const finance = isFinance(input.topic);
+  const spread = input.material ? spreadSentences(input.material.text, perWeek * input.weeks) : [];
+  const finance = isFinance(input.topic) && spread.length === 0;
   const skip = levelSkip(input.level);
   for (let w = 0; w < input.weeks; w++) {
     const last = w === input.weeks - 1;
@@ -128,8 +151,10 @@ export function mockCurriculum(input: CurriculumInput): CurriculumPlan {
     }
     const lessons = Array.from({ length: perWeek }, (_, i) => {
       const lt = lessonTitles[i % lessonTitles.length] + (i >= lessonTitles.length ? ` ${Math.floor(i / lessonTitles.length) + 1}` : "");
-      const body =
-        finance && lt === "현금흐름표는 왜 손익계산서와 다를까"
+      const pair = spread[w * perWeek + i];
+      const body = pair
+        ? materialLesson(lt, pair, input.material?.title ?? "내 자료")
+        : finance && lt === "현금흐름표는 왜 손익계산서와 다를까"
           ? CASHFLOW_LESSON
           : genericLesson(input.topic, lt, input.minutes, i % 3);
       return { title: lt, body };
@@ -160,7 +185,10 @@ export function mockTutor(input: TutorInput): TutorReply {
   if (input.free) {
     const last = [...input.history].reverse().find((h) => h.role === "user")?.content.trim() ?? "";
     const q = last.length > 24 ? `${last.slice(0, 24)}...` : last;
-    return { content: FREE_REPLY[input.teacher](q), understanding: "이해", done: true, choices: [] };
+    // 내 자료가 있으면 자료의 첫 문장을 근거로 함께 보여 준다
+    const quote = input.material?.text.split("\n").find((l) => l.trim());
+    const from = quote ? `\n\n올려 준 자료에 이런 문장이 있어요. "${clip(quote.trim(), 60)}"` : "";
+    return { content: FREE_REPLY[input.teacher](q) + from, understanding: "이해", done: true, choices: [] };
   }
   const finance = input.lessonTitle === "현금흐름표는 왜 손익계산서와 다를까";
   const userTurns = input.history.filter((h) => h.role === "user");

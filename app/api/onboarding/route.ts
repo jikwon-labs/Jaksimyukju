@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { AiError } from "@/lib/ai/types";
-import { OnboardingInput, startOnboarding } from "@/lib/server/onboarding";
+import { MaterialNotFound, OnboardingInput, startOnboarding } from "@/lib/server/onboarding";
 
 /** 시작 흐름 마지막: 계정(게스트)과 과정을 만들고 미리보기용 요약을 돌려준다 */
 export async function POST(req: NextRequest) {
@@ -18,6 +18,7 @@ export async function POST(req: NextRequest) {
     const summary = await startOnboarding(parsed.data);
     return NextResponse.json(summary);
   } catch (e) {
+    if (e instanceof MaterialNotFound) return NextResponse.json({ error: "invalid", issues: ["materialId"] }, { status: 400 });
     if (e instanceof AiError) {
       console.error("[onboarding] ai", e.reason, e.message);
       return NextResponse.json({ error: "ai", reason: e.reason }, { status: 502 });

@@ -1,4 +1,5 @@
 // 튜터 프롬프트와 규칙의 순수 계산. 실제 호출(anthropic.ts)과 서버(api/tutor)가 같이 쓴다
+import { MATERIAL_RULE, PROMPT_TUTOR_CHARS, wrapMaterial } from "@/lib/domain/material";
 import type { LessonSection, TutorInput, TutorReply, TutorTurn, Understanding } from "./types";
 
 /** 열린 질문에 엇나간 답을 몇 번까지 받을지. 여기에 닿으면 정답을 알려 주고 끝낸다 */
@@ -106,6 +107,13 @@ export function tutorRole(input: TutorInput): string {
       input.free
         ? "답은 이 레슨 본문을 먼저 근거로 한다. 본문에 없어도 널리 알려진 기초 지식이면 짧게 답하고 레슨 밖 내용이라고 한마디 밝힌다. 확실하지 않은 수치나 최신 정보는 모른다고 한다."
         : "질문과 채점은 이 레슨 본문을 근거로 한다. 레슨 본문에 없는 사실은 지어내지 않는다.",
+    );
+  }
+  if (input.material?.text.trim()) {
+    lines.push(
+      `학습자가 올린 자료에서 이 레슨과 맞닿은 부분:\n${wrapMaterial(input.material.title, input.material.text, PROMPT_TUTOR_CHARS)}`,
+      MATERIAL_RULE,
+      "질문과 답은 레슨 본문과 이 자료를 함께 근거로 한다. 자료에서 가져온 내용이면 \"올려 준 자료에\"라고 밝힌다.",
     );
   }
   if (input.free) {

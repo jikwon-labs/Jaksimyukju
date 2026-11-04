@@ -41,6 +41,14 @@ export interface CurriculumInput {
   minutes: number;
   weeks: number;
   teacher: TeacherName;
+  /** 내 자료(PDF·링크에서 뽑은 글). 있으면 이 자료를 근거로 과정을 짠다 */
+  material?: MaterialText;
+}
+
+/** AI에 넘기는 내 자료. 프롬프트에 넣을 때 wrapMaterial이 한도에서 자르고 감싼다 */
+export interface MaterialText {
+  title: string;
+  text: string;
 }
 
 export interface CurriculumPlan {
@@ -71,6 +79,8 @@ export interface TutorInput {
   level?: string;
   /** 같은 코스 지난 레슨 중 확인이 덜 된 레슨 제목(최근 것부터) */
   weak?: string[];
+  /** 과정에 붙은 내 자료에서 이 레슨과 맞닿은 문장들 */
+  material?: MaterialText;
 }
 
 export interface TutorReply {
