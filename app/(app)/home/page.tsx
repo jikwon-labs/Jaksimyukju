@@ -6,11 +6,12 @@ import { Grass } from "@/components/course/Grass";
 import { ShortPath } from "@/components/course/ShortPath";
 import { NudgeButton } from "@/components/NudgeButton";
 import { Page } from "@/components/ui";
+import { WidgetSync } from "@/components/WidgetSync";
 import { getSessionUser } from "@/lib/auth";
 import { getHour, getNow, getToday } from "@/lib/clock";
 import { LINES } from "@/lib/ai/teachers";
 import { TUTOR_QUESTIONS } from "@/lib/domain/lesson";
-import { shortPath, stepsToMilestone, type Step } from "@/lib/domain/course";
+import { shortPath, stepHref, stepsToMilestone, type Step } from "@/lib/domain/course";
 import { WEEKDAY_KO, weekday } from "@/lib/domain/dates";
 import { NUDGE_MESSAGES } from "@/lib/domain/limits";
 import { reviewEntryLabel } from "@/lib/domain/review";
@@ -22,12 +23,6 @@ import { reviewSummary } from "@/lib/server/review";
 import s from "./home.module.css";
 
 export const metadata = { title: "오늘 · 작심육주" };
-
-function stepHref(st: Step, short = false): string {
-  if (st.kind === "quiz") return `/quiz/${st.week}`;
-  if (st.kind === "goal") return `/milestone/${st.week}`;
-  return `/lesson/${st.lessonId}${short ? "?mode=short" : ""}`;
-}
 
 function stepMeta(st: Step, topic: string): string {
   if (st.kind === "quiz") return `${topic} · 이번 주 레슨으로 3문제 · 약 3분`;
@@ -202,6 +197,7 @@ export default async function HomePage() {
           </Link>
         </section>
       )}
+      <WidgetSync />
     </Page>
   );
 }

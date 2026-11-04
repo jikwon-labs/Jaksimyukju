@@ -11,6 +11,8 @@ import { type DayKey, parseStudyDays } from "@/lib/domain/dates";
 import {
   type ActivityInput,
   activityLevels,
+  countedMilestoneDays,
+  countedQuizDay,
   currentStreak,
   type GrassCell,
   type GrassLevel,
@@ -76,17 +78,28 @@ export function activityOf(course: CourseFull): ActivityInput[] {
       else if (l.status === "done")
         items.push({ day: l.completedDay, kind: l.tutorChecked ? "lesson_tutor" : "lesson" });
     }
-    // 퀴즈는 주차마다 첫 응시만 센다(옛 퀴즈 재응시로 연속을 이어 가지 않게)
-    const firstQuiz = w.quizAttempts[w.quizAttempts.length - 1];
-    if (firstQuiz) items.push({ day: firstQuiz.day, kind: "quiz" });
-    // 마일스톤은 통과할 때까지 낸 차수만 센다
-    const asc = [...w.milestones].reverse();
-    for (const m of asc) {
-      items.push({ day: m.day, kind: "milestone" });
-      if (json<{ passed?: boolean }>(m.feedback).passed === true) break;
-    }
+    const quizDay = countedQuizDay(quizDaysAsc(w));
+    if (quizDay) items.push({ day: quizDay, kind: "quiz" });
+    for (const day of countedMilestoneDays(milestoneRoundsAsc(w)))
+      items.push({ day, kind: "milestone" });
   }
   return items;
+}
+
+type WeekFull = CourseFull["weeks"][number];
+
+/** 퀴즈 응시 날, 오래된 것부터(courseInclude는 최신순으로 읽는다) */
+export function quizDaysAsc(w: Pick<WeekFull, "quizAttempts">): DayKey[] {
+  return w.quizAttempts.map((q) => q.day).reverse();
+}
+
+/** 마일스톤 제출 차수, 오래된 것부터 */
+export function milestoneRoundsAsc(
+  w: Pick<WeekFull, "milestones">,
+): { day: DayKey; passed: boolean }[] {
+  return w.milestones
+    .map((m) => ({ day: m.day, passed: json<{ passed?: boolean }>(m.feedback).passed === true }))
+    .reverse();
 }
 
 export interface CourseState {

@@ -1,4 +1,6 @@
 // 웹과 앱 껍데기 사이의 약속. 웹 쪽은 lib/external.ts
+import { parseWidgetSummary, widgetLinkPath, type WidgetSummary } from "./widget-data";
+
 export const OPEN_EXTERNAL = "open-external";
 
 /** 띄울 웹 주소. iOS 시뮬레이터는 맥의 localhost를 그대로 쓴다. 기기나 안드로이드 에뮬레이터는 EXPO_PUBLIC_WEB_URL로 바꾼다 */
@@ -109,4 +111,34 @@ export function isKakaoCancel(e: unknown): boolean {
   const text =
     e instanceof Error ? `${e.message} ${(e as { code?: unknown }).code ?? ""}` : String(e);
   return /cancel/i.test(text);
+}
+
+// 홈 화면 위젯 약속. 웹 쪽은 lib/widget-bridge.ts, 요약 모양은 widget-data.ts
+export const WIDGET_UPDATE = "widget-update";
+export const WIDGET_REFRESH_EVENT = "j6-widget-refresh";
+
+/** 웹이 보낸 메시지가 "위젯 갱신"이면 { summary }(null이면 위젯을 비운다), 아니거나 모양이 틀리면 null */
+export function widgetUpdate(data: string): { summary: WidgetSummary | null } | null {
+  try {
+    const m: unknown = JSON.parse(data);
+    if (typeof m !== "object" || m === null) return null;
+    const { type, summary } = m as { type?: unknown; summary?: unknown };
+    if (type !== WIDGET_UPDATE) return null;
+    if (summary === null) return { summary: null };
+    const parsed = parseWidgetSummary(summary);
+    return parsed ? { summary: parsed } : null;
+  } catch {
+    return null;
+  }
+}
+
+/** 앱이 다시 앞으로 왔을 때 웹에 위젯 요약을 다시 보내 달라고 하는 스크립트 */
+export function widgetRefreshScript(): string {
+  return `window.dispatchEvent(new Event(${JSON.stringify(WIDGET_REFRESH_EVENT)}));true;`;
+}
+
+/** 위젯이 연 주소(jaksim6://open?to=/home)를 웹뷰가 열 주소로. 위젯 주소가 아니면 null */
+export function widgetOpenUrl(url: string, base: string = WEB_URL): string | null {
+  const path = widgetLinkPath(url);
+  return path ? base.replace(/\/$/, "") + path : null;
 }

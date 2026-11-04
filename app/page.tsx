@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { inviteGroup } from "@/lib/server/onboarding";
 import { availableProviders } from "@/lib/server/oauth";
 import { parseTeacher, TEACHER_COOKIE } from "@/lib/theme";
+import { WidgetSync } from "@/components/WidgetSync";
 import { Welcome } from "./welcome.client";
 
 export const metadata = { title: "작심육주" };
@@ -22,5 +23,11 @@ export default async function WelcomePage({ searchParams }: { searchParams: Prom
   const teacher = user ? parseTeacher(user.teacher) : parseTeacher((await cookies()).get(TEACHER_COOKIE)?.value);
   const group = await inviteGroup();
   const invite = group ? { inviter: group.createdBy.name, group: group.name } : null;
-  return <Welcome teacher={teacher} invite={invite} providers={availableProviders()} loginResult={login ?? null} guestAtRisk={guestAtRisk} />;
+  return (
+    <>
+      <Welcome teacher={teacher} invite={invite} providers={availableProviders()} loginResult={login ?? null} guestAtRisk={guestAtRisk} />
+      {/* 로그아웃 뒤에는 홈 화면 위젯을 비운다 */}
+      <WidgetSync />
+    </>
+  );
 }

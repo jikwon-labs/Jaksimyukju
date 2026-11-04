@@ -116,6 +116,17 @@ Expo 앱이 웹 화면(3100 포트)을 그대로 띄운다. 자료 원문처럼 
 
 앱의 웹뷰는 Safari와 쿠키를 나누지 않아서 처음에는 새 게스트로 시작한다.
 
+### 홈 화면 위젯
+
+휴대폰 홈 화면에 연속 학습 일수, 최근 5주 잔디, 오늘 할 일(제목과 아직·완료·쉬는 날)을 보여 준다. 누르면 앱이 홈으로, 오늘 칸 줄을 누르면 그 레슨(퀴즈·마일스톤) 화면으로 열린다. 라이트·다크와 고른 선생님 색을 따른다. 이름·주제·그룹은 싣지 않는다.
+
+- 데이터: 웹 `GET /api/widget`(로그인 세션 쿠키, `no-store`)이 요약을 만든다(순수 함수 `lib/domain/widget.ts`). 앱 안의 웹 화면(`components/WidgetSync.tsx`, 홈·레슨 완료·시작 화면)이 요약을 받아 껍데기에 `widget-update` 메시지로 넘긴다(`lib/widget-bridge.ts` ↔ `mobile/bridge.ts`). 앱이 다시 앞으로 오면 껍데기가 갱신을 다시 부탁한다. 로그아웃하면 위젯을 비운다.
+- iOS: `@bacons/apple-targets`가 `mobile/targets/widget/`(SwiftUI WidgetKit, 작게·중간)을 확장 타깃으로 붙인다. 요약은 App Group `group.com.jaksim6.app`의 UserDefaults에 둔다. 자정(한국 시간)이 지나면 "새로고침"으로 바뀌고, 앱을 열면 새 요약으로 다시 그린다. iOS 17 이상.
+- 안드로이드: `react-native-android-widget`(`mobile/widget/`, 4x2). 요약은 AsyncStorage에 두고, 30분마다와 앱이 요약을 받을 때 다시 그린다.
+- 위젯 주소는 `jaksim6://open?to=/home`(app.json `scheme`). 앱 안 경로만 연다.
+- 네이티브 코드라 Expo Go에서는 보이지 않는다. 안드로이드 위젯 라이브러리는 네이티브 모듈이 있을 때만 불러와서(`mobile/widget/android.ts`) Expo Go에서도 앱 껍데기는 그대로 열린다. `npx expo prebuild` 후 개발 빌드나 Release 빌드로 확인한다. 위젯 확장은 번들 ID `com.jaksim6.app.widget`과 App Group이 필요해서, 처음 한 번은 `npx eas-cli build -p ios --profile production`을 대화형으로 돌려 인증서·프로비저닝을 만든다(CI의 `--non-interactive`로는 만들지 못한다). 그다음 GitHub 레포 변수 `IOS_WIDGET_CREDENTIALS_READY`를 `true`로 둔다. 이 변수가 없으면 `app-release` 워크플로가 EAS 빌드를 시작하기 전에 이 안내와 함께 멈춘다.
+- 날짜는 서버와 같은 한국 시간(Asia/Seoul)으로 본다. 해외에서도 한국 자정에 "새로고침"으로 바뀐다.
+
 ### 실제 아이폰에 설치
 
 평소에는 quedot-commerce-app처럼 맥에서 직접 빌드해 케이블로 연결한 폰에 깐다. Expo 서버를 거치지 않아 빌드 횟수를 쓰지 않는다. 앱은 `EXPO_PUBLIC_WEB_URL`(맥의 IP와 3100 포트)을 연다.

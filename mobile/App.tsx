@@ -4,11 +4,12 @@
 // 웹이 "auth-open"을 보내면 로그인을 앱이 맡는다(lib/app-auth-bridge.ts): 카카오는 카카오톡 앱, Apple·구글은 Safari 로그인 창.
 import { login as kakaoLogin } from "@react-native-seoul/kakao-login";
 import Constants from "expo-constants";
+// 웹이 "widget-update"를 보내면 홈 화면 위젯을 새로 그리고(lib/widget-bridge.ts), 위젯을 누르면 그 주소(jaksim6://open?to=...)로 간다.
 import { StatusBar } from "expo-status-bar";
 import * as Notifications from "expo-notifications";
 import * as WebBrowser from "expo-web-browser";
 import { useEffect, useRef, useState } from "react";
-import { Pressable, StyleSheet, Text, useColorScheme, View } from "react-native";
+import { AppState, Linking, Pressable, StyleSheet, Text, useColorScheme, View } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { WebView, type WebViewMessageEvent } from "react-native-webview";
 import type { ShouldStartLoadRequest } from "react-native-webview/lib/WebViewTypes";
@@ -25,8 +26,12 @@ import {
   staysInWebView,
   WEB_URL,
   type AuthOpen,
+  widgetOpenUrl,
+  widgetRefreshScript,
+  widgetUpdate,
 } from "./bridge";
 import { getPushToken } from "./push";
+import { saveWidgetSummary } from "./widget-store";
 
 /** 카카오 네이티브 앱 키로 빌드했는지(app.config.js). 아니면 카카오도 Safari 로그인 창으로 연다 */
 const KAKAO_NATIVE = Constants.expoConfig?.extra?.kakaoNative === true;
@@ -54,10 +59,35 @@ export default function App() {
     if (handled.current === id) return;
     handled.current = id;
     const url = notificationUrl(response.notification.request.content.data);
-    if (!url) return;
+    if (url) open(url);
+  }, [response]);
+
+  // 알림과 같이 열 주소를 받는다: 아직 안 떴으면 다 뜬 뒤에 간다
+  function open(url: string) {
     if (loaded.current) go(url);
     else pendingUrl.current = url;
-  }, [response]);
+  }
+
+  // 홈 화면 위젯을 눌러 켜진 경우(앱이 꺼져 있었으면 처음 주소, 켜져 있었으면 url 이벤트)
+  useEffect(() => {
+    void Linking.getInitialURL().then((u) => {
+      const url = u ? widgetOpenUrl(u) : null;
+      if (url) open(url);
+    });
+    const sub = Linking.addEventListener("url", ({ url }) => {
+      const to = widgetOpenUrl(url);
+      if (to) open(to);
+    });
+    return () => sub.remove();
+  }, []);
+
+  // 앱이 다시 앞으로 오면 웹에 위젯 요약을 다시 보내 달라고 한다(날이 바뀌었거나 다른 기기에서 공부한 경우)
+  useEffect(() => {
+    const sub = AppState.addEventListener("change", (s) => {
+      if (s === "active" && loaded.current) web.current?.injectJavaScript(widgetRefreshScript());
+    });
+    return () => sub.remove();
+  }, []);
 
   function onLoadEnd() {
     loaded.current = true;
@@ -105,6 +135,11 @@ export default function App() {
     const url = externalUrl(data);
     if (url) {
       void WebBrowser.openBrowserAsync(url);
+      return;
+    }
+    const widget = widgetUpdate(data);
+    if (widget) {
+      void saveWidgetSummary(widget.summary);
       return;
     }
     const push = pushRequest(data);

@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import { addDays, diffDays, mondayOf, parseStudyDays, weekday } from "./dates";
 import {
   activityLevels,
+  countedMilestoneDays,
+  countedQuizDay,
   currentStreak,
   dayKind,
   grassGrid,
@@ -225,5 +227,23 @@ describe("학습 요일 변경 이력", () => {
       { from: "2026-10-19", days: [1, 2, 3, 4, 5] },
       { from: "2026-10-28", days: [2, 4] },
     ]);
+  });
+});
+
+describe("잔디에 세는 퀴즈·마일스톤", () => {
+  it("퀴즈는 주차마다 첫 응시만 센다", () => {
+    expect(countedQuizDay([])).toBeNull();
+    expect(countedQuizDay(["2026-10-23", "2026-11-04"])).toBe("2026-10-23");
+  });
+  it("마일스톤은 통과할 때까지 낸 차수만 센다", () => {
+    expect(countedMilestoneDays([])).toEqual([]);
+    expect(
+      countedMilestoneDays([
+        { day: "2026-10-28", passed: false },
+        { day: "2026-10-30", passed: true },
+        { day: "2026-11-04", passed: true },
+      ]),
+    ).toEqual(["2026-10-28", "2026-10-30"]);
+    expect(countedMilestoneDays([{ day: "2026-10-28", passed: false }])).toEqual(["2026-10-28"]);
   });
 });

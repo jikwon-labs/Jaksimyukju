@@ -1,6 +1,7 @@
 // 루트의 vitest가 돌린다. 웹(lib/external.ts)과 앱 껍데기가 같은 메시지 약속을 쓰는지 본다
 import { describe, expect, it } from "vitest";
 import { OPEN_EXTERNAL as WEB_SIDE } from "../lib/external";
+import { dayKeyAt } from "../lib/domain/dates";
 import {
   APP_AUTH_REDIRECT as WEB_APP_AUTH_REDIRECT,
   AUTH_OPEN as WEB_AUTH_OPEN,
@@ -29,7 +30,13 @@ import {
   pushRequest,
   pushTokenScript,
   staysInWebView,
+  WIDGET_REFRESH_EVENT,
+  WIDGET_UPDATE,
+  widgetOpenUrl,
+  widgetRefreshScript,
+  widgetUpdate,
 } from "./bridge";
+import { cellStyle, isStale, widgetDayKey, widgetLink, widgetLinkPath, withAlpha } from "./widget-data";
 
 describe("externalUrl", () => {
   it("웹과 같은 메시지 이름을 쓴다", () => {
@@ -142,5 +149,55 @@ describe("로그인 약속", () => {
   it("카카오 취소만 취소로 본다", () => {
     expect(isKakaoCancel(new Error("user cancelled"))).toBe(true);
     expect(isKakaoCancel(new Error("KAKAO_APP_KEY is missing"))).toBe(false);
+  });
+});
+
+describe("홈 화면 위젯", () => {
+  it("위젯 주소는 앱 안 경로만 연다", () => {
+    expect(widgetLink("/lesson/abc")).toBe("jaksim6://open?to=%2Flesson%2Fabc");
+    expect(widgetLink("https://evil.test")).toBe("jaksim6://open?to=%2Fhome");
+    expect(widgetLinkPath(widgetLink("/quiz/2"))).toBe("/quiz/2");
+    expect(widgetOpenUrl(widgetLink("/home"), "https://j6.test/")).toBe("https://j6.test/home");
+    expect(widgetOpenUrl("jaksim6://open?to=%2F%2Fevil.test", "https://j6.test")).toBeNull();
+    expect(
+      widgetOpenUrl("jaksim6://open?to=https%3A%2F%2Fevil.test", "https://j6.test"),
+    ).toBeNull();
+    expect(widgetOpenUrl("other://open?to=%2Fhome", "https://j6.test")).toBeNull();
+    expect(widgetOpenUrl("https://j6.test/home", "https://j6.test")).toBeNull();
+  });
+  it("위젯 갱신 메시지만 꺼낸다", () => {
+    expect(widgetUpdate(JSON.stringify({ type: WIDGET_UPDATE, summary: null }))).toEqual({
+      summary: null,
+    });
+    expect(widgetUpdate(JSON.stringify({ type: WIDGET_UPDATE, summary: { v: 1 } }))).toBeNull();
+    expect(widgetUpdate(JSON.stringify({ type: PUSH_REGISTER }))).toBeNull();
+    expect(widgetUpdate("nope")).toBeNull();
+  });
+  it("앞으로 오면 웹에 갱신 이벤트를 쏜다", () => {
+    let got = "";
+    const win = { dispatchEvent: (e: Event) => (got = e.type) };
+    new Function("window", "Event", widgetRefreshScript())(win, Event);
+    expect(got).toBe(WIDGET_REFRESH_EVENT);
+  });
+  it("날이 바뀌면 오래된 요약으로 본다(한국 시간 자정 기준)", () => {
+    const now = new Date("2026-11-04T23:59:00+09:00");
+    expect(widgetDayKey(now)).toBe("2026-11-04");
+    expect(isStale({ day: "2026-11-04" }, now)).toBe(false);
+    expect(isStale({ day: "2026-11-04" }, new Date("2026-11-05T00:01:00+09:00"))).toBe(true);
+  });
+  it("기기 시간대와 상관없이 서버(getToday, Asia/Seoul)와 같은 날로 본다", () => {
+    // 미국 동부 11월 4일 오전 10시 = 한국 11월 5일 0시
+    const t = new Date("2026-11-04T10:00:00-05:00");
+    expect(widgetDayKey(t)).toBe("2026-11-05");
+    expect(widgetDayKey(t)).toBe(dayKeyAt(t, "Asia/Seoul"));
+    expect(widgetDayKey(new Date("2026-11-04T14:59:59Z"))).toBe("2026-11-04");
+    expect(widgetDayKey(new Date("2026-11-04T15:00:00Z"))).toBe("2026-11-05");
+  });
+  it("잔디 칸 색은 진하기와 오늘 표시를 따른다", () => {
+    expect(withAlpha("#5B8CFF", 0.6)).toBe("#5B8CFF99");
+    expect(cellStyle("4", "온", false, false)).toEqual({ fill: "#2F62D9", border: null });
+    expect(cellStyle("4", "온", true, false)).toEqual({ fill: "#5B8CFF", border: null });
+    expect(cellStyle("0", "결", false, true)).toEqual({ fill: null, border: "#B42E25" });
+    expect(cellStyle("-", "새", false, false)).toEqual({ fill: null, border: null });
   });
 });
