@@ -276,3 +276,26 @@ describe("커리큘럼 뼈대는 모양이 틀리면 한 번 다시 만든다", 
   });
 });
 
+
+describe("복습 문제", () => {
+  const input = {
+    teacher: "새" as const,
+    lessonTitle: "레슨",
+    core: "핵심 한 줄",
+    sections: [{ heading: "소제목", text: "설명", example: "예시", ref: 0 }],
+    focus: "lesson" as const,
+    step: 1,
+  };
+  it("가벼운 모델로 레슨 본문을 넣어 부르고 답을 그대로 쓴다", async () => {
+    const q = { q: "핵심은?", choices: ["a", "b", "c", "d"], answer: 1, why: "이유" };
+    const { calls, ai } = stub(textReply(q));
+    await expect(ai.reviewQuestion(input)).resolves.toEqual(q);
+    expect(calls[0].params.model).toBe(LIGHT_MODEL);
+    expect(String(calls[0].params.system)).toContain("소제목");
+    expect(calls[0].opts.stream).toBe(false);
+  });
+  it("보기가 4개가 아니면 parse 오류", async () => {
+    const { ai } = stub(textReply({ q: "핵심은?", choices: ["a", "b"], answer: 1, why: "이유" }));
+    await expect(ai.reviewQuestion(input)).rejects.toMatchObject({ reason: "parse" });
+  });
+});

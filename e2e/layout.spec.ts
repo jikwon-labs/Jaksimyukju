@@ -2,7 +2,7 @@ import { expect, type Page, test } from "@playwright/test";
 import { loginDemo, resetDb } from "./helpers";
 
 // 가장 좁은 폰(320px)에서 가로 스크롤이 생기지 않는지 본다
-const ROUTES = ["/home", "/curriculum", "/group", "/profile", "/settings", "/notifications", "/pause", "/quiz/2", "/milestone/2", "/finish", "/retro", "/states"];
+const ROUTES = ["/home", "/curriculum", "/group", "/profile", "/settings", "/notifications", "/pause", "/quiz/2", "/milestone/2", "/finish", "/retro", "/review", "/states"];
 
 test.beforeAll(() => {
   resetDb();

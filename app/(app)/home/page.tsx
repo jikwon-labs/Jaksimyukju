@@ -13,10 +13,12 @@ import { TUTOR_QUESTIONS } from "@/lib/domain/lesson";
 import { shortPath, stepsToMilestone, type Step } from "@/lib/domain/course";
 import { WEEKDAY_KO, weekday } from "@/lib/domain/dates";
 import { NUDGE_MESSAGES } from "@/lib/domain/limits";
+import { reviewEntryLabel } from "@/lib/domain/review";
 import { prisma } from "@/lib/prisma";
 import { loadState, teacherOf } from "@/lib/server/course";
 import { runCoach } from "@/lib/server/coach";
 import { getGroupView } from "@/lib/server/group";
+import { reviewSummary } from "@/lib/server/review";
 import s from "./home.module.css";
 
 export const metadata = { title: "오늘 · 작심육주" };
@@ -61,6 +63,7 @@ export default async function HomePage() {
     .join(", ");
   const weekCells = st.grass.flat().filter((c) => c.kind === "level" && c.level > 0).length;
   const offDays = st.cal.studyDays.length < 7;
+  const review = await reviewSummary(st);
 
   return (
     <Page tabs className={s.page}>
@@ -116,6 +119,29 @@ export default async function HomePage() {
             </Link>
           </div>
         </section>
+      )}
+
+      {review.due > 0 ? (
+        <Link href="/review" prefetch={false} className={s.review} data-testid="review-entry">
+          <span className={s.reviewIcon} aria-hidden>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M17 2l4 4-4 4M3 11V10a4 4 0 0 1 4-4h14M7 22l-4-4 4-4M21 13v1a4 4 0 0 1-4 4H3" />
+            </svg>
+          </span>
+          <span className={s.reviewText}>
+            <strong>{reviewEntryLabel(review.due)}</strong>
+            <span className={s.meta}>잊기 전에 한 번 꺼내 봐요 · 잔디에는 세지 않아요</span>
+          </span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden className={s.reviewChev}>
+            <path d="M9 6l6 6-6 6" />
+          </svg>
+        </Link>
+      ) : (
+        review.doneToday > 0 && (
+          <p className={s.reviewDone} data-testid="review-done">
+            오늘 복습 {review.doneToday}개를 마쳤어요
+          </p>
+        )
       )}
 
       <section aria-label="학습 잔디" className={s.card}>

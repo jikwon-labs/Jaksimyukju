@@ -1,6 +1,7 @@
 // 결정적 모의 응답. 같은 입력이면 항상 같은 결과를 돌려준다.
 import { createLibrarian, type LinkCheck, type WebSearch } from "./librarian";
 import { LINES } from "./teachers";
+import { mockReviewQuestion } from "./review";
 import { openAnswers, TUTOR_MAX_OPEN } from "./tutor";
 import {
   CASHFLOW_LESSON,
@@ -309,6 +310,9 @@ export const mockProvider: AiProvider = {
   },
   async roommate(input) {
     return mockRoommate(input);
+  },
+  async reviewQuestion(input) {
+    return mockReviewQuestion(input);
   },
 };
 

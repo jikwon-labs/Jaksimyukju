@@ -20,6 +20,7 @@ const ICONS: Record<NotifIcon, ReactNode> = {
   moon: <path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z" />,
   users: <path d="M9 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7zM3 20c0-3.3 2.7-6 6-6s6 2.7 6 6M17 11a2.5 2.5 0 1 0 0-5M16 14.2c2.8.3 5 2.6 5 5.8" />,
   route: <path d="M6 19a2 2 0 1 0 0-4 2 2 0 0 0 0 4zM18 9a2 2 0 1 0 0-4 2 2 0 0 0 0 4zM8 17h7a3 3 0 0 0 0-6H9a3 3 0 0 1 0-6h7" />,
+  repeat: <path d="M17 2l4 4-4 4M3 11V10a4 4 0 0 1 4-4h14M7 22l-4-4 4-4M21 13v1a4 4 0 0 1-4 4H3" />,
   book: <path d="M4 5.5A1.5 1.5 0 0 1 5.5 4H11v16H5.5A1.5 1.5 0 0 1 4 18.5zM20 5.5A1.5 1.5 0 0 0 18.5 4H13v16h5.5a1.5 1.5 0 0 0 1.5-1.5z" />,
 };
 
@@ -71,7 +72,7 @@ export default async function NotificationsPage() {
         <section className={s.empty} aria-label="알림 없음" data-testid="notif-empty">
           <Teacher who={who} state="base" size={96} jump />
           <h2>아직 알림이 없어요</h2>
-          <p>콕 찌르기, 선생님 알림, 그룹 소식이 오면 여기에 모여요.</p>
+          <p>콕 찌르기, 선생님 알림, 복습, 그룹 소식이 오면 여기에 모여요.</p>
         </section>
       ) : (
         groups.map((g) => (

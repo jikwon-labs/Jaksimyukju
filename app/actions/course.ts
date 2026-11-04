@@ -12,6 +12,7 @@ import { scoreQuiz } from "@/lib/domain/quiz";
 import { prisma } from "@/lib/prisma";
 import { quizOf, syncCourseStatus, teacherOf } from "@/lib/server/course";
 import { criteriaOf, weekAccess } from "@/lib/server/progress";
+import { addQuizMisses } from "@/lib/server/review";
 
 /** 개발·E2E에서 AI 실패 화면을 보려면 이 쿠키를 1로 둔다 */
 const AI_FAIL_COOKIE = "j6_ai_fail";
@@ -23,6 +24,7 @@ function refresh(week: number) {
   revalidatePath(`/quiz/${week}`);
   revalidatePath(`/milestone/${week}`);
   revalidatePath("/finish");
+  revalidatePath("/review");
 }
 
 export type QuizResult = { ok: true; score: number } | { ok: false; message: string };
@@ -41,7 +43,8 @@ export async function submitQuizAction(week: number, picks: number[]): Promise<Q
   const { access } = await weekAccess(user, today, week);
   if (!access) return { ok: false, message: "이 주차를 찾지 못했어요" };
   if (access.locked) return { ok: false, message: "아직 열리지 않은 주차예요" };
-  const scored = scoreQuiz(quizOf(access.week.quiz), picks);
+  const questions = quizOf(access.week.quiz);
+  const scored = scoreQuiz(questions, picks);
   if (!scored) return { ok: false, message: "답을 다시 골라 주세요" };
   await prisma.quizAttempt.create({
     data: {
@@ -51,6 +54,8 @@ export async function submitQuizAction(week: number, picks: number[]): Promise<Q
       day: today,
     },
   });
+  // 틀린 문제는 1일 뒤 복습 카드로
+  await addQuizMisses(user.id, access.st.course.id, access.week, questions, scored.answers, today);
   await syncCourseStatus(user, today);
   refresh(week);
   return { ok: true, score: scored.score };

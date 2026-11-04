@@ -1,0 +1,63 @@
+/* 복습 화면. 문제·보기·피드백 모양은 주차 퀴즈(quiz.module.css)를 그대로 쓰고 여기는 더한 것만 둔다 */
+.source {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--a-text);
+  word-break: keep-all;
+}
+.next {
+  font-size: 13px;
+  line-height: 20px;
+  color: var(--sub);
+}
+.tally {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.tally span {
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 16px;
+  background: var(--surface);
+  border: var(--card-border);
+  font-size: 13px;
+  display: inline-flex;
+  align-items: center;
+}
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 48px 12px;
+  text-align: center;
+}
+.empty h2 {
+  font-size: 18px;
+  font-weight: 700;
+}
+.empty p {
+  font-size: 14px;
+  line-height: 21px;
+  color: var(--sub);
+  word-break: keep-all;
+}
+.home {
+  margin-top: 8px;
+  height: 48px;
+  padding: 0 20px;
+  border-radius: 16px;
+  background: var(--a-btn-bg);
+  color: var(--a-btn-ink);
+  font-size: 15px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+}
+.home:focus-visible {
+  outline: 3px solid var(--a-text);
+  outline-offset: 2px;
+}

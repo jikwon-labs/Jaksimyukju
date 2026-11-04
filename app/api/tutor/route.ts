@@ -1,11 +1,13 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 import { getSessionUser } from "@/lib/auth";
-import { devToolsEnabled } from "@/lib/clock";
+import { devToolsEnabled, getToday } from "@/lib/clock";
 import { AiError, getAi, type TutorTurn } from "@/lib/ai";
 import { carriedUnderstanding, forceDone, stripLeak, weakSpots } from "@/lib/ai/tutor";
 import { prisma } from "@/lib/prisma";
+import { tutorNeedsReview } from "@/lib/domain/review";
 import { lessonBody, teacherOf } from "@/lib/server/course";
+import { markTutorWeak } from "@/lib/server/review";
 import {
   toChoices,
   toMessageView as view,
@@ -101,6 +103,10 @@ export async function POST(req: NextRequest) {
         await tx.lesson.update({ where: { id: lessonId }, data: { tutorChecked: true } });
       return true;
     });
+    // 확인이 덜 된 채 끝났으면(3번 틀려 정답을 들었거나 부분 이해) 그 개념을 1일 뒤 복습 카드로
+    if (saved && r.done && !free && tutorNeedsReview(r.understanding)) {
+      await markTutorWeak(user.id, lesson, await getToday());
+    }
     history = await load();
     const done =
       free ||

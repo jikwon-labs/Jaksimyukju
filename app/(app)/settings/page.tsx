@@ -35,6 +35,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
           notifyTeacher: user.notifyTeacher,
           notifyRetro: user.notifyRetro,
           notifyGroup: user.notifyGroup,
+          notifyReview: user.notifyReview,
           // 화면에 실제로 적용된 값은 쿠키다
           theme: parseTheme((await cookies()).get(THEME_COOKIE)?.value ?? user.theme),
         }}

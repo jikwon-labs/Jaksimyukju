@@ -88,6 +88,7 @@ describe("notifications", () => {
   it("maps kinds to icons", () => {
     expect(notifIcon("nudge")).toBe("poke");
     expect(notifIcon("comeback")).toBe("route");
+    expect(notifIcon("review")).toBe("repeat");
     expect(notifIcon("whatever")).toBe("book");
   });
   it("formats times relative to today (KST)", () => {
