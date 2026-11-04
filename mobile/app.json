@@ -4,6 +4,7 @@
     "slug": "jaksim6",
     "version": "1.0.0",
     "orientation": "portrait",
+    "scheme": "jaksim6",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
     "ios": {
@@ -12,7 +13,12 @@
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       },
-      "appleTeamId": "K6599UJ4KM"
+      "appleTeamId": "K6599UJ4KM",
+      "entitlements": {
+        "com.apple.security.application-groups": [
+          "group.com.jaksim6.app"
+        ]
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -44,6 +50,25 @@
           "dark": {
             "backgroundColor": "#111114"
           }
+        }
+      ],
+      "@bacons/apple-targets",
+      [
+        "react-native-android-widget",
+        {
+          "widgets": [
+            {
+              "name": "JaksimToday",
+              "label": "작심육주 오늘",
+              "description": "연속 학습, 최근 잔디, 오늘 할 일",
+              "minWidth": "250dp",
+              "minHeight": "110dp",
+              "targetCellWidth": 4,
+              "targetCellHeight": 2,
+              "resizeMode": "horizontal|vertical",
+              "updatePeriodMillis": 1800000
+            }
+          ]
         }
       ]
     ],

@@ -190,3 +190,10 @@ export function stepsToMilestone(view: CourseView): number {
   if (!week) return 0;
   return week.steps.length - 1 - view.today.i;
 }
+
+/** 칸을 누르면 갈 화면. short면 레슨을 5분 버전으로 연다 */
+export function stepHref(st: Pick<Step, "kind" | "week" | "lessonId">, short = false): string {
+  if (st.kind === "quiz") return `/quiz/${st.week}`;
+  if (st.kind === "goal") return `/milestone/${st.week}`;
+  return `/lesson/${st.lessonId}${short ? "?mode=short" : ""}`;
+}

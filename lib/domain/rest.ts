@@ -63,6 +63,26 @@ const LEVEL: Record<ActivityInput["kind"], GrassLevel> = {
   milestone: 4,
 };
 
+/**
+ * 잔디·연속에 세는 퀴즈 날. 주차마다 첫 응시만 센다(옛 퀴즈 재응시로 연속을 이어 가지 않게).
+ * attemptDays는 응시 날을 오래된 것부터.
+ */
+export function countedQuizDay(attemptDays: readonly DayKey[]): DayKey | null {
+  return attemptDays[0] ?? null;
+}
+
+/** 잔디·연속에 세는 마일스톤 날. 통과할 때까지 낸 차수만 센다. rounds는 오래된 차수부터 */
+export function countedMilestoneDays(
+  rounds: readonly { day: DayKey; passed: boolean }[],
+): DayKey[] {
+  const days: DayKey[] = [];
+  for (const r of rounds) {
+    days.push(r.day);
+    if (r.passed) break;
+  }
+  return days;
+}
+
 /** 날짜별로 가장 진한 단계만 남긴다 */
 export function activityLevels(items: ActivityInput[]): Map<DayKey, GrassLevel> {
   const m = new Map<DayKey, GrassLevel>();

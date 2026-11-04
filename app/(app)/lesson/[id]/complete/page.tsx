@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { Teacher } from "@/components/teacher/Teacher";
+import { WidgetSync } from "@/components/WidgetSync";
 import { COMPLETE_LINE } from "@/components/lesson/copy";
 import { getSessionUser } from "@/lib/auth";
 import { getToday } from "@/lib/clock";
@@ -160,6 +161,7 @@ export default async function CompletePage({
           groupInitials={others.map((m) => m.initial)}
         />
       </div>
+      <WidgetSync />
     </main>
   );
 }
