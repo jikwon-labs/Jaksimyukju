@@ -3,11 +3,11 @@
 }
 .switcher {
   position: fixed;
-  left: 50%;
+  left: calc(50% + var(--side-x, 0px) / 2);
   bottom: 0;
   transform: translateX(-50%);
-  width: 100%;
-  max-width: 430px;
+  width: calc(100% - var(--side-x, 0px));
+  max-width: var(--frame-w);
   padding: 8px 12px 12px 12px;
   display: grid;
   grid-template-columns: repeat(4, 1fr);

@@ -311,3 +311,21 @@
   outline: 3px solid var(--a-text);
   outline-offset: 2px;
 }
+
+/* PC: 잔디와 실력 변화, 설정과 지난 과정을 나란히 둔다. 나머지는 한 줄을 다 쓴다 */
+@media (min-width: 1024px) {
+  main.page {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: start;
+    gap: 16px;
+  }
+  main.page > * {
+    grid-column: 1 / -1;
+  }
+  main.page > .card,
+  main.page > .list,
+  main.page > .pastWrap {
+    grid-column: auto;
+  }
+}

@@ -3,10 +3,9 @@
 .screen {
   position: fixed;
   top: var(--vv-top, 0px);
-  left: 0;
+  left: var(--side-x, 0px);
   right: 0;
-  width: 100%;
-  max-width: 430px;
+  max-width: var(--frame-w);
   min-width: 320px;
   margin: 0 auto;
   height: var(--vv-height, 100dvh);
