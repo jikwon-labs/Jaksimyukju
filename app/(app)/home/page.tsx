@@ -8,6 +8,7 @@ import { NudgeButton } from "@/components/NudgeButton";
 import { Page } from "@/components/ui";
 import { WidgetSync } from "@/components/WidgetSync";
 import { getSessionUser } from "@/lib/auth";
+import { MedalGate } from "@/components/medal/MedalGate";
 import { getHour, getNow, getToday } from "@/lib/clock";
 import { LINES } from "@/lib/ai/teachers";
 import { TUTOR_QUESTIONS } from "@/lib/domain/lesson";
@@ -206,6 +207,7 @@ export default async function HomePage() {
         </section>
       )}
       <WidgetSync />
+      <MedalGate user={user} />
     </Page>
   );
 }

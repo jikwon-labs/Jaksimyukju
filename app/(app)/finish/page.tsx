@@ -4,22 +4,15 @@ import { Grass } from "@/components/course/Grass";
 import { Teacher } from "@/components/teacher/Teacher";
 import { getSessionUser } from "@/lib/auth";
 import { getToday } from "@/lib/clock";
-import type { TeacherName } from "@/lib/design/types";
-import { nextCourses, quizAverage, stepsLeft } from "@/lib/domain/finish";
+import { Medal } from "@/components/medal/Medal";
+import { MedalGate } from "@/components/medal/MedalGate";
+import { finishLine, nextCourses, quizAverage, stepsLeft } from "@/lib/domain/finish";
 import { prisma } from "@/lib/prisma";
 import { json, loadState, teacherOf } from "@/lib/server/course";
 import { SaveCard } from "./save.client";
 import s from "./finish.module.css";
 
 export const metadata = { title: "목적지 도착 · 작심육주" };
-
-function finishLine(who: TeacherName, weeks: number): string {
-  return {
-    온: `${weeks}주 동안 한 번도 포기하지 않았어요. 정말 자랑스러워요.`,
-    결: "목표 달성. 처음 세운 계획대로 끝냈습니다.",
-    새: "처음엔 낯선 숫자였는데, 이제 회사 이야기가 읽히죠?",
-  }[who];
-}
 
 export default async function FinishPage() {
   const user = await getSessionUser();
@@ -75,11 +68,17 @@ export default async function FinishPage() {
       </header>
 
       <section aria-label={finished ? "과정 완료" : "목적지까지"} className={`${s.hero} ${s.rise}`} data-finished={finished ? "true" : "false"}>
-        <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-          <path d="M6 21V4" />
-          <path d="M6 4h11l-2 4 2 4H6" />
-        </svg>
-        <Teacher who={who} state={finished ? "joy" : "base"} size={110} />
+        {finished ? (
+          <Medal weeks={weeks} teacher={who} size={132} />
+        ) : (
+          <>
+            <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <path d="M6 21V4" />
+              <path d="M6 4h11l-2 4 2 4H6" />
+            </svg>
+            <Teacher who={who} state="base" size={110} />
+          </>
+        )}
         <span className={s.heroKicker}>{finished ? `${weeks}주 과정 완주` : `목적지까지 ${left}칸`}</span>
         <h2 className={s.heroTitle}>{course.topic}</h2>
         <p className={s.heroLine}>{finished ? finishLine(who, weeks) : `${course.goal}. 다 오면 여기서 처음과 지금을 같이 볼 거예요.`}</p>
@@ -154,6 +153,7 @@ export default async function FinishPage() {
           지도로 돌아가기
         </Link>
       )}
+      <MedalGate user={user} />
     </main>
   );
 }

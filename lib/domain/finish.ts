@@ -1,4 +1,14 @@
 // 목적지 도착 화면: 다음 과정 추천과 기록 요약
+import type { TeacherName } from "@/lib/design/types";
+
+/** 완주했을 때 선생님 한마디(목적지 도착·메달 수여 화면) */
+export function finishLine(who: TeacherName, weeks: number): string {
+  return {
+    온: `${weeks}주 동안 한 번도 포기하지 않았어요. 정말 자랑스러워요.`,
+    결: "목표 달성. 처음 세운 계획대로 끝냈습니다.",
+    새: "처음엔 낯선 숫자였는데, 이제 회사 이야기가 읽히죠?",
+  }[who];
+}
 export const LEVELS = ["처음이에요", "조금 알아요", "꽤 알아요"] as const;
 
 /** 한 과정을 마치면 수준을 한 칸 올린다(꽤 알아요는 그대로) */

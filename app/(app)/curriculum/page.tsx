@@ -2,6 +2,7 @@ import { durationLabel } from "@/lib/domain/prefs";
 import { redirect } from "next/navigation";
 import { Page } from "@/components/ui";
 import { getSessionUser } from "@/lib/auth";
+import { MedalGate } from "@/components/medal/MedalGate";
 import { getToday } from "@/lib/clock";
 import { bannerMeta, maskLocked, studyDaysLabel, weekMeta } from "@/lib/domain/curriculum";
 import { loadState, teacherOf } from "@/lib/server/course";
@@ -45,6 +46,7 @@ export default async function CurriculumPage() {
           left: total - done,
         }}
       />
+      <MedalGate user={user} />
     </Page>
   );
 }

@@ -303,6 +303,54 @@
 .pastStatus[data-status="finished"] {
   background: var(--good-bg);
   color: var(--good);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.medals {
+  background: var(--surface);
+  border: var(--card-border);
+  border-radius: 20px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.medalsHead {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.medalsHead h2 {
+  font-size: 15px;
+  font-weight: 700;
+}
+.medalsCount {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--a-text);
+}
+.medalGrid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px 8px;
+}
+.medalItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  text-align: center;
+}
+.medalTopic {
+  margin-top: 4px;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 18px;
+  word-break: keep-all;
 }
 .settingsLink:focus-visible,
 .change:focus-visible,

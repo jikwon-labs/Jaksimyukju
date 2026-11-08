@@ -1,6 +1,7 @@
 import "server-only";
 import type { Prisma, User } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { getNow } from "@/lib/clock";
 import { getLibrarian } from "@/lib/ai";
 import type { CurriculumInput, CurriculumPlan, LessonBody, QuizQuestion } from "@/lib/ai/types";
 import { type CourseMaterial, writeCourse } from "./write-course";
@@ -249,6 +250,7 @@ export function pendingOrders(course: CourseFull): number[] {
 export async function syncCourseStatus(user: User, today: DayKey, courseId?: string): Promise<boolean> {
   const st = await loadState(user, today, courseId);
   if (!st || st.course.status !== "active" || !st.view.finished) return false;
-  await prisma.course.update({ where: { id: st.course.id }, data: { status: "finished" } });
+  // 완주 시각을 남기면 다음에 여는 홈·지도·목적지 화면에서 메달 수여 화면이 한 번 뜬다(medalSeenAt 이 빌 때)
+  await prisma.course.update({ where: { id: st.course.id }, data: { status: "finished", finishedAt: await getNow() } });
   return true;
 }

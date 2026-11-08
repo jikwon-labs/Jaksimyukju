@@ -89,6 +89,8 @@ model Course {
   comebackDay String? // 복귀 화면에서 재조정을 고른 날
   schedule    Json         @default("[]") // 학습 요일 변경 이력 [{ from: YYYY-MM-DD, days: number[] }]
   replan      String? // 마지막 재조정: delay | squeeze | skip
+  finishedAt  DateTime? // 모든 칸을 채워 완주로 바뀐 때
+  medalSeenAt DateTime? // 완주 메달 수여 화면을 닫은 때. 완주했는데 비어 있으면 한 번 띄운다
   createdAt   DateTime     @default(now())
   user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   weeks       Week[]

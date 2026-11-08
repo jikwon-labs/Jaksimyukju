@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { Grass } from "@/components/course/Grass";
 import { QuizChart } from "@/components/profile/QuizChart";
 import { TeacherPicker } from "@/components/profile/TeacherPicker.client";
+import { Medal } from "@/components/medal/Medal";
 import { Page } from "@/components/ui";
 import { getSessionUser } from "@/lib/auth";
 import { getToday } from "@/lib/clock";
@@ -12,6 +13,8 @@ import { accountLabel } from "@/lib/domain/oauth";
 import { prisma } from "@/lib/prisma";
 import { THEME_LABELS, parseTheme } from "@/lib/theme";
 import { loadState, quizPercent, teacherOf } from "@/lib/server/course";
+import { earnedMedals } from "@/lib/server/medal";
+import { dotDate } from "@/lib/domain/medal";
 import p from "@/components/profile/profile.module.css";
 
 export const metadata = { title: "내 정보 · 작심육주" };
@@ -45,6 +48,7 @@ export default async function ProfilePage({ searchParams }: { searchParams: Prom
     orderBy: { createdAt: "desc" },
     select: { id: true, topic: true, status: true, weeksCount: true, startDate: true },
   });
+  const medals = await earnedMedals(user.id);
   const cells = st.grass.flat().filter((c) => (c.kind === "level" || c.kind === "today") && c.level > 0).length;
 
   const settings: { label: string; value: string; href: string }[] = [
@@ -117,6 +121,26 @@ export default async function ProfilePage({ searchParams }: { searchParams: Prom
         ))}
       </section>
 
+      <section aria-label="내 메달" className={p.medals} id="medals">
+        <div className={p.medalsHead}>
+          <h2>내 메달</h2>
+          <span className={p.medalsCount}>{medals.length}개</span>
+        </div>
+        {medals.length === 0 ? (
+          <p className={p.note}>과정을 끝까지 마치면 완주 메달을 받아요.</p>
+        ) : (
+          <ul className={p.medalGrid}>
+            {medals.map((m) => (
+              <li key={m.courseId} className={p.medalItem}>
+                <Medal weeks={m.weeks} teacher={who} size={88} decorative />
+                <span className={p.medalTopic}>{m.topic}</span>
+                <span className={p.meta}>{dotDate(m.end)} 완주</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
       <section aria-label="지난 과정" className={p.pastWrap} id="past">
         <h2 className={p.h2}>지난 과정</h2>
         {past.length === 0 ? (
@@ -130,6 +154,7 @@ export default async function ProfilePage({ searchParams }: { searchParams: Prom
                   {c.weeksCount}주 · {c.startDate} 시작
                 </span>
                 <span className={p.pastStatus} data-status={c.status}>
+                  {c.status === "finished" && <Medal weeks={c.weeksCount} teacher={who} size={14} decorative />}
                   {c.status === "finished" ? "완주" : "멈춤"}
                 </span>
               </li>
