@@ -14,7 +14,7 @@ import {
 import { prisma } from "@/lib/prisma";
 import { fetchPublicLink } from "./fetch-link";
 import { extractPdf } from "./pdf";
-import { lessonBody } from "./course";
+import { focusCourseId, lessonBody } from "./course";
 import { lessonQuery } from "./write-course";
 
 export interface Extracted {
@@ -93,11 +93,14 @@ export async function addCourseMaterial(
   user: Pick<User, "id">,
   x: Extracted,
 ): Promise<{ id: string; title: string; lessons: number }> {
-  const course = await prisma.course.findFirst({
-    where: { userId: user.id, status: "active" },
-    orderBy: { createdAt: "desc" },
-    include: { lessons: { where: { status: "todo" }, orderBy: { order: "asc" } } },
-  });
+  // 지금 보는 과정에 더한다(진행 중일 때만)
+  const focus = await focusCourseId(user.id);
+  const course = focus
+    ? await prisma.course.findFirst({
+        where: { id: focus, userId: user.id, status: "active" },
+        include: { lessons: { where: { status: "todo" }, orderBy: { order: "asc" } } },
+      })
+    : null;
   if (!course) throw new MaterialError("no_course");
   return prisma.$transaction(async (tx) => {
     const count = await tx.material.count({ where: { courseId: course.id } });
@@ -129,11 +132,10 @@ export async function getOwnMaterial(user: Pick<User, "id">, id: string) {
 
 /** 지금 과정에 붙은 내 자료 목록(글 본문은 빼고) */
 export async function listCourseMaterials(user: Pick<User, "id">) {
-  const course = await prisma.course.findFirst({
-    where: { userId: user.id, status: { in: ["active", "finished"] } },
-    orderBy: { createdAt: "desc" },
-    select: { id: true, status: true, topic: true },
-  });
+  const focus = await focusCourseId(user.id);
+  const course = focus
+    ? await prisma.course.findFirst({ where: { id: focus, userId: user.id }, select: { id: true, status: true, topic: true } })
+    : null;
   if (!course) return null;
   const materials = await prisma.material.findMany({
     where: { courseId: course.id, userId: user.id },

@@ -48,13 +48,36 @@ const MATERIAL_DONE: Record<TeacherName, (title: string) => string> = {
   새: (t) => `"${t}" 접수! 이 자료로 탐험 지도를 그릴게요. 주제는 뭐라고 부를까요?`,
 };
 
-export function Topic({ next }: { next?: { topic: string; level: string } }) {
+/** 이미 과정을 하는 사람이 과정을 하나 더 열 때 이어받는 내 설정 */
+export interface TopicSeed {
+  teacher: TeacherName;
+  studyDays: number[];
+  minutes: number;
+  notifyTime: string;
+}
+
+export function Topic({
+  next,
+  seed,
+  backHref = "/start/teacher",
+}: {
+  next?: { topic: string; level: string };
+  seed?: TopicSeed;
+  backHref?: string;
+}) {
   const draft = useDraft();
 
-  // 지난 과정의 주제와 수준을 이어받는다. 목적지는 새로 묻는다
+  // 과정을 더 열 때는 선생님과 학습 시간을 내 설정에서 이어받고, 주제는 새로 묻는다.
+  // 지난 과정에서 왔으면 그 주제와 수준을 이어받는다. 목적지는 언제나 새로 묻는다
   useEffect(() => {
-    if (next) writeDraft({ topic: next.topic, goal: "", level: next.level });
-  }, [next]);
+    if (!next && !seed) return;
+    writeDraft({
+      ...(seed ? { ...seed, materialId: null, materialTitle: "" } : {}),
+      topic: next?.topic ?? "",
+      goal: "",
+      level: next?.level ?? "",
+    });
+  }, [next, seed]);
 
   const who = draftTeacher(draft, useTeacherFallback());
   const ans = [draft.topic, draft.goal, draft.level];
@@ -114,7 +137,11 @@ export function Topic({ next }: { next?: { topic: string; level: string } }) {
   return (
     <main className={s.root} ref={screenRef}>
       <div className={s.head} data-testid="topic-head">
-        <StepHeader step={2} backHref="/start/teacher" backLabel="선생님 고르기로 돌아가기" />
+        <StepHeader
+          step={2}
+          backHref={backHref}
+          backLabel={backHref === "/start/teacher" ? "선생님 고르기로 돌아가기" : "내 과정으로 돌아가기"}
+        />
       </div>
       <div className={s.chat} ref={chatRef} aria-live="polite" onClick={closeKeyboard} data-testid="topic-chat">
         {rows.map((m, i) =>

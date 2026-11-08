@@ -23,8 +23,9 @@ export default async function LessonPage({
   if (!user) redirect("/");
   const lesson = await getOwnLesson(user, id);
   if (!lesson) notFound();
-  const st = await loadState(user, await getToday());
-  if (!st) redirect("/start/personality");
+  // 레슨이 속한 과정으로 그린다(다른 과정의 알림에서 들어와도 맞는 과정을 보여 준다)
+  const st = await loadState(user, await getToday(), lesson.courseId);
+  if (!st) redirect("/home");
   const who = teacherOf(user);
   const step = st.view.weeks.flatMap((w) => w.steps).find((x) => x.lessonId === lesson.id);
   const body = lessonBody(lesson.body);

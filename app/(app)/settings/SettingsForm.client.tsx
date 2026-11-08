@@ -190,6 +190,7 @@ export function SettingsForm({
   }
 
   const rows: { label: string; value: string; href: string; testid?: string }[] = [
+    { label: "내 과정", value: "바꾸기·추가", href: "/courses", testid: "settings-courses" },
     {
       label: "쉬어 가기 예약",
       value: `남은 ${restLeft}일`,

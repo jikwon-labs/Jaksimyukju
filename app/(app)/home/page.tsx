@@ -16,7 +16,7 @@ import { WEEKDAY_KO, weekday } from "@/lib/domain/dates";
 import { NUDGE_MESSAGES } from "@/lib/domain/limits";
 import { reviewEntryLabel } from "@/lib/domain/review";
 import { prisma } from "@/lib/prisma";
-import { loadState, teacherOf } from "@/lib/server/course";
+import { listOpenCourses, loadState, teacherOf } from "@/lib/server/course";
 import { runCoach } from "@/lib/server/coach";
 import { getGroupView } from "@/lib/server/group";
 import { reviewSummary } from "@/lib/server/review";
@@ -59,11 +59,19 @@ export default async function HomePage() {
   const weekCells = st.grass.flat().filter((c) => c.kind === "level" && c.level > 0).length;
   const offDays = st.cal.studyDays.length < 7;
   const review = await reviewSummary(st);
+  const openCount = (await listOpenCourses(user.id)).filter((c) => c.status === "active").length;
 
   return (
     <Page tabs className={s.page}>
       <header className={s.header}>
         <span className={s.logo}>작심육주</span>
+        <Link href="/courses" className={s.courseSwitch} aria-label={`지금 과정 ${course.topic}. 과정 바꾸기와 새 과정 추가`} data-testid="course-switch">
+          <span className={s.courseTopic}>{course.topic}</span>
+          {openCount > 1 && <span className={s.courseCount}>{openCount}</span>}
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+            <path d="M6 9l6 6 6-6" />
+          </svg>
+        </Link>
         <Link href="/notifications" aria-label={`알림 ${unread}개`} className={s.bell}>
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
             <path d="M6 9a6 6 0 0 1 12 0c0 6 2.5 7.5 2.5 7.5h-17S6 15 6 9" />

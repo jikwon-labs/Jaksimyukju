@@ -11,8 +11,11 @@ import { DEMO_INVITE } from "@/lib/constants";
 import { sortStudyDays } from "@/lib/domain/dates";
 import { nickname } from "@/lib/domain/nickname";
 import { prisma } from "@/lib/prisma";
+import { canAddCourse } from "@/lib/domain/courses";
 import { createCourse } from "./course";
+import { TooManyCourses } from "./write-course";
 import { getDraftMaterial } from "./material";
+import { recordStudyDays } from "./settings";
 import { joinByCode } from "./social";
 
 /** /invite/[code]가 남기는 초대 코드 쿠키 */
@@ -63,6 +66,8 @@ export async function inviteGroup(now?: Date) {
 /** 내 것이 아니거나 이미 다른 과정에 붙은 자료 번호를 보냈을 때 */
 export class MaterialNotFound extends Error {}
 
+export { TooManyCourses };
+
 /**
  * 커리큘럼을 만들고 과정을 저장한다. 세션 사용자가 있으면 그 사용자를 쓰고(다시 만들기),
  * 없으면 게스트를 만든다. AI가 실패하면 AiError를 그대로 던지고 아무것도 쓰지 않는다.
@@ -70,6 +75,9 @@ export class MaterialNotFound extends Error {}
 export async function startOnboarding(data: OnboardingInput): Promise<OnboardingSummary> {
   const studyDays = sortStudyDays(data.studyDays);
   const existing = await getSessionUser();
+  // 한도를 넘으면 AI를 부르기 전에 멈춘다(쓸 때 write-course가 한 번 더 막는다)
+  if (existing && !canAddCourse(await prisma.course.count({ where: { userId: existing.id, status: "active" } })).ok)
+    throw new TooManyCourses();
   // 내 자료는 지금 세션 사용자가 시작 흐름에서 올리고 아직 과정에 안 붙은 것만 쓴다(자료를 올릴 때 게스트가 만들어진다)
   const material = data.materialId ? (existing ? await getDraftMaterial(existing, data.materialId) : null) : null;
   if (data.materialId && !material) throw new MaterialNotFound();
@@ -93,6 +101,8 @@ export async function startOnboarding(data: OnboardingInput): Promise<Onboarding
   };
   let user: User;
   if (existing) {
+    // 다른 과정을 함께 하는 중이면, 그 과정들에 요일 변경 이력을 남긴다
+    await recordStudyDays(existing, studyDays, await getToday());
     // 자료를 올리며 막 만든 게스트(과정 없음, 기본 이름)면 새 사용자처럼 별명을 붙인다
     const fresh = existing.name === "나" && (await prisma.course.count({ where: { userId: existing.id } })) === 0;
     const name = fresh ? nickname(await prisma.user.count()) : undefined;

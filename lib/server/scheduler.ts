@@ -19,7 +19,16 @@ export async function runTick(now: Date): Promise<TickResult> {
   const users = await prisma.user.findMany({ where: { courses: { some: { status: "active" } } } });
   let made = 0;
   for (const user of users) {
-    const st = await loadState(user, today);
+    // 보는 과정이 진행 중이면 그것, 아니면(방금 완주 등) 가장 최근의 진행 중 과정으로 알림을 판단한다
+    let st = await loadState(user, today);
+    if (st && st.course.status !== "active") {
+      const active = await prisma.course.findFirst({
+        where: { userId: user.id, status: "active" },
+        orderBy: { createdAt: "desc" },
+        select: { id: true },
+      });
+      st = active ? await loadState(user, today, active.id) : null;
+    }
     if (!st) continue;
     // 새로 만든 알림은 createCapped가 푸시로도 보낸다(lib/server/push.ts, 운영은 Expo)
     made += await runCoach(user, st, today, hour, now, minuteOfDay);

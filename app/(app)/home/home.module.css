@@ -7,12 +7,55 @@
   justify-content: space-between;
   height: 44px;
 }
+.courseSwitch {
+  margin-left: auto;
+  margin-right: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  max-width: 55%;
+  height: 40px;
+  padding: 0 12px 0 14px;
+  border-radius: 20px;
+  border: var(--card-border);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 500;
+  text-decoration: none;
+}
+.courseSwitch:focus-visible {
+  outline: 3px solid var(--a-text);
+  outline-offset: 2px;
+}
+.courseTopic {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.courseCount {
+  flex: none;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  background: var(--a-tint);
+  color: var(--a-text);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
+}
 .logo {
+  flex: none;
   font-family: var(--font-title), "Jua", sans-serif;
   font-size: 24px;
   letter-spacing: -0.5px;
 }
 .bell {
+  flex: none;
   position: relative;
   width: 44px;
   height: 44px;

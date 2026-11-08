@@ -6,7 +6,7 @@ import type { DayKey } from "@/lib/domain/dates";
 import { canNudge, type NotifyDecision, type NudgeDecision } from "@/lib/domain/limits";
 import { createCapped, notifyDecision } from "./notify";
 import type { GrassCell } from "@/lib/domain/rest";
-import { loadState, teacherOf } from "./course";
+import { loadState, studiedTodayAny, teacherOf } from "./course";
 
 export interface MemberView {
   id: string;
@@ -45,6 +45,8 @@ export async function getGroupView(user: User, today: DayKey): Promise<GroupView
   const members: MemberView[] = [];
   for (const m of g.members) {
     const st = await loadState(m.user, today);
+    // 과정을 여러 개 하면 어느 과정이든 오늘 했으면 한 것으로 본다
+    const studiedToday = (st?.studiedToday ?? false) || (await studiedTodayAny(m.user.id, today));
     const visibility = m.visibility === "grass_topic" ? "grass_topic" : "grass";
     members.push({
       id: m.user.id,
@@ -55,7 +57,7 @@ export async function getGroupView(user: User, today: DayKey): Promise<GroupView
       // 튜터 대화, 퀴즈 점수, 마일스톤 내용은 어떤 범위에서도 내보내지 않는다
       topic: visibility === "grass_topic" ? (st?.course.topic ?? null) : null,
       visibility,
-      studiedToday: st?.studiedToday ?? false,
+      studiedToday,
       streak: st?.streak ?? 0,
       missed: st?.missed ?? 0,
       resting: st?.restingToday ?? false,
@@ -67,7 +69,7 @@ export async function getGroupView(user: User, today: DayKey): Promise<GroupView
         today,
         sentDays: sent.filter((n) => n.toUserId === m.user.id).map((n) => n.day),
         targetResting: st?.restingToday ?? false,
-        targetStudiedToday: st?.studiedToday ?? false,
+        targetStudiedToday: studiedToday,
       }),
     });
   }

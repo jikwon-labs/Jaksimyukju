@@ -34,8 +34,8 @@ export default async function CompletePage({
   if (!lesson) notFound();
   if (lesson.status !== "done" && lesson.status !== "short") redirect(`/lesson/${lesson.id}`);
   const today = await getToday();
-  const st = await loadState(user, today);
-  if (!st) redirect("/start/personality");
+  const st = await loadState(user, today, lesson.courseId);
+  if (!st) redirect("/home");
   const who = teacherOf(user);
 
   const change = streakChange(st.cal, st.levels, today);

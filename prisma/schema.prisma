@@ -29,6 +29,7 @@ model User {
   notifyGroup   Boolean   @default(true)
   aiConsentAt   DateTime? // 외부 AI(Anthropic)로 학습 내용을 보내는 데 동의한 때. 비면 AI 기능 전에 동의 화면을 띄운다
   notifyReview  Boolean   @default(true)
+  focusCourseId String? // 지금 보고 있는 과정. 과정을 여러 개 동시에 할 때 화면이 이 과정을 기준으로 그린다. 비거나 끝난 과정이면 가장 최근 과정
   createdAt     DateTime  @default(now())
 
   courses       Course[]

@@ -6,7 +6,7 @@ import { getSessionUser } from "@/lib/auth";
 import { getHour, getNow, getToday } from "@/lib/clock";
 import { cleanOneLiner, cleanRating, cleanReview, type CompleteMode } from "@/lib/domain/lesson";
 import { prisma } from "@/lib/prisma";
-import { syncCourseStatus } from "@/lib/server/course";
+import { setFocusCourse, syncCourseStatus } from "@/lib/server/course";
 import { completeLesson, notifyGroupDone } from "@/lib/server/lesson";
 
 function revalidateLoop(lessonId: string) {
@@ -23,7 +23,12 @@ export async function completeLessonAction(lessonId: string, mode: CompleteMode)
   const today = await getToday();
   const r = await completeLesson(user, lessonId, mode === "short" ? "short" : "full", today, await getNow());
   if (!r.ok) redirect("/home");
-  await syncCourseStatus(user, today);
+  const done = await prisma.lesson.findUnique({ where: { id: lessonId }, select: { courseId: true } });
+  if (done) {
+    await syncCourseStatus(user, today, done.courseId);
+    // 다른 과정의 레슨을 했으면 그 과정을 보게 해, 완료 뒤 오늘 화면이 같은 과정을 보여 준다
+    await setFocusCourse(user.id, done.courseId);
+  }
   revalidateLoop(lessonId);
   redirect(`/lesson/${lessonId}/complete`);
 }

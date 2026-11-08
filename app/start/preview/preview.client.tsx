@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { Teacher } from "@/components/teacher/Teacher";
 import type { TeacherName } from "@/lib/design/types";
 import type { OnboardingSummary } from "@/lib/server/onboarding";
+import { ADD_MESSAGES } from "@/lib/domain/courses";
 import { draftTeacher, readDraft, useDraft, useTeacherFallback, writeDraft, type Draft } from "../draft";
 import st from "../start.module.css";
 import s from "./preview.module.css";
@@ -33,7 +34,7 @@ const FAIL_BODY: Record<TeacherName, string> = {
 
 type Result =
   | { ok: true; data: OnboardingSummary }
-  | { ok: false; kind: "ai" | "invalid" | "server" | "consent" };
+  | { ok: false; kind: "ai" | "invalid" | "server" | "consent" | "too_many" };
 
 async function post(d: Draft): Promise<Result> {
   try {
@@ -61,6 +62,7 @@ async function post(d: Draft): Promise<Result> {
     const body = (await res.json().catch(() => ({}))) as { error?: string; issues?: string[] };
     // 다른 탭에서 AI 동의를 철회한 경우 등. 화면이 안내로 보낸다
     if (body.error === "consent") return { ok: false, kind: "consent" };
+    if (body.error === "too_many") return { ok: false, kind: "too_many" };
     // 올린 자료를 쓸 수 없게 됐으면(다른 기기, 로그아웃, 이미 다른 과정에 붙음) 초안에서 빼고 다시 고르게 한다
     if (body.issues?.includes("materialId")) writeDraft({ materialId: null, materialTitle: "" });
     return {
@@ -127,6 +129,24 @@ export function Preview() {
   }
 
   const shown = phase >= 3 ? result : null;
+
+  if (shown && !shown.ok && shown.kind === "too_many") {
+    return (
+      <main className={s.fail}>
+        <div className={s.failMid}>
+          <Teacher who={who} state="sad" size={120} jump label={`${who} 선생님, 과정 한도`} />
+          <span className={s.tag}>과정 한도</span>
+          <h1 className={s.failTitle}>지금 하는 과정이 이미 가득 찼어요</h1>
+          <p className={s.failBody} role="alert" data-testid="preview-too-many">
+            {ADD_MESSAGES.too_many}
+          </p>
+        </div>
+        <Link href="/courses" className={st.cta}>
+          내 과정 보기
+        </Link>
+      </main>
+    );
+  }
 
   if (shown && !shown.ok) {
     return (

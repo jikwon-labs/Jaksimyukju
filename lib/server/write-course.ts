@@ -2,7 +2,11 @@
 import type { Prisma, PrismaClient } from "@prisma/client";
 import type { CurriculumInput, CurriculumPlan, LessonBody, Librarian } from "@/lib/ai/types";
 import type { DayKey } from "@/lib/domain/dates";
+import { canAddCourse } from "@/lib/domain/courses";
 import { materialResource } from "@/lib/domain/material";
+
+/** 진행 중 과정이 이미 한도만큼 있을 때 */
+export class TooManyCourses extends Error {}
 
 /** 과정에 붙일 내 자료. 소유자 확인은 부르는 쪽이 이미 했다 */
 export interface CourseMaterial {
@@ -34,7 +38,9 @@ export async function writeCourse(
     }
   }
   return db.$transaction(async (tx) => {
-    await tx.course.updateMany({ where: { userId, status: "active" }, data: { status: "stopped" } });
+    // 다른 진행 중 과정은 그대로 두고 함께 한다. 한도를 넘으면 아무것도 쓰지 않는다
+    const active = await tx.course.count({ where: { userId, status: "active" } });
+    if (!canAddCourse(active).ok) throw new TooManyCourses();
     const course = await tx.course.create({
       data: {
         userId,
@@ -93,6 +99,8 @@ export async function writeCourse(
         await tx.resource.createMany({ data: found });
       }
     }
+    // 새 과정을 바로 보게 한다
+    await tx.user.update({ where: { id: userId }, data: { focusCourseId: course.id } });
     return course;
   }, { timeout: 30_000 });
 }

@@ -7,7 +7,7 @@ import { coachNotes, MISSED_EARLIER_LINE, MISSED_ONE_LINE, reminderDue, RETRO_LI
 import { dayKind, missedStudyDays } from "@/lib/domain/rest";
 import { reviewLine } from "@/lib/domain/review";
 import type { CourseState } from "./course";
-import { teacherOf } from "./course";
+import { studiedTodayAny, teacherOf } from "./course";
 import { createCapped, notifyDecision } from "./notify";
 import { countDue } from "./review";
 
@@ -62,7 +62,8 @@ export async function runCoach(
     today,
     missed: gap.count,
     missedDay: gap.days[0] ?? null,
-    studiedToday: st.studiedToday,
+    // 다른 과정을 오늘 했으면 "오늘 아직" 알림은 남기지 않는다
+    studiedToday: st.studiedToday || (await studiedTodayAny(user.id, today)),
     restingToday: st.restingToday,
     sent,
     retroDoneThisWeek,
