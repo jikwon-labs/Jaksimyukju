@@ -185,6 +185,17 @@ model Material {
   @@map("materials")
 }
 
+/// 요청 횟수 제한 창(lib/server/rate-limit.ts). key는 "material:user:<id>" 같은 꼴
+model RateHit {
+  key         String
+  windowStart DateTime
+  count       Int      @default(1)
+
+  @@id([key, windowStart])
+  @@index([windowStart])
+  @@map("rate_hits")
+}
+
 model TutorMessage {
   id            String   @id @default(cuid())
   lessonId      String

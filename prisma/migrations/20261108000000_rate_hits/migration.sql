@@ -1,0 +1,12 @@
+-- CreateTable
+CREATE TABLE "rate_hits" (
+    "key" TEXT NOT NULL,
+    "windowStart" TIMESTAMP(3) NOT NULL,
+    "count" INTEGER NOT NULL DEFAULT 1,
+
+    CONSTRAINT "rate_hits_pkey" PRIMARY KEY ("key","windowStart")
+);
+
+-- CreateIndex
+CREATE INDEX "rate_hits_windowStart_idx" ON "rate_hits"("windowStart");
+

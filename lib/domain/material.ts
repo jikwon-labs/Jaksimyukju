@@ -19,7 +19,6 @@ export const UPLOAD_RATE = {
   windowMs: 10 * 60 * 1000,
   guestLimit: 5,
   userLimit: 20,
-  maxKeys: 5000,
 };
 /** 과정 하나에 붙일 수 있는 자료 수 */
 export const MATERIALS_PER_COURSE = 5;

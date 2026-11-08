@@ -10,7 +10,7 @@ import {
   type MaterialResponse,
   UPLOAD_RATE,
 } from "@/lib/domain/material";
-import { clientKey, hitRate, type RateWindow } from "@/lib/domain/rate-limit";
+import { clientKey } from "@/lib/domain/rate-limit";
 import {
   addCourseMaterial,
   type Extracted,
@@ -18,6 +18,7 @@ import {
   fromPdfFile,
   saveDraftMaterial,
 } from "@/lib/server/material";
+import { hitRate } from "@/lib/server/rate-limit";
 
 // PDF 글 뽑기와 링크 가져오기에 시간이 걸린다
 export const maxDuration = 30;
@@ -29,10 +30,6 @@ const STATUS: Partial<Record<MaterialErrorCode, number>> = {
   too_many: 409,
   too_often: 429,
 };
-
-// 함수 인스턴스마다 따로 센다(인스턴스가 여럿이면 느슨해진다). 한 곳에서 몰아 부르는 요청을 줄이는 과속방지턱이다
-const guestHits = new Map<string, RateWindow>();
-const userHits = new Map<string, RateWindow>();
 
 function fail(code: MaterialErrorCode) {
   return NextResponse.json<MaterialResponse>(
@@ -65,12 +62,25 @@ export async function POST(req: NextRequest) {
   // 과정에 더하기는 로그인(게스트 세션)과 진행 중 과정이 있어야 한다. 무거운 일 전에 먼저 본다
   if (mode === "course" && !user) return fail("auth");
   // 세션 없이 오면 올릴 때마다 게스트와 자료가 새로 생긴다. 글을 뽑기 전에 횟수부터 본다
-  const allowed = user
-    ? hitRate(userHits, user.id, Date.now(), { ...UPLOAD_RATE, limit: UPLOAD_RATE.userLimit })
-    : hitRate(guestHits, clientKey(req.headers), Date.now(), {
-        ...UPLOAD_RATE,
-        limit: UPLOAD_RATE.guestLimit,
-      });
+  // 횟수는 DB에 세서 모든 서버 인스턴스가 같이 본다(lib/server/rate-limit.ts)
+  let allowed: boolean;
+  try {
+    allowed = user
+      ? await hitRate(`material:user:${user.id}`, {
+          windowMs: UPLOAD_RATE.windowMs,
+          limit: UPLOAD_RATE.userLimit,
+        })
+      : await hitRate(`material:guest:${clientKey(req.headers)}`, {
+          windowMs: UPLOAD_RATE.windowMs,
+          limit: UPLOAD_RATE.guestLimit,
+        });
+  } catch (e) {
+    console.error("[material] rate", e);
+    return NextResponse.json<MaterialResponse>(
+      { error: "bad_request", message: "잠시 뒤 다시 해 주세요." },
+      { status: 503 },
+    );
+  }
   if (!allowed) return fail("too_often");
 
   let extracted: Extracted;
